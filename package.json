@@ -1,0 +1,35 @@
+{
+  "name": "skeletal-animation-system",
+  "version": "0.0.1",
+  "description": "Calculate a model's interpolated joint matrices",
+  "main": "index.js",
+  "scripts": {
+    "test": "standard && tape test/**/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chinedufn/skeletal-animation-system.git"
+  },
+  "keywords": [
+    "skeletal",
+    "skeleton",
+    "animation",
+    "system",
+    "collada",
+    "joint",
+    "animate",
+    "blend",
+    "bone"
+  ],
+  "author": "Chinedu Francis Nwafili <frankie.nwafili@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/chinedufn/skeletal-animation-system/issues"
+  },
+  "homepage": "https://github.com/chinedufn/skeletal-animation-system#readme",
+  "devDependencies": {
+    "mat4-interpolate": "^1.0.4",
+    "standard": "^8.3.0",
+    "tape": "^4.6.2"
+  }
+}
