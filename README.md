@@ -176,6 +176,10 @@ lorem ipsum
 
 - [collada-dae-parser](https://github.com/chinedufn/collada-dae-parser)
 
+## References
+
+- [Anatomy of a skeletal animation system part 1](http://blog.demofox.org/2012/09/21/anatomy-of-a-skeletal-animation-system-part-1/) [part 2](http://blog.demofox.org/2012/09/21/anatomy-of-a-skeletal-animation-system-part-2/) [part 3](http://blog.demofox.org/2012/09/21/anatomy-of-a-skeletal-animation-system-part-3/)
+
 ## License
 
 MIT
