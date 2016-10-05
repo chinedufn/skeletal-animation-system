@@ -1,6 +1,6 @@
 {
   "name": "skeletal-animation-system",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Calculate a model's interpolated joint matrices",
   "main": "index.js",
   "scripts": {
