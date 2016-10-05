@@ -1,1 +1,1 @@
-module.exports = require('skeletal-animation-system')
+module.exports = require('./src/skeletal-animation-system')
