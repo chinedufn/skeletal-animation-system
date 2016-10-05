@@ -3,6 +3,7 @@ var animationSystem = require('../')
 
 test('Animate without blending previous animation', function (t) {
   var options = {
+    // Our application clock has been running for 1.5 seconds
     currentTime: 1.5,
     // TODO: Don't use same matrices in keyframes
     keyframes: {
@@ -27,5 +28,3 @@ test('Animate without blending previous animation', function (t) {
 })
 
 // TODO: Test looping
-
-// TODO: Test blending

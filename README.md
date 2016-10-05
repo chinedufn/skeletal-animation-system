@@ -118,8 +118,16 @@ Type: `Number`
 
 Default: `0`
 
-The current number of seconds elapsed. If your application has a clock, this will
-typically be your current clock time.
+The current number of seconds elapsed. If you have an animation an loop,
+this will typically be the sum of all of your loops time deltas
+
+```js
+// Example of tracking current time
+var currentTime = 0
+function animationLoop (dt) {
+ currentTime += dt
+}
+```
 
 ##### keyframes
 
