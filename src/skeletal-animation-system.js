@@ -55,7 +55,7 @@ function interpolateJoints (opts) {
   }
 
   // Calculate the interpolated joint matrices for our consumer's animation
-  var interpolatedJoints = opts.jointNames.reduce(function (acc, jointName) {
+  var interpolatedJoints = opts.jointNums.reduce(function (acc, jointName) {
     // If there is a previous animation
     // TODO: don't blend if blend is > 1
     if (opts.previousAnimation) {

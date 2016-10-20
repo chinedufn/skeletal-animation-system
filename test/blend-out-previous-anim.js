@@ -7,17 +7,17 @@ test('Blend out previous animation', function (t) {
     // Our application clock has been running for 100.5 seconds
     currentTime: 100.5,
     keyframes: {
-      '0': {
-        'hip': [0, 0, 0, 0, 0, 0, 0, 0]
-      },
-      '5.0': {
-        'hip': [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-      },
-      '8.0': {
-        'hip': [1, 1, 1, 1, 1, 1, 1, 1]
-      }
+      '0': [
+        [0, 0, 0, 0, 0, 0, 0, 0]
+      ],
+      '5.0': [
+        [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+      ],
+      '8.0': [
+        [1, 1, 1, 1, 1, 1, 1, 1]
+      ]
     },
-    jointNames: ['hip'],
+    jointNums: [0],
     currentAnimation: {
       range: [1, 2],
       // Our new animation has been playing for 1.5 seconds
@@ -39,7 +39,7 @@ test('Blend out previous animation', function (t) {
   var interpolatedJoints = animationSystem.interpolateJoints(options)
 
   t.deepEqual(
-    interpolatedJoints['hip'],
+    interpolatedJoints[0],
     // Our new animation has been playing for 1.5 seconds
     //  This means that it should have 3/4th of the dual quaternion weight
     //  3/4th of the way between 0.25 and 0.75 = 0.625
