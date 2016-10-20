@@ -6,16 +6,15 @@ test('Blend out previous animation', function (t) {
   var options = {
     // Our application clock has been running for 100.5 seconds
     currentTime: 100.5,
-    // TODO: Don't use same matrices in keyframes
     keyframes: {
       '0': {
-        'hip': [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+        'hip': [0, 0, 0, 0, 0, 0, 0, 0]
       },
       '5.0': {
-        'hip': [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1]
+        'hip': [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
       },
       '8.0': {
-        'hip': [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 2, 2, 2, 1]
+        'hip': [1, 1, 1, 1, 1, 1, 1, 1]
       }
     },
     jointNames: ['hip'],
@@ -23,12 +22,16 @@ test('Blend out previous animation', function (t) {
       range: [1, 2],
       // Our new animation has been playing for 1.5 seconds
       //  This means that it is halfway done
+      //  Making it's dual quaternion:
+      //  [0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75]
       startTime: 99.0
     },
     previousAnimation: {
       range: [0, 1],
       // Our previous animation started 2.5 seconds before our current time
       //  This means that it has (5.0 - 2.5) seconds remaining
+      //  Making it's dual quaternion:
+      //  [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
       startTime: 98.0
     }
   }
@@ -37,7 +40,10 @@ test('Blend out previous animation', function (t) {
 
   t.deepEqual(
     interpolatedJoints['hip'],
-    [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1.25, 1.25, 1.25, 1],
+    // Our new animation has been playing for 1.5 seconds
+    //  This means that it should have 3/4th of the dual quaternion weight
+    //  3/4th of the way between 0.25 and 0.75 = 0.625
+    [0.625, 0.625, 0.625, 0.625, 0.625, 0.625, 0.625, 0.625],
     'Uses default 2 second linear blend'
   )
   t.end()

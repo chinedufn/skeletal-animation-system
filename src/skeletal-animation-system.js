@@ -1,5 +1,3 @@
-var mat4Interpolate = require('mat4-interpolate')
-
 module.exports = {
   interpolateJoints: interpolateJoints
 }
@@ -61,41 +59,32 @@ function interpolateJoints (opts) {
     // If there is a previous animation
     // TODO: don't blend if blend is > 1
     if (opts.previousAnimation) {
+      var blend = defaultBlend(currentAnimElapsedTime)
       acc[jointName] = []
 
       var previousAnimJointMatrix = []
       var currentAnimJointMatrix = []
-      mat4Interpolate(
-        previousAnimJointMatrix,
-        opts.keyframes[previousAnimLowerKeyframe][jointName],
-        opts.keyframes[previousAnimUpperKeyframe][jointName],
-        prevAnimElapsedTime / (previousAnimUpperKeyframe - previousAnimLowerKeyframe)
-      )
+      // Blend the two dual quaternions based on where we are in the current keyframe
+      previousAnimJointMatrix = opts.keyframes[previousAnimLowerKeyframe][jointName].reduce(function (dualQuat, value, index) {
+        dualQuat[index] = opts.keyframes[previousAnimLowerKeyframe][jointName][index] + (opts.keyframes[previousAnimUpperKeyframe][jointName][index] - opts.keyframes[previousAnimLowerKeyframe][jointName][index]) * (prevAnimElapsedTime / (previousAnimUpperKeyframe - previousAnimLowerKeyframe))
+        return dualQuat
+      }, [])
 
-      mat4Interpolate(
-        currentAnimJointMatrix,
-        opts.keyframes[currentAnimLowerKeyframe][jointName],
-        opts.keyframes[currentAnimUpperKeyframe][jointName],
-        currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe)
-      )
+      currentAnimJointMatrix = opts.keyframes[currentAnimLowerKeyframe][jointName].reduce(function (dualQuat, value, index) {
+        dualQuat[index] = opts.keyframes[currentAnimLowerKeyframe][jointName][index] + (opts.keyframes[currentAnimUpperKeyframe][jointName][index] - opts.keyframes[currentAnimLowerKeyframe][jointName][index]) * (currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe))
+        return dualQuat
+      }, [])
 
-      var blend = defaultBlend(currentAnimElapsedTime)
-      console.log(currentAnimElapsedTime, blend)
-
-      mat4Interpolate(
-        acc[jointName],
-        previousAnimJointMatrix,
-        currentAnimJointMatrix,
-        blend
-      )
+      acc[jointName] = previousAnimJointMatrix.reduce(function (dualQuat, value, index) {
+        dualQuat[index] = (currentAnimJointMatrix[index] - previousAnimJointMatrix[index]) * blend + previousAnimJointMatrix[index]
+        return dualQuat
+      }, [])
     } else {
-      acc[jointName] = []
-      mat4Interpolate(
-        acc[jointName],
-        opts.keyframes[currentAnimLowerKeyframe][jointName],
-        opts.keyframes[currentAnimUpperKeyframe][jointName],
-        currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe)
-      )
+      // Blend the two dual quaternions based on where we are in the current keyframe
+      acc[jointName] = opts.keyframes[currentAnimLowerKeyframe][jointName].reduce(function (dualQuat, value, index) {
+        dualQuat[index] = opts.keyframes[currentAnimLowerKeyframe][jointName][index] + (opts.keyframes[currentAnimUpperKeyframe][jointName][index] - opts.keyframes[currentAnimLowerKeyframe][jointName][index]) * (currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe))
+        return dualQuat
+      }, [])
     }
     return acc
   }, {})
