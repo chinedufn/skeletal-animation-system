@@ -1,17 +1,19 @@
 skeletal-animation-system [![npm version](https://badge.fury.io/js/skeletal-animation-system.svg)](http://badge.fury.io/js/skeletal-animation-system) [![Build Status](https://travis-ci.org/chinedufn/skeletal-animation-system.svg?branch=master)](https://travis-ci.org/chinedufn/skeletal-animation-system)
 ===============
 
-> Calculate an animated 3d model's interpolated joint matrices
+> A standalone, stateless, dual quaternion based skeletal animation system built with interactive applications in mind
 
 ## Background / Initial Motivation
 
-At any given time your an animated 3d model's joint matrices will have different values, based on factors such as which animation
-you are currently playing, which groups of bones you want to animate,
-whether or not you want the animation to loop, the time elapsed since you started the animation
-and whether you want the old animation to blend into the new animation.
+skeletal-animation-system aims to give the user a flexible module for managing skeletal animations across different 3d models and bone groups.
 
-skeletal-animation-system aims to provide a stateless API around these calculations, giving the user a flexible module for managing
-skeletal animations across different 3d models and bone groups.
+`skeletal-animation-system` aims to provide a sane API for starting, stopping and interpolating skeletal animations.
+
+It supports blending between
+your previous and current animation when you switch animations. It also supports splitting your model into different bone groups such as the upper
+and lower body, allowing you to, for example, play a walking animation for your legs while playing a punch animation for your upper body.
+
+`skeletal-animation-system` does not maintain an internal state, but instead lets the modules consumer track thigns such as the current animation and the current clock time.
 
 ## Notes
 
@@ -19,7 +21,7 @@ This API is still experimental and will evolve as we use it and realize the kink
 
 ## To Install
 
-```
+```sh
 $ npm install --save skeletal-animation-system
 ```
 
@@ -186,7 +188,7 @@ lorem ipsum
 
 ## References
 
-- [Anatomy of a skeletal animation system part 1](http://blog.demofox.org/2012/09/21/anatomy-of-a-skeletal-animation-system-part-1/) [part 2](http://blog.demofox.org/2012/09/21/anatomy-of-a-skeletal-animation-system-part-2/) [part 3](http://blog.demofox.org/2012/09/21/anatomy-of-a-skeletal-animation-system-part-3/)
+- [Anatomy of a skeletal animation system part 1](http://blog.demofox.org/2012/09/21/anatomy-of-a-skeletal-animation-system-part-1/), [part 2](http://blog.demofox.org/2012/09/21/anatomy-of-a-skeletal-animation-system-part-2/) and [part 3](http://blog.demofox.org/2012/09/21/anatomy-of-a-skeletal-animation-system-part-3/)
 
 ## License
 

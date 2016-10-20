@@ -1,7 +1,7 @@
 {
   "name": "skeletal-animation-system",
   "version": "0.0.2",
-  "description": "Calculate a model's interpolated joint matrices",
+  "description": "A standalone, stateless, dual quaternion based skeletal animation system built with interactive applications in mind",
   "main": "index.js",
   "scripts": {
     "test": "standard && tape test/**/*.js"
@@ -19,7 +19,8 @@
     "joint",
     "animate",
     "blend",
-    "bone"
+    "bone",
+    "webgl"
   ],
   "author": "Chinedu Francis Nwafili <frankie.nwafili@gmail.com>",
   "license": "MIT",
