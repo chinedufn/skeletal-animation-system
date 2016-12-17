@@ -24,7 +24,6 @@ function interpolateJoints (opts) {
   if (frameRelToFirst > currentKeyframeTimes[currentKeyframeTimes.length - 1]) {
     var range = currentKeyframeTimes[currentKeyframeTimes.length - 1] - currentKeyframeTimes[0]
     frameRelToFirst = (frameRelToFirst % range) + Number(currentKeyframeTimes[0])
-    // TODO: Normalize with frameRelToFirst
     currentAnimElapsedTime = frameRelToFirst
   }
 
@@ -34,9 +33,13 @@ function interpolateJoints (opts) {
   currentKeyframeTimes.forEach(function (keyframeTime) {
     if (frameRelToFirst > keyframeTime) {
       currentAnimLowerKeyframe = keyframeTime
-    }
-    if (frameRelToFirst < keyframeTime) {
+    } else if (frameRelToFirst < keyframeTime) {
       currentAnimUpperKeyframe = keyframeTime
+    } else if (frameRelToFirst === Number(keyframeTime)) {
+      // TODO: Perform fewer calculations in places that we already know
+      // that the keyframe time doesn't need to be blended against an upper
+      // and lower keyframe. For now we don't handle this special case
+      currentAnimLowerKeyframe = currentAnimUpperKeyframe = keyframeTime
     }
   })
 
