@@ -9,7 +9,11 @@ module.exports = {
 function interpolateJoints (opts) {
   var currentAnimElapsedTime = opts.currentTime - opts.currentAnimation.startTime
 
-  var keyframeTimes = Object.keys(opts.keyframes).sort()
+  var keyframeTimes = Object.keys(opts.keyframes).sort(function (a, b) {
+    if (Number(a) > Number(b)) { return 1 }
+    if (Number(a) < Number(b)) { return -1 }
+    return 0
+  })
 
   var currentKeyframeTimes = keyframeTimes.slice(
     opts.currentAnimation.range[0],
@@ -31,6 +35,7 @@ function interpolateJoints (opts) {
   var currentAnimUpperKeyframe
   // Get the surrounding keyframes for our current animation
   currentKeyframeTimes.forEach(function (keyframeTime) {
+    if (currentAnimLowerKeyframe && currentAnimUpperKeyframe) { return }
     if (frameRelToFirst > keyframeTime) {
       currentAnimLowerKeyframe = keyframeTime
     } else if (frameRelToFirst < keyframeTime) {
@@ -42,6 +47,8 @@ function interpolateJoints (opts) {
       currentAnimLowerKeyframe = currentAnimUpperKeyframe = keyframeTime
     }
   })
+  // Set the elapsed time relative to our current lower bound keyframe instead of our lowest out of all keyframes
+  currentAnimElapsedTime = currentAnimElapsedTime + Number(currentKeyframeTimes[0]) - Number(currentAnimLowerKeyframe)
 
   if (opts.previousAnimation) {
     var prevAnimElapsedTime = opts.currentTime - opts.previousAnimation.startTime
@@ -94,6 +101,14 @@ function interpolateJoints (opts) {
     } else {
       // Blend the two dual quaternions based on where we are in the current keyframe
       acc[jointName] = opts.keyframes[currentAnimLowerKeyframe][jointName].reduce(function (dualQuat, value, index) {
+        // If we have an exact keyframe we just return the value that we already have
+        // TODO: We can accomplish this without loopign through each value since we
+        // already know that we are at an exact keyframe
+        if (currentAnimUpperKeyframe === currentAnimLowerKeyframe) {
+          dualQuat[index] = opts.keyframes[currentAnimLowerKeyframe][jointName][index]
+          return dualQuat
+        }
+
         dualQuat[index] = opts.keyframes[currentAnimLowerKeyframe][jointName][index] +
         (opts.keyframes[currentAnimUpperKeyframe][jointName][index] - opts.keyframes[currentAnimLowerKeyframe][jointName][index]) *
         (currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe))
@@ -109,6 +124,7 @@ function interpolateJoints (opts) {
 // TODO: Comment on what `dt` represents
 function defaultBlend (dt) {
   // If zero time has elapsed we avoid dividing by 0
+  console.log(dt, 'ok')
   if (!dt) { return 0 }
   return 1 / 2 * dt
 }
