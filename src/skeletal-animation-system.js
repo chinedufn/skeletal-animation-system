@@ -4,6 +4,8 @@ module.exports = {
 
 // TODO: Add thorough comments
 // TODO: Refactor duplicative code
+// TODO: Rename animation time -> frame. We're dealing with frames not time
+// TODO: Benchmark perf
 function interpolateJoints (opts) {
   var currentAnimElapsedTime = opts.currentTime - opts.currentAnimation.startTime
 
@@ -14,19 +16,26 @@ function interpolateJoints (opts) {
     opts.currentAnimation.range[1] + 1
   )
 
-  var curAnimTimeRelToFirstFrame = Number(currentKeyframeTimes[0]) + Number(currentAnimElapsedTime)
-  if (curAnimTimeRelToFirstFrame > currentKeyframeTimes[currentKeyframeTimes.length - 1]) {
-    // Handle looping here
+  // Get the number of frames passed the first animation frame
+  // TODO: This isn't actually the frame relative to the first..?
+  // TODO: Yeah refactor everything once this works
+  // Handle looping here
+  var frameRelToFirst = Number(currentKeyframeTimes[0]) + Number(currentAnimElapsedTime)
+  if (frameRelToFirst > currentKeyframeTimes[currentKeyframeTimes.length - 1]) {
+    var range = currentKeyframeTimes[currentKeyframeTimes.length - 1] - currentKeyframeTimes[0]
+    frameRelToFirst = (frameRelToFirst % range) + Number(currentKeyframeTimes[0])
+    // TODO: Normalize with frameRelToFirst
+    currentAnimElapsedTime = frameRelToFirst
   }
 
   var currentAnimLowerKeyframe
   var currentAnimUpperKeyframe
   // Get the surrounding keyframes for our current animation
   currentKeyframeTimes.forEach(function (keyframeTime) {
-    if (curAnimTimeRelToFirstFrame > keyframeTime) {
+    if (frameRelToFirst > keyframeTime) {
       currentAnimLowerKeyframe = keyframeTime
     }
-    if (curAnimTimeRelToFirstFrame < keyframeTime) {
+    if (frameRelToFirst < keyframeTime) {
       currentAnimUpperKeyframe = keyframeTime
     }
   })
@@ -82,7 +91,9 @@ function interpolateJoints (opts) {
     } else {
       // Blend the two dual quaternions based on where we are in the current keyframe
       acc[jointName] = opts.keyframes[currentAnimLowerKeyframe][jointName].reduce(function (dualQuat, value, index) {
-        dualQuat[index] = opts.keyframes[currentAnimLowerKeyframe][jointName][index] + (opts.keyframes[currentAnimUpperKeyframe][jointName][index] - opts.keyframes[currentAnimLowerKeyframe][jointName][index]) * (currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe))
+        dualQuat[index] = opts.keyframes[currentAnimLowerKeyframe][jointName][index] +
+        (opts.keyframes[currentAnimUpperKeyframe][jointName][index] - opts.keyframes[currentAnimLowerKeyframe][jointName][index]) *
+        (currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe))
         return dualQuat
       }, [])
     }
