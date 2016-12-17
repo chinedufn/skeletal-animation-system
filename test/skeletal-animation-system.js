@@ -90,7 +90,7 @@ test('Looping animation', function (t) {
 
   t.deepEqual(
     interpolatedJoints[0],
-    [1, 1, 1, 1, 0, 0, 0, 0],
+    [0, 0, 0, 0, 1, 1, 1, 1],
     'Loop is frame is outside of provided frame range'
   )
   t.end()
@@ -124,6 +124,44 @@ test('Current time lower than first keyframe', function (t) {
     interpolatedJoints[0],
     [0, 0, 0, 0, 1, 1, 1, 1],
     'Current frame is an exact match of a passed in keyframe'
+  )
+  t.end()
+})
+
+// In this case we should start from the lowest frame as zero
+// in the future we might add a flag to actually treat the lowest
+// frame as the number specified. But since Blender defaults to frame
+// `1` it's too easy to accidentally not start at zero
+test('Looping when not using lowest keyframe range', function (t) {
+  var options = {
+    currentTime: 7.0,
+    keyframes: {
+      '1': [
+        [0, 0, 0, 0, 1, 1, 1, 1]
+      ],
+      '3': [
+        [1, 1, 1, 1, 0, 0, 0, 0]
+      ],
+      '5': [
+        [3, 3, 3, 3, 1, 1, 1, 1]
+      ],
+      '7': [
+        [1, 1, 1, 1, 0, 0, 0, 0]
+      ]
+    },
+    jointNums: [0],
+    currentAnimation: {
+      range: [1, 2],
+      startTime: 0.0
+    }
+  }
+
+  var interpolatedJoints = animationSystem.interpolateJoints(options)
+
+  t.deepEqual(
+    interpolatedJoints[0],
+    [2, 2, 2, 2, 0.5, 0.5, 0.5, 0.5],
+    'Properly loops the specified upper and lower keyframes'
   )
   t.end()
 })

@@ -6,6 +6,8 @@ module.exports = {
 // TODO: Refactor duplicative code
 // TODO: Rename animation time -> frame. We're dealing with frames not time
 // TODO: Benchmark perf
+// TODO: Document and accept a frame range AND a keyframe range
+//        you can specify the first and last pre-specified keyframes to use or just the actual frame
 function interpolateJoints (opts) {
   var currentAnimElapsedTime = opts.currentTime - opts.currentAnimation.startTime
 
@@ -25,10 +27,10 @@ function interpolateJoints (opts) {
   // TODO: Yeah refactor everything once this works
   // Handle looping here
   var frameRelToFirst = Number(currentKeyframeTimes[0]) + Number(currentAnimElapsedTime)
-  if (frameRelToFirst > currentKeyframeTimes[currentKeyframeTimes.length - 1]) {
-    var range = currentKeyframeTimes[currentKeyframeTimes.length - 1] - currentKeyframeTimes[0]
-    frameRelToFirst = (frameRelToFirst % range) + Number(currentKeyframeTimes[0])
-    currentAnimElapsedTime = frameRelToFirst
+  var range = currentKeyframeTimes[currentKeyframeTimes.length - 1] - currentKeyframeTimes[0]
+  if (frameRelToFirst > range) {
+    currentAnimElapsedTime = currentAnimElapsedTime % range
+    frameRelToFirst = currentAnimElapsedTime + Number(currentKeyframeTimes[0])
   }
 
   var currentAnimLowerKeyframe
@@ -48,7 +50,7 @@ function interpolateJoints (opts) {
     }
   })
   // Set the elapsed time relative to our current lower bound keyframe instead of our lowest out of all keyframes
-  currentAnimElapsedTime = currentAnimElapsedTime + Number(currentKeyframeTimes[0]) - Number(currentAnimLowerKeyframe)
+  currentAnimElapsedTime = frameRelToFirst - currentAnimLowerKeyframe
 
   if (opts.previousAnimation) {
     var prevAnimElapsedTime = opts.currentTime - opts.previousAnimation.startTime
