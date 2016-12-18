@@ -42,6 +42,7 @@ function getPreviousAnimationData (opts, keyframeTimes) {
 
     // Get the surrounding keyframes for our previous animation
     previousKeyframeTimes.forEach(function (keyframeTime) {
+      if (previousAnimLowerKeyframe && previousAnimUpperKeyframe) { return }
       if (prevAnimTimeRelToFirstFrame > keyframeTime) {
         previousAnimLowerKeyframe = keyframeTime
       }
