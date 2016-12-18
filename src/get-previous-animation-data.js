@@ -50,6 +50,7 @@ function getPreviousAnimationData (opts, keyframeTimes) {
       }
     })
   }
+  prevAnimElapsedTime = prevAnimTimeRelToFirstFrame - previousAnimLowerKeyframe
 
   return {
     lower: previousAnimLowerKeyframe,

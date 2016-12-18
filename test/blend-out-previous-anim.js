@@ -208,7 +208,8 @@ test('Previous animation in middle of loop', function (t) {
     jointNums: [0],
     currentAnimation: {
       range: [1, 2],
-      // TODO: Change all of the "seconds" to frames
+      // TODO: Change all "frames" to "seconds". We're dealing with seconds
+      // as our keyframe key
       // Our new animation has been playing for 0.5 seconds
       //  Making it's dual quaternion:
       //  [3, 3, 3, 3, 3, 3, 3, 3]
@@ -273,6 +274,57 @@ test('Previous animation started in middle of loop but now passed final frame', 
     interpolatedJoints[0],
     [2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5],
     'Supports looping when previous animation started before current'
+  )
+  t.end()
+})
+
+// Test that previous animation elapsed time is properly calculated against
+// the lowest keyframe
+test('Previous animation elapsed time when previous animation starts from non first keyframe in set', function (t) {
+  var options = {
+    // Our application clock has been running for 100.5 seconds
+    currentTime: 100.5,
+    keyframes: {
+      '0': [
+        [100, 100, 100, 100, 100, 100, 100, 100]
+      ],
+      '1': [
+        [0, 0, 0, 0, 0, 0, 0, 0]
+      ],
+      '6.0': [
+        [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+      ],
+      '9.0': [
+        [1, 1, 1, 1, 1, 1, 1, 1]
+      ]
+    },
+    jointNums: [0],
+    currentAnimation: {
+      range: [2, 3],
+      // Our new animation has been playing for 1.5 seconds
+      //  This means that it is halfway done
+      //  Making it's dual quaternion:
+      //  [0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75]
+      startTime: 99.0
+    },
+    previousAnimation: {
+      range: [0, 2],
+      // Our previous animation started 3.5 seconds before our current time
+      //  Making it's dual quaternion:
+      //  [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
+      startTime: 97.0
+    }
+  }
+
+  var interpolatedJoints = animationSystem.interpolateJoints(options)
+
+  t.deepEqual(
+    interpolatedJoints[0],
+    // Our new animation has been playing for 1.5 seconds
+    //  This means that it should have 3/4th of the dual quaternion weight
+    //  3/4th of the way between 0.25 and 0.75 = 0.625
+    [0.625, 0.625, 0.625, 0.625, 0.625, 0.625, 0.625, 0.625],
+    'Uses default 2 second linear blend'
   )
   t.end()
 })
