@@ -98,5 +98,97 @@ test('Blending while passed previous animations upper keyframe', function (t) {
   t.end()
 })
 
+test('Blend is above 100% complete', function (t) {
+  var options = {
+    // Our application clock has been running for 100.5 seconds
+    currentTime: 101.5,
+    keyframes: {
+      '0': [
+        [0, 0, 0, 0, 0, 0, 0, 0]
+      ],
+      '5.0': [
+        [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+      ],
+      '10.0': [
+        [1, 1, 1, 1, 1, 1, 1, 1]
+      ]
+    },
+    jointNums: [0],
+    currentAnimation: {
+      range: [1, 2],
+      // Our new animation has been playing for 2.5 seconds
+      //  This means that it is halfway done
+      //  Making it's dual quaternion:
+      //  [0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75]
+      startTime: 99.0
+    },
+    previousAnimation: {
+      range: [0, 1],
+      // Our previous animation started 2.5 seconds before our current time
+      //  This means that it has (5.0 - 2.5) seconds remaining
+      //  Making it's dual quaternion:
+      //  [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
+      startTime: 99.0
+    }
+  }
+
+  var interpolatedJoints = animationSystem.interpolateJoints(options)
+
+  t.deepEqual(
+    interpolatedJoints[0],
+    // Our new animation has been playing for 1.5 seconds
+    //  This means that it should have 3/4th of the dual quaternion weight
+    //  3/4th of the way between 0.25 and 0.75 = 0.625
+    [0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75],
+    'Ignores previous animation if blend above 100%'
+  )
+  t.end()
+})
+
+test('Blends using time since current animation frame set began', function (t) {
+  var options = {
+    // Our application clock has been running for 100.5 seconds
+    currentTime: 100.5,
+    keyframes: {
+      '1': [
+        [-0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5]
+      ],
+      '5.0': [
+        [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+      ],
+      '6.0': [
+        [1, 1, 1, 1, 1, 1, 1, 1]
+      ],
+      '7.0': [
+        [3, 3, 3, 3, 3, 3, 3, 3]
+      ]
+    },
+    jointNums: [0],
+    currentAnimation: {
+      range: [1, 3],
+      // Our new animation has been playing for 1.5 seconds
+      //  Making it's dual quaternion:
+      //  [2, 2, 2, 2, 2, 2, 2, 2]
+      startTime: 99.0
+    },
+    previousAnimation: {
+      range: [0, 1],
+      // Our previous animation started 2 seconds before our current time
+      //  Making it's dual quaternion:
+      //  [0, 0, 0, 0, 0, 0, 0, 0]
+      startTime: 98.5
+    }
+  }
+
+  var interpolatedJoints = animationSystem.interpolateJoints(options)
+
+  t.deepEqual(
+    interpolatedJoints[0],
+    [1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5],
+    'Uses default 2 second linear blend'
+  )
+  t.end()
+})
+
 // TODO: Handle case where previous animation starts off in mid loop
 // but then needs to end at the last keyframe

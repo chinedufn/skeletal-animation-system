@@ -66,8 +66,8 @@ function interpolateJoints (opts) {
   var interpolatedJoints = opts.jointNums.reduce(function (acc, jointName) {
     // If there is a previous animation
     // TODO: don't blend if blend is > 1
-    if (opts.previousAnimation) {
-      var blend = defaultBlend(currentAnimElapsedTime)
+    var blend = defaultBlend(opts.currentTime - opts.currentAnimation.startTime)
+    if (opts.previousAnimation && blend < 1) {
       acc[jointName] = []
 
       var previousAnimJointMatrix = []
@@ -84,7 +84,6 @@ function interpolateJoints (opts) {
         }
         return dualQuat
       }, [])
-      console.log(previousAnimJointMatrix)
 
       currentAnimJointMatrix = opts.keyframes[currentAnimLowerKeyframe][jointName].reduce(function (dualQuat, value, index) {
         dualQuat[index] = opts.keyframes[currentAnimLowerKeyframe][jointName][index] + (opts.keyframes[currentAnimUpperKeyframe][jointName][index] - opts.keyframes[currentAnimLowerKeyframe][jointName][index]) * (currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe))
@@ -107,9 +106,9 @@ function interpolateJoints (opts) {
         }
 
         dualQuat[index] = opts.keyframes[currentAnimLowerKeyframe][jointName][index] +
-          (opts.keyframes[currentAnimUpperKeyframe][jointName][index] - opts.keyframes[currentAnimLowerKeyframe][jointName][index]) *
-            (currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe))
-            return dualQuat
+        (opts.keyframes[currentAnimUpperKeyframe][jointName][index] - opts.keyframes[currentAnimLowerKeyframe][jointName][index]) *
+        (currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe))
+        return dualQuat
       }, [])
     }
     return acc
@@ -122,6 +121,5 @@ function interpolateJoints (opts) {
 function defaultBlend (dt) {
   // If zero time has elapsed we avoid dividing by 0
   if (!dt) { return 0 }
-  console.log(dt)
   return 1 / 2 * dt
 }
