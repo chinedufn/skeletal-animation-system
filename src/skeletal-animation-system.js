@@ -123,3 +123,5 @@ function defaultBlend (dt) {
   if (!dt) { return 0 }
   return 1 / 2 * dt
 }
+
+// TODO: Event emitter for when animation ends ?

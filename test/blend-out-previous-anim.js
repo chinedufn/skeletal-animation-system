@@ -185,10 +185,94 @@ test('Blends using time since current animation frame set began', function (t) {
   t.deepEqual(
     interpolatedJoints[0],
     [1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5],
-    'Uses default 2 second linear blend'
+    'Blends using time since current animation frame set first started'
   )
   t.end()
 })
 
-// TODO: Handle case where previous animation starts off in mid loop
-// but then needs to end at the last keyframe
+test('Previous animation in middle of loop', function (t) {
+  var options = {
+    // Our application clock has been running for 100.5 seconds
+    currentTime: 101,
+    keyframes: {
+      '0': [
+        [0, 0, 0, 0, 0, 0, 0, 0]
+      ],
+      '2.0': [
+        [2, 2, 2, 2, 2, 2, 2, 2]
+      ],
+      '3.0': [
+        [4, 4, 4, 4, 4, 4, 4, 4]
+      ]
+    },
+    jointNums: [0],
+    currentAnimation: {
+      range: [1, 2],
+      // TODO: Change all of the "seconds" to frames
+      // Our new animation has been playing for 0.5 seconds
+      //  Making it's dual quaternion:
+      //  [3, 3, 3, 3, 3, 3, 3, 3]
+      startTime: 100.5
+    },
+    previousAnimation: {
+      range: [0, 1],
+      // Our previous animation has been playing for 3 seconds
+      //  Making it's dual quaternion:
+      //  [1, 1, 1, 1, 1, 1, 1, 1]
+      startTime: 98.0
+    }
+  }
+
+  var interpolatedJoints = animationSystem.interpolateJoints(options)
+
+  t.deepEqual(
+    interpolatedJoints[0],
+    [1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5],
+    'Supports looping when previous animation started before current'
+  )
+  t.end()
+})
+
+test('Previous animation started in middle of loop but now passed final frame', function (t) {
+  var options = {
+    // Our application clock has been running for 100.5 seconds
+    currentTime: 102.5,
+    keyframes: {
+      '0': [
+        [0, 0, 0, 0, 0, 0, 0, 0]
+      ],
+      '1.0': [
+        [2, 2, 2, 2, 2, 2, 2, 2]
+      ],
+      '3.0': [
+        [4, 4, 4, 4, 4, 4, 4, 4]
+      ]
+    },
+    jointNums: [0],
+    currentAnimation: {
+      range: [1, 2],
+      // TODO: Change all of the "seconds" to frames
+      // Our new animation has been playing for 1.0 seconds
+      //  Making it's dual quaternion:
+      //  [3, 3, 3, 3, 3, 3, 3, 3]
+      startTime: 101.5
+    },
+    previousAnimation: {
+      range: [0, 1],
+      // Our previous animation has been playing for 2.5 frames,
+      //  but only 1 frame since the new animation started
+      //  This means that it has hit it's final frame and should
+      //  no longer loop.
+      startTime: 100
+    }
+  }
+
+  var interpolatedJoints = animationSystem.interpolateJoints(options)
+
+  t.deepEqual(
+    interpolatedJoints[0],
+    [2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5],
+    'Supports looping when previous animation started before current'
+  )
+  t.end()
+})
