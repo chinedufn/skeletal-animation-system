@@ -52,27 +52,14 @@ function interpolateJoints (opts) {
   // Set the elapsed time relative to our current lower bound keyframe instead of our lowest out of all keyframes
   currentAnimElapsedTime = frameRelToFirst - currentAnimLowerKeyframe
 
+  var previousAnimLowerKeyframe
+  var previousAnimUpperKeyframe
+  var prevAnimElapsedTime
   if (opts.previousAnimation) {
-    var prevAnimElapsedTime = opts.currentTime - opts.previousAnimation.startTime
-
-    var previousKeyframeTimes = keyframeTimes.slice(
-      opts.previousAnimation.range[0],
-      opts.previousAnimation.range[1] + 1
-    )
-
-    var prevAnimTimeRelToFirstFrame = Number(previousKeyframeTimes[0]) + Number(prevAnimElapsedTime)
-
-    var previousAnimLowerKeyframe
-    var previousAnimUpperKeyframe
-    // Get the surrounding keyframes for our previous animation
-    previousKeyframeTimes.forEach(function (keyframeTime) {
-      if (prevAnimTimeRelToFirstFrame > keyframeTime) {
-        previousAnimLowerKeyframe = keyframeTime
-      }
-      if (prevAnimTimeRelToFirstFrame < keyframeTime) {
-        previousAnimUpperKeyframe = keyframeTime
-      }
-    })
+    var previousKeyframeData = require('./get-previous-animation-data.js')(opts, keyframeTimes)
+    previousAnimLowerKeyframe = previousKeyframeData.lower
+    previousAnimUpperKeyframe = previousKeyframeData.upper
+    prevAnimElapsedTime = previousKeyframeData.elapsedTime
   }
 
   // Calculate the interpolated joint matrices for our consumer's animation
@@ -86,10 +73,18 @@ function interpolateJoints (opts) {
       var previousAnimJointMatrix = []
       var currentAnimJointMatrix = []
       // Blend the two dual quaternions based on where we are in the current keyframe
+      // TODO: Rename to previousAnimDualQuat
       previousAnimJointMatrix = opts.keyframes[previousAnimLowerKeyframe][jointName].reduce(function (dualQuat, value, index) {
-        dualQuat[index] = opts.keyframes[previousAnimLowerKeyframe][jointName][index] + (opts.keyframes[previousAnimUpperKeyframe][jointName][index] - opts.keyframes[previousAnimLowerKeyframe][jointName][index]) * (prevAnimElapsedTime / (previousAnimUpperKeyframe - previousAnimLowerKeyframe))
+        // If we are using an exact frame that we already have we do not need to blend
+        // TODO: No need to loop in this case
+        if (previousAnimUpperKeyframe === previousAnimLowerKeyframe) {
+          dualQuat[index] = opts.keyframes[previousAnimLowerKeyframe][jointName][index]
+        } else {
+          dualQuat[index] = opts.keyframes[previousAnimLowerKeyframe][jointName][index] + (opts.keyframes[previousAnimUpperKeyframe][jointName][index] - opts.keyframes[previousAnimLowerKeyframe][jointName][index]) * (prevAnimElapsedTime / (previousAnimUpperKeyframe - previousAnimLowerKeyframe))
+        }
         return dualQuat
       }, [])
+      console.log(previousAnimJointMatrix)
 
       currentAnimJointMatrix = opts.keyframes[currentAnimLowerKeyframe][jointName].reduce(function (dualQuat, value, index) {
         dualQuat[index] = opts.keyframes[currentAnimLowerKeyframe][jointName][index] + (opts.keyframes[currentAnimUpperKeyframe][jointName][index] - opts.keyframes[currentAnimLowerKeyframe][jointName][index]) * (currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe))
@@ -112,9 +107,9 @@ function interpolateJoints (opts) {
         }
 
         dualQuat[index] = opts.keyframes[currentAnimLowerKeyframe][jointName][index] +
-        (opts.keyframes[currentAnimUpperKeyframe][jointName][index] - opts.keyframes[currentAnimLowerKeyframe][jointName][index]) *
-        (currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe))
-        return dualQuat
+          (opts.keyframes[currentAnimUpperKeyframe][jointName][index] - opts.keyframes[currentAnimLowerKeyframe][jointName][index]) *
+            (currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe))
+            return dualQuat
       }, [])
     }
     return acc
@@ -126,7 +121,7 @@ function interpolateJoints (opts) {
 // TODO: Comment on what `dt` represents
 function defaultBlend (dt) {
   // If zero time has elapsed we avoid dividing by 0
-  console.log(dt, 'ok')
   if (!dt) { return 0 }
+  console.log(dt)
   return 1 / 2 * dt
 }

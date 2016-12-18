@@ -48,3 +48,55 @@ test('Blend out previous animation', function (t) {
   )
   t.end()
 })
+
+test('Blending while passed previous animations upper keyframe', function (t) {
+  var options = {
+    // Our application clock has been running for 100.5 seconds
+    currentTime: 100.5,
+    keyframes: {
+      '0': [
+        [0, 0, 0, 0, 0, 0, 0, 0]
+      ],
+      '1.0': [
+        [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+      ],
+      '4.0': [
+        [1, 1, 1, 1, 1, 1, 1, 1]
+      ]
+    },
+    jointNums: [0],
+    currentAnimation: {
+      range: [1, 2],
+      // Our new animation has been playing for 1.5 frames
+      //  This means that it is halfway done
+      //  Making it's dual quaternion:
+      //  [0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75]
+      startTime: 99.0
+    },
+    previousAnimation: {
+      range: [0, 1],
+      // Our previous animation started 1.5 frames before our current time
+      //   Meaning that it has passed it's final frame of 1.0. It should not loop
+      //   if it's being blended. We will use it's final frame
+      //   Making it's dual quaternion:
+      //   [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+      startTime: 99.0
+    }
+  }
+
+  var interpolatedJoints = animationSystem.interpolateJoints(options)
+
+  t.deepEqual(
+    interpolatedJoints[0],
+    // Our new animation has been playing for 1.5 seconds
+    //  This means that it should have 3/4th of the dual quaternion weight
+    //  3/4th of the way between 0.25 and 0.75 = 0.625
+    [0.6875, 0.6875, 0.6875, 0.6875, 0.6875, 0.6875, 0.6875, 0.6875],
+    `Uses the previous animations final keyframe when blending if
+    the previous animation has elapsed but there is still blend time remaining`
+  )
+  t.end()
+})
+
+// TODO: Handle case where previous animation starts off in mid loop
+// but then needs to end at the last keyframe
