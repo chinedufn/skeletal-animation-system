@@ -4,6 +4,7 @@
   "description": "A standalone, stateless, dual quaternion based skeletal animation system built with interactive applications in mind",
   "main": "index.js",
   "scripts": {
+    "demo": "budo --open --live --host=localhost --dir=demo/asset demo/browser.js",
     "test": "standard && tape test/**/*.js"
   },
   "repository": {
@@ -35,6 +36,7 @@
     "gh-pages": "^0.12.0",
     "load-collada-dae": "^0.2.0",
     "raf-loop": "^1.1.3",
+    "solid-state": "^1.0.3",
     "standard": "^8.3.0",
     "tape": "^4.6.2",
     "xhr": "^2.3.2"
