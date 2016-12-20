@@ -6,7 +6,7 @@
   "scripts": {
     "demo": "budo --open --live --host=localhost --dir=demo/asset demo/browser.js",
     "deploy": "mkdirp example-dist && npm run dist:index:html && browserify demo/browser.js > example-dist/bundle.js && cp ./demo/asset/* ./example-dist/ && gh-pages -d example-dist",
-    "dist:index:html": "echo '</script><script src=\"bundle.js\">' | htmlify > demo-dist/index.html",
+    "dist:index:html": "echo '</script><script src=\"bundle.js\">' | htmlify > example-dist/index.html",
     "test": "standard && tape test/**/*.js"
   },
   "repository": {

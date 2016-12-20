@@ -14,6 +14,7 @@ var createCanvas = require('./create-canvas.js')
 var modelJSON = require('./asset/old-man.json')
 
 var SS = require('solid-state')
+var xhr = require('xhr')
 
 var createControls = require('./create-controls.js')
 
@@ -33,16 +34,30 @@ function createSkeletonCanvas () {
     return acc
   }, {})
 
+  var imageLoaded
+
   // Download our model's texture image
   var image = new window.Image()
   image.crossOrigin = 'anonymous'
-  image.onload = loadModel
-  image.src = '/suite01d.png'
+  image.onload = function () {
+    imageLoaded = true
+    loadModel()
+  }
+  image.src = 'suite01d.png'
+
+  // Download our model's JSON
+  xhr.get('old-man.json', function (err, resp) {
+    if (err) { throw err }
+    modelJSON = JSON.parse(resp.body)
+    loadModel()
+  })
 
   // Once our model and image have been downloaded we
   // prepare our data for the GPU so that we can later draw it
   function loadModel () {
-    loaded3dModel = loadDae(gl, modelJSON, {texture: image})
+    if (modelJSON && imageLoaded) {
+      loaded3dModel = loadDae(gl, modelJSON, {texture: image})
+    }
   }
 
   // Create our canvas and WebGL context
