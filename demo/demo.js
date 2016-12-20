@@ -4,7 +4,6 @@ var mat3FromMat4 = require('gl-mat3/from-mat4')
 var quatMultiply = require('gl-quat/multiply')
 var quatFromMat3 = require('gl-quat/fromMat3')
 var quatScale = require('gl-quat/scale')
-var mat4Perspective = require('gl-mat4/perspective')
 
 var loadDae = require('../../load-collada-dae')
 var loaded3dModel
@@ -16,24 +15,22 @@ var modelJSON = require('./asset/old-man.json')
 var SS = require('solid-state')
 var xhr = require('xhr')
 
-var createControls = require('./create-controls.js')
+var mainLoop = require('main-loop')
 
 module.exports = createSkeletonCanvas
 
+// Keep in mind that things were haphazardly thrown around
+// and you'd want better organization in a real application
 function createSkeletonCanvas () {
-  var State = new SS()
+  var State = new SS({
+    currentAnimation: {
+      name: 'dance',
+      range: [0, 3],
+      startTime: 0
+    }
+  })
 
-  var dualQuatKeyframes = Object.keys(modelJSON.keyframes)
-  .reduce(function (acc, time) {
-    var keyframes = convertMatricesToDualQuats(modelJSON.keyframes[time])
-    keyframes = keyframes.rotQuaternions.reduce(function (all, quat, index) {
-      all[index] = keyframes.rotQuaternions[index].concat(keyframes.transQuaternions[index])
-      return all
-    }, {})
-    acc[time] = keyframes
-    return acc
-  }, {})
-
+  var dualQuatKeyframes
   var imageLoaded
 
   // Download our model's texture image
@@ -49,6 +46,7 @@ function createSkeletonCanvas () {
   xhr.get('old-man.json', function (err, resp) {
     if (err) { throw err }
     modelJSON = JSON.parse(resp.body)
+    dualQuatKeyframes = convertKeyframesToDualQuats(modelJSON.keyframes)
     loadModel()
   })
 
@@ -67,99 +65,59 @@ function createSkeletonCanvas () {
   gl.enable(gl.DEPTH_TEST)
 
   // Render our model every request animation frame
-  var loop = require('raf-loop')
-
-  var animationSystem = require('../')
-  var animationRanges = {
-    'dance': [0, 3],
-    'bend': [3, 6]
-  }
-  var jointNums = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-
-  var currentAnimationName = 'dance'
-  var startTime = 0
+  var canvasLoop = require('raf-loop')
 
   var currentTime = 0
-  var previousAnim
-  loop(function (dt) {
-    gl.viewport(0, 0, canvas.width, canvas.height)
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
+  canvasLoop(function (dt) {
     currentTime += dt / 1000
-
-    var interpolatedQuats = animationSystem.interpolateJoints({
-      // TODO: Fix test case when current time is 0
-      currentTime: currentTime,
-      keyframes: dualQuatKeyframes,
-      jointNums: jointNums,
-      currentAnimation: {
-        range: animationRanges[currentAnimationName],
-        // TODO: Fix test case when current time is 0
-        startTime: startTime
-      },
-      previousAnimation: previousAnim
+    State.set('currentTime', currentTime)
+    var state = State.get()
+    require('./render-canvas.js')(gl, state, dt, {
+      model: loaded3dModel,
+      dualQuatKeyframes: dualQuatKeyframes
     })
-    if (!interpolatedQuats) {
-      return
-    }
-    var interpolatedRotQuats = []
-    var interpolatedTransQuats = []
-    Object.keys(interpolatedQuats).forEach(function (jointNum) {
-      interpolatedRotQuats[jointNum] = interpolatedQuats[jointNum].slice(0, 4)
-      interpolatedTransQuats[jointNum] = interpolatedQuats[jointNum].slice(4, 8)
-    })
-
-    // Once we've loaded our model we draw it every frame
-    if (loaded3dModel) {
-      loaded3dModel.draw({
-        perspective: mat4Perspective([], Math.PI / 3, canvas.width / canvas.height, 0.1, 20),
-        position: [0, 0, -3.1],
-        rotQuaternions: interpolatedRotQuats,
-        transQuaternions: interpolatedTransQuats
-        // TODO: Leave comment in tutorial about using a view matrix to create a camera
-        //  If you're interested in that let me know on twitter
-      })
-    }
   }).start()
 
+  var controlLoop = mainLoop(State.get(), require('./render-controls').bind(null, State), require('virtual-dom'))
+  State.addListener(controlLoop.update)
+
   return {
-    control: createControls(State),
+    control: controlLoop.target,
     canvas: canvas
   }
+}
 
-  /*
-  var button = document.createElement('button')
-  button.innerHTML = 'Change Animation'
-  button.onclick = function () {
-    previousAnim = {
-      range: animationRanges[currentAnimationName],
-      startTime: startTime
-    }
-    currentAnimationName = currentAnimationName === 'dance' ? 'bend' : 'dance'
-    startTime = currentTime
-  }
-  document.body.appendChild(button)
-  */
+function convertKeyframesToDualQuats (keyframes) {
+  return Object.keys(modelJSON.keyframes)
+  .reduce(function (acc, time) {
+    var keyframes = convertMatricesToDualQuats(modelJSON.keyframes[time])
+    keyframes = keyframes.rotQuaternions.reduce(function (all, quat, index) {
+      all[index] = keyframes.rotQuaternions[index].concat(keyframes.transQuaternions[index])
+      return all
+    }, {})
+    acc[time] = keyframes
+    return acc
+  }, {})
+}
 
-  // TODO: Turn into module
-  function convertMatricesToDualQuats (jointMatrices) {
-    var rotQuaternions = []
-    var transQuaternions = []
+// TODO: Turn into module
+function convertMatricesToDualQuats (jointMatrices) {
+  var rotQuaternions = []
+  var transQuaternions = []
 
-    jointMatrices.forEach(function (joint, index) {
-      // Create our dual quaternion
-      var rotationMatrix = mat3FromMat4([], joint)
-      var rotationQuat = quatFromMat3([], rotationMatrix)
-      var transVec = [joint[12], joint[13], joint[14], 0]
-      var transQuat = quatScale([], quatMultiply([], transVec, rotationQuat), 0.5)
+  jointMatrices.forEach(function (joint, index) {
+    // Create our dual quaternion
+    var rotationMatrix = mat3FromMat4([], joint)
+    var rotationQuat = quatFromMat3([], rotationMatrix)
+    var transVec = [joint[12], joint[13], joint[14], 0]
+    var transQuat = quatScale([], quatMultiply([], transVec, rotationQuat), 0.5)
 
-      rotQuaternions.push(rotationQuat)
-      transQuaternions.push(transQuat)
-    })
+    rotQuaternions.push(rotationQuat)
+    transQuaternions.push(transQuat)
+  })
 
-    return {
-      rotQuaternions: rotQuaternions,
-      transQuaternions: transQuaternions
-    }
+  return {
+    rotQuaternions: rotQuaternions,
+    transQuaternions: transQuaternions
   }
 }
