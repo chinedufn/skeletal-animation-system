@@ -726,6 +726,7 @@ var createCanvas = require('./create-canvas.js')
 var modelJSON = require('./asset/old-man.json')
 
 var SS = require('solid-state')
+var xhr = require('xhr')
 
 var createControls = require('./create-controls.js')
 
@@ -745,16 +746,30 @@ function createSkeletonCanvas () {
     return acc
   }, {})
 
+  var imageLoaded
+
   // Download our model's texture image
   var image = new window.Image()
   image.crossOrigin = 'anonymous'
-  image.onload = loadModel
-  image.src = '/suite01d.png'
+  image.onload = function () {
+    imageLoaded = true
+    loadModel()
+  }
+  image.src = 'suite01d.png'
+
+  // Download our model's JSON
+  xhr.get('old-man.json', function (err, resp) {
+    if (err) { throw err }
+    modelJSON = JSON.parse(resp.body)
+    loadModel()
+  })
 
   // Once our model and image have been downloaded we
   // prepare our data for the GPU so that we can later draw it
   function loadModel () {
-    loaded3dModel = loadDae(gl, modelJSON, {texture: image})
+    if (modelJSON && imageLoaded) {
+      loaded3dModel = loadDae(gl, modelJSON, {texture: image})
+    }
   }
 
   // Create our canvas and WebGL context
@@ -861,10 +876,10 @@ function createSkeletonCanvas () {
   }
 }
 
-},{"../":17,"../../load-collada-dae":8,"./asset/old-man.json":12,"./create-canvas.js":14,"./create-controls.js":15,"gl-mat3/from-mat4":22,"gl-mat4/perspective":23,"gl-quat/fromMat3":24,"gl-quat/multiply":25,"gl-quat/scale":26,"raf-loop":32,"solid-state":35}],17:[function(require,module,exports){
+},{"../":17,"../../load-collada-dae":8,"./asset/old-man.json":12,"./create-canvas.js":14,"./create-controls.js":15,"gl-mat3/from-mat4":23,"gl-mat4/perspective":24,"gl-quat/fromMat3":25,"gl-quat/multiply":26,"gl-quat/scale":27,"raf-loop":36,"solid-state":39,"xhr":42}],17:[function(require,module,exports){
 module.exports = require('./src/skeletal-animation-system')
 
-},{"./src/skeletal-animation-system":39}],18:[function(require,module,exports){
+},{"./src/skeletal-animation-system":45}],18:[function(require,module,exports){
 'use strict'
 
 module.exports = function assertFunction (value) {
@@ -986,7 +1001,7 @@ function getPathSegments(path) {
 	return parts;
 }
 
-},{"is-obj":29}],20:[function(require,module,exports){
+},{"is-obj":32}],20:[function(require,module,exports){
 'use strict'
 
 var assertFn = require('assert-function')
@@ -1329,6 +1344,54 @@ function isUndefined(arg) {
 }
 
 },{}],22:[function(require,module,exports){
+var isFunction = require('is-function')
+
+module.exports = forEach
+
+var toString = Object.prototype.toString
+var hasOwnProperty = Object.prototype.hasOwnProperty
+
+function forEach(list, iterator, context) {
+    if (!isFunction(iterator)) {
+        throw new TypeError('iterator must be a function')
+    }
+
+    if (arguments.length < 3) {
+        context = this
+    }
+    
+    if (toString.call(list) === '[object Array]')
+        forEachArray(list, iterator, context)
+    else if (typeof list === 'string')
+        forEachString(list, iterator, context)
+    else
+        forEachObject(list, iterator, context)
+}
+
+function forEachArray(array, iterator, context) {
+    for (var i = 0, len = array.length; i < len; i++) {
+        if (hasOwnProperty.call(array, i)) {
+            iterator.call(context, array[i], i, array)
+        }
+    }
+}
+
+function forEachString(string, iterator, context) {
+    for (var i = 0, len = string.length; i < len; i++) {
+        // no such thing as a sparse string.
+        iterator.call(context, string.charAt(i), i, string)
+    }
+}
+
+function forEachObject(object, iterator, context) {
+    for (var k in object) {
+        if (hasOwnProperty.call(object, k)) {
+            iterator.call(context, object[k], k, object)
+        }
+    }
+}
+
+},{"is-function":31}],23:[function(require,module,exports){
 module.exports = fromMat4
 
 /**
@@ -1352,9 +1415,9 @@ function fromMat4(out, a) {
   return out
 }
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 arguments[4][3][0].apply(exports,arguments)
-},{"dup":3}],24:[function(require,module,exports){
+},{"dup":3}],25:[function(require,module,exports){
 module.exports = fromMat3
 
 /**
@@ -1405,7 +1468,7 @@ function fromMat3 (out, m) {
   return out
 }
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 module.exports = multiply
 
 /**
@@ -1427,7 +1490,7 @@ function multiply (out, a, b) {
   return out
 }
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 /**
  * Scales a quat by a scalar number
  *
@@ -1439,7 +1502,7 @@ function multiply (out, a, b) {
  */
 module.exports = require('gl-vec4/scale')
 
-},{"gl-vec4/scale":27}],27:[function(require,module,exports){
+},{"gl-vec4/scale":28}],28:[function(require,module,exports){
 module.exports = scale
 
 /**
@@ -1458,7 +1521,20 @@ function scale (out, a, b) {
   return out
 }
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
+(function (global){
+if (typeof window !== "undefined") {
+    module.exports = window;
+} else if (typeof global !== "undefined") {
+    module.exports = global;
+} else if (typeof self !== "undefined"){
+    module.exports = self;
+} else {
+    module.exports = {};
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],30:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -1483,14 +1559,63 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],29:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
+module.exports = isFunction
+
+var toString = Object.prototype.toString
+
+function isFunction (fn) {
+  var string = toString.call(fn)
+  return string === '[object Function]' ||
+    (typeof fn === 'function' && string !== '[object RegExp]') ||
+    (typeof window !== 'undefined' &&
+     // IE8 and below
+     (fn === window.setTimeout ||
+      fn === window.alert ||
+      fn === window.confirm ||
+      fn === window.prompt))
+};
+
+},{}],32:[function(require,module,exports){
 'use strict';
 module.exports = function (x) {
 	var type = typeof x;
 	return x !== null && (type === 'object' || type === 'function');
 };
 
-},{}],30:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
+var trim = require('trim')
+  , forEach = require('for-each')
+  , isArray = function(arg) {
+      return Object.prototype.toString.call(arg) === '[object Array]';
+    }
+
+module.exports = function (headers) {
+  if (!headers)
+    return {}
+
+  var result = {}
+
+  forEach(
+      trim(headers).split('\n')
+    , function (row) {
+        var index = row.indexOf(':')
+          , key = trim(row.slice(0, index)).toLowerCase()
+          , value = trim(row.slice(index + 1))
+
+        if (typeof(result[key]) === 'undefined') {
+          result[key] = value
+        } else if (isArray(result[key])) {
+          result[key].push(value)
+        } else {
+          result[key] = [ result[key], value ]
+        }
+      }
+  )
+
+  return result
+}
+},{"for-each":22,"trim":41}],34:[function(require,module,exports){
 (function (process){
 // Generated by CoffeeScript 1.7.1
 (function() {
@@ -1526,7 +1651,7 @@ module.exports = function (x) {
 }).call(this);
 
 }).call(this,require('_process'))
-},{"_process":31}],31:[function(require,module,exports){
+},{"_process":35}],35:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -1708,7 +1833,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],32:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 var inherits = require('inherits')
 var EventEmitter = require('events').EventEmitter
 var now = require('right-now')
@@ -1753,7 +1878,7 @@ Engine.prototype.tick = function() {
     this.emit('tick', dt)
     this.last = time
 }
-},{"events":21,"inherits":28,"raf":33,"right-now":34}],33:[function(require,module,exports){
+},{"events":21,"inherits":30,"raf":37,"right-now":38}],37:[function(require,module,exports){
 (function (global){
 var now = require('performance-now')
   , root = typeof window === 'undefined' ? global : window
@@ -1829,7 +1954,7 @@ module.exports.polyfill = function() {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"performance-now":30}],34:[function(require,module,exports){
+},{"performance-now":34}],38:[function(require,module,exports){
 (function (global){
 module.exports =
   global.performance &&
@@ -1840,7 +1965,7 @@ module.exports =
   }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],35:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 var Listeners = require('ear')
 var dotProp = require('dot-prop')
 var extend = require('xtend')
@@ -1877,7 +2002,7 @@ State.prototype.del = function (key) {
   this.listeners(this.get())
 }
 
-},{"dot-prop":19,"ear":20,"traverse":36,"xtend":37}],36:[function(require,module,exports){
+},{"dot-prop":19,"ear":20,"traverse":40,"xtend":43}],40:[function(require,module,exports){
 var traverse = module.exports = function (obj) {
     return new Traverse(obj);
 };
@@ -2193,7 +2318,263 @@ var hasOwnProperty = Object.hasOwnProperty || function (obj, key) {
     return key in obj;
 };
 
-},{}],37:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
+
+exports = module.exports = trim;
+
+function trim(str){
+  return str.replace(/^\s*|\s*$/g, '');
+}
+
+exports.left = function(str){
+  return str.replace(/^\s*/, '');
+};
+
+exports.right = function(str){
+  return str.replace(/\s*$/, '');
+};
+
+},{}],42:[function(require,module,exports){
+"use strict";
+var window = require("global/window")
+var isFunction = require("is-function")
+var parseHeaders = require("parse-headers")
+var xtend = require("xtend")
+
+module.exports = createXHR
+createXHR.XMLHttpRequest = window.XMLHttpRequest || noop
+createXHR.XDomainRequest = "withCredentials" in (new createXHR.XMLHttpRequest()) ? createXHR.XMLHttpRequest : window.XDomainRequest
+
+forEachArray(["get", "put", "post", "patch", "head", "delete"], function(method) {
+    createXHR[method === "delete" ? "del" : method] = function(uri, options, callback) {
+        options = initParams(uri, options, callback)
+        options.method = method.toUpperCase()
+        return _createXHR(options)
+    }
+})
+
+function forEachArray(array, iterator) {
+    for (var i = 0; i < array.length; i++) {
+        iterator(array[i])
+    }
+}
+
+function isEmpty(obj){
+    for(var i in obj){
+        if(obj.hasOwnProperty(i)) return false
+    }
+    return true
+}
+
+function initParams(uri, options, callback) {
+    var params = uri
+
+    if (isFunction(options)) {
+        callback = options
+        if (typeof uri === "string") {
+            params = {uri:uri}
+        }
+    } else {
+        params = xtend(options, {uri: uri})
+    }
+
+    params.callback = callback
+    return params
+}
+
+function createXHR(uri, options, callback) {
+    options = initParams(uri, options, callback)
+    return _createXHR(options)
+}
+
+function _createXHR(options) {
+    if(typeof options.callback === "undefined"){
+        throw new Error("callback argument missing")
+    }
+
+    var called = false
+    var callback = function cbOnce(err, response, body){
+        if(!called){
+            called = true
+            options.callback(err, response, body)
+        }
+    }
+
+    function readystatechange() {
+        if (xhr.readyState === 4) {
+            loadFunc()
+        }
+    }
+
+    function getBody() {
+        // Chrome with requestType=blob throws errors arround when even testing access to responseText
+        var body = undefined
+
+        if (xhr.response) {
+            body = xhr.response
+        } else {
+            body = xhr.responseText || getXml(xhr)
+        }
+
+        if (isJson) {
+            try {
+                body = JSON.parse(body)
+            } catch (e) {}
+        }
+
+        return body
+    }
+
+    function errorFunc(evt) {
+        clearTimeout(timeoutTimer)
+        if(!(evt instanceof Error)){
+            evt = new Error("" + (evt || "Unknown XMLHttpRequest Error") )
+        }
+        evt.statusCode = 0
+        return callback(evt, failureResponse)
+    }
+
+    // will load the data & process the response in a special response object
+    function loadFunc() {
+        if (aborted) return
+        var status
+        clearTimeout(timeoutTimer)
+        if(options.useXDR && xhr.status===undefined) {
+            //IE8 CORS GET successful response doesn't have a status field, but body is fine
+            status = 200
+        } else {
+            status = (xhr.status === 1223 ? 204 : xhr.status)
+        }
+        var response = failureResponse
+        var err = null
+
+        if (status !== 0){
+            response = {
+                body: getBody(),
+                statusCode: status,
+                method: method,
+                headers: {},
+                url: uri,
+                rawRequest: xhr
+            }
+            if(xhr.getAllResponseHeaders){ //remember xhr can in fact be XDR for CORS in IE
+                response.headers = parseHeaders(xhr.getAllResponseHeaders())
+            }
+        } else {
+            err = new Error("Internal XMLHttpRequest Error")
+        }
+        return callback(err, response, response.body)
+    }
+
+    var xhr = options.xhr || null
+
+    if (!xhr) {
+        if (options.cors || options.useXDR) {
+            xhr = new createXHR.XDomainRequest()
+        }else{
+            xhr = new createXHR.XMLHttpRequest()
+        }
+    }
+
+    var key
+    var aborted
+    var uri = xhr.url = options.uri || options.url
+    var method = xhr.method = options.method || "GET"
+    var body = options.body || options.data || null
+    var headers = xhr.headers = options.headers || {}
+    var sync = !!options.sync
+    var isJson = false
+    var timeoutTimer
+    var failureResponse = {
+        body: undefined,
+        headers: {},
+        statusCode: 0,
+        method: method,
+        url: uri,
+        rawRequest: xhr
+    }
+
+    if ("json" in options && options.json !== false) {
+        isJson = true
+        headers["accept"] || headers["Accept"] || (headers["Accept"] = "application/json") //Don't override existing accept header declared by user
+        if (method !== "GET" && method !== "HEAD") {
+            headers["content-type"] || headers["Content-Type"] || (headers["Content-Type"] = "application/json") //Don't override existing accept header declared by user
+            body = JSON.stringify(options.json === true ? body : options.json)
+        }
+    }
+
+    xhr.onreadystatechange = readystatechange
+    xhr.onload = loadFunc
+    xhr.onerror = errorFunc
+    // IE9 must have onprogress be set to a unique function.
+    xhr.onprogress = function () {
+        // IE must die
+    }
+    xhr.onabort = function(){
+        aborted = true;
+    }
+    xhr.ontimeout = errorFunc
+    xhr.open(method, uri, !sync, options.username, options.password)
+    //has to be after open
+    if(!sync) {
+        xhr.withCredentials = !!options.withCredentials
+    }
+    // Cannot set timeout with sync request
+    // not setting timeout on the xhr object, because of old webkits etc. not handling that correctly
+    // both npm's request and jquery 1.x use this kind of timeout, so this is being consistent
+    if (!sync && options.timeout > 0 ) {
+        timeoutTimer = setTimeout(function(){
+            if (aborted) return
+            aborted = true//IE9 may still call readystatechange
+            xhr.abort("timeout")
+            var e = new Error("XMLHttpRequest timeout")
+            e.code = "ETIMEDOUT"
+            errorFunc(e)
+        }, options.timeout )
+    }
+
+    if (xhr.setRequestHeader) {
+        for(key in headers){
+            if(headers.hasOwnProperty(key)){
+                xhr.setRequestHeader(key, headers[key])
+            }
+        }
+    } else if (options.headers && !isEmpty(options.headers)) {
+        throw new Error("Headers cannot be set on an XDomainRequest object")
+    }
+
+    if ("responseType" in options) {
+        xhr.responseType = options.responseType
+    }
+
+    if ("beforeSend" in options &&
+        typeof options.beforeSend === "function"
+    ) {
+        options.beforeSend(xhr)
+    }
+
+    xhr.send(body)
+
+    return xhr
+
+
+}
+
+function getXml(xhr) {
+    if (xhr.responseType === "document") {
+        return xhr.responseXML
+    }
+    var firefoxBugTakenEffect = xhr.status === 204 && xhr.responseXML && xhr.responseXML.documentElement.nodeName === "parsererror"
+    if (xhr.responseType === "" && !firefoxBugTakenEffect) {
+        return xhr.responseXML
+    }
+
+    return null
+}
+
+function noop() {}
+
+},{"global/window":29,"is-function":31,"parse-headers":33,"xtend":43}],43:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -2214,7 +2595,7 @@ function extend() {
     return target
 }
 
-},{}],38:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 module.exports = getPreviousAnimationData
 
 function getPreviousAnimationData (opts, keyframeTimes) {
@@ -2277,7 +2658,7 @@ function getPreviousAnimationData (opts, keyframeTimes) {
   }
 }
 
-},{}],39:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 module.exports = {
   interpolateJoints: interpolateJoints
 }
@@ -2406,4 +2787,4 @@ function defaultBlend (dt) {
 
 // TODO: Event emitter for when animation ends ?
 
-},{"./get-previous-animation-data.js":38}]},{},[13]);
+},{"./get-previous-animation-data.js":44}]},{},[13]);
