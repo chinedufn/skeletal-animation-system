@@ -6,10 +6,18 @@ function renderCanvas (gl, state, dt, opts) {
   gl.viewport(0, 0, state.viewport.width, state.viewport.height)
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-  var interpolatedQuats = require('./upper-body.js')(state, opts.dualQuatKeyframes)
+  var upperBodyQuats = require('./upper-body.js')(state, opts.dualQuatKeyframes)
+  var lowerBodyQuats = require('./lower-body.js')(state, opts.dualQuatKeyframes)
 
-  if (!interpolatedQuats) {
+  if (!upperBodyQuats || !lowerBodyQuats) {
     return
+  }
+
+  var interpolatedQuats = {rot: [], trans: []}
+  var totalJoints = upperBodyQuats.length + lowerBodyQuats.length
+  for (var i = 0; i < totalJoints; i++) {
+    interpolatedQuats.rot[i] = upperBodyQuats.rot[i] || lowerBodyQuats.rot[i]
+    interpolatedQuats.trans[i] = upperBodyQuats.trans[i] || lowerBodyQuats.trans[i]
   }
 
   // Once we've loaded our model we draw it every frame

@@ -1,10 +1,10 @@
 var animationSystem = require('../')
 
-module.exports = upperBody
+module.exports = lowerBody
 
-var jointNums = [0, 1, 2, 3, 4]
+var jointNums = [5, 6, 7, 8, 9]
 
-function upperBody (state, dualQuatKeyframes) {
+function lowerBody (state, dualQuatKeyframes) {
   var interpolatedQuats = animationSystem.interpolateJoints({
     // TODO: Fix test case when current time is 0
     currentTime: state.currentTime,
@@ -31,3 +31,4 @@ function upperBody (state, dualQuatKeyframes) {
     trans: interpolatedTransQuats
   }
 }
+
