@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "demo": "budo --open --live --host=localhost --dir=demo/asset demo/browser.js",
+    "deploy": "mkdirp example-dist && npm run dist:index:html && browserify demo/browser.js > example-dist/bundle.js && cp ./demo/asset/* ./example-dist/ && gh-pages -d example-dist",
+    "dist:index:html": "echo '</script><script src=\"bundle.js\">' | htmlify > demo-dist/index.html",
     "test": "standard && tape test/**/*.js"
   },
   "repository": {
@@ -34,7 +36,9 @@
     "browserify": "^13.1.1",
     "budo": "^9.3.0",
     "gh-pages": "^0.12.0",
+    "inline-htmlify": "^2.0.0",
     "load-collada-dae": "^0.2.0",
+    "mkdirp": "^0.5.1",
     "raf-loop": "^1.1.3",
     "solid-state": "^1.0.3",
     "standard": "^8.3.0",
