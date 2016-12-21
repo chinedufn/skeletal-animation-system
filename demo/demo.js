@@ -72,7 +72,8 @@ function createSkeletonCanvas () {
   }
 
   // Create our canvas and WebGL context
-  var canvas = createCanvas(State)
+  var canvasData = createCanvas(State)
+  var canvas = canvasData.canvas
   var gl = canvas.getContext('webgl')
   gl.clearColor(0.0, 0.0, 0.0, 1.0)
   gl.enable(gl.DEPTH_TEST)
@@ -85,7 +86,7 @@ function createSkeletonCanvas () {
     currentTime += dt / 1000
     State.set('currentTime', currentTime)
     var state = State.get()
-    require('./render-canvas.js')(gl, state, dt, {
+    require('./render-canvas.js')(gl, state, canvasData.cameraControls, dt, {
       model: loaded3dModel,
       dualQuatKeyframes: dualQuatKeyframes
     })

@@ -1,3 +1,6 @@
+var cameraControls = require('orbit-controls')
+
+
 module.exports = createCanvas
 
 // TODO: Turn into module
@@ -17,7 +20,20 @@ function createCanvas (State) {
     State.set('viewport', {width: canvas.width, height: canvas.height})
   })
 
-  return canvas
+  canvas.addEventListener('touchstart', function preventScroll (e) {
+    e.preventDefault()
+  })
+
+  var controls = cameraControls({
+    position: [0, 0, -5],
+    element: canvas,
+    distanceBounds: [0.1, 100]
+  })
+
+  return {
+    cameraControls: controls,
+    canvas: canvas
+  }
 
   function stopObserving () {
     observer.disconnect()
