@@ -23,10 +23,23 @@ module.exports = createSkeletonCanvas
 // and you'd want better organization in a real application
 function createSkeletonCanvas () {
   var State = new SS({
-    currentAnimation: {
-      name: 'dance',
-      range: [0, 3],
-      startTime: 0
+    animationRanges: {
+      'dance': [0, 3],
+      'bend': [3, 6]
+    },
+    upperBody: {
+      currentAnimation: {
+        name: 'dance',
+        range: [0, 3],
+        startTime: 0
+      }
+    },
+    lowerBody: {
+      currentAnimation: {
+        name: 'dance',
+        range: [0, 3],
+        startTime: 0
+      }
     }
   })
 

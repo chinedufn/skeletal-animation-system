@@ -11,11 +11,11 @@ function upperBody (state, dualQuatKeyframes) {
     keyframes: dualQuatKeyframes,
     jointNums: jointNums,
     currentAnimation: {
-      range: state.currentAnimation.range,
+      range: state.upperBody.currentAnimation.range,
       // TODO: Fix test case when current time is 0
-      startTime: state.currentAnimation.startTime
+      startTime: state.upperBody.currentAnimation.startTime
     },
-    previousAnimation: state.previousAnimation
+    previousAnimation: state.upperBody.previousAnimation
   })
 
   var interpolatedRotQuats = []

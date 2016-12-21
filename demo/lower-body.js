@@ -11,11 +11,11 @@ function lowerBody (state, dualQuatKeyframes) {
     keyframes: dualQuatKeyframes,
     jointNums: jointNums,
     currentAnimation: {
-      range: state.currentAnimation.range,
+      range: state.lowerBody.currentAnimation.range,
       // TODO: Fix test case when current time is 0
-      startTime: state.currentAnimation.startTime
+      startTime: state.lowerBody.currentAnimation.startTime
     },
-    previousAnimation: state.previousAnimation
+    previousAnimation: state.lowerBody.previousAnimation
   })
 
   var interpolatedRotQuats = []
