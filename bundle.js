@@ -658,7 +658,118 @@ document.body.style.height = '100%'
 document.body.style.margin = 0
 
 
-},{"./demo.js":15}],14:[function(require,module,exports){
+},{"./demo.js":18}],14:[function(require,module,exports){
+module.exports = renderFullBodyControls
+
+function renderFullBodyControls (h, State) {
+  return h('div', {
+    style: {
+      display: 'flex',
+      flexDirection: 'column'
+    }
+  }, [
+    h('button', {
+      onclick: function (e) {
+        var state = State.get()
+
+        State.set('upperBody.previousAnimation', {
+          range: state.animationRanges[State.get().upperBody.currentAnimation.name],
+          startTime: State.get().upperBody.currentAnimation.startTime
+        })
+        var upperBodyAnimName = State.get().upperBody.currentAnimation.name === 'dance' ? 'bend' : 'dance'
+        State.set('upperBody.currentAnimation', {
+          name: upperBodyAnimName,
+          range: state.animationRanges[upperBodyAnimName],
+          startTime: State.get().currentTime
+        })
+
+        State.set('lowerBody.previousAnimation', {
+          range: state.animationRanges[State.get().lowerBody.currentAnimation.name],
+          startTime: State.get().lowerBody.currentAnimation.startTime
+        })
+        var lowerBodyAnimName = State.get().lowerBody.currentAnimation.name === 'dance' ? 'bend' : 'dance'
+        State.set('lowerBody.currentAnimation', {
+          name: lowerBodyAnimName,
+          range: state.animationRanges[lowerBodyAnimName],
+          startTime: State.get().currentTime
+        })
+      },
+      style: {
+        width: '140px'
+      }
+    }, 'Toggle Full Body animation')
+  ])
+}
+
+},{}],15:[function(require,module,exports){
+module.exports = renderLowerBodyControls
+
+function renderLowerBodyControls (h, State) {
+  return h('div', {
+    style: {
+      display: 'flex',
+      flexDirection: 'column'
+    }
+  }, [
+    h('button', {
+      onclick: function (e) {
+        var state = State.get()
+
+        State.set('lowerBody.previousAnimation', {
+          range: state.animationRanges[State.get().lowerBody.currentAnimation.name],
+          startTime: State.get().lowerBody.currentAnimation.startTime
+        })
+        var lowerBodyAnimName = State.get().lowerBody.currentAnimation.name === 'dance' ? 'bend' : 'dance'
+        State.set('lowerBody.currentAnimation', {
+          name: lowerBodyAnimName,
+          range: state.animationRanges[lowerBodyAnimName],
+          startTime: State.get().currentTime
+        })
+      },
+      style: {
+        width: '140px'
+      }
+    }, 'Toggle Lower Body animation'),
+    h('span', {
+    }, 'Lower body animation: ' + State.get().lowerBody.currentAnimation.name)
+  ])
+}
+
+},{}],16:[function(require,module,exports){
+module.exports = renderUpperBodyControls
+
+function renderUpperBodyControls (h, State) {
+  return h('div', {
+    style: {
+      display: 'flex',
+      flexDirection: 'column'
+    }
+  }, [
+    h('button', {
+      onclick: function (e) {
+        var state = State.get()
+
+        State.set('upperBody.previousAnimation', {
+          range: state.animationRanges[State.get().upperBody.currentAnimation.name],
+          startTime: State.get().upperBody.currentAnimation.startTime
+        })
+        var upperBodyAnimName = State.get().upperBody.currentAnimation.name === 'dance' ? 'bend' : 'dance'
+        State.set('upperBody.currentAnimation', {
+          name: upperBodyAnimName,
+          range: state.animationRanges[upperBodyAnimName],
+          startTime: State.get().currentTime
+        })
+      },
+      style: {
+        width: '140px'
+      }
+    }, 'Toggle Upper Body animation'),
+    h('span', {
+    }, 'Upper body animation: ' + State.get().upperBody.currentAnimation.name)
+  ])
+}
+
+},{}],17:[function(require,module,exports){
 module.exports = createCanvas
 
 // TODO: Turn into module
@@ -698,7 +809,7 @@ function checkForCanvas (State, stop, canvas, mutationRecords) {
   })
 }
 
-},{}],15:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 // TODO: Refactor this example out into modules that handle the boilerplate
 //  i.e. you shouldn't need to convert to dual quats yourself
 var mat3FromMat4 = require('gl-mat3/from-mat4')
@@ -724,10 +835,23 @@ module.exports = createSkeletonCanvas
 // and you'd want better organization in a real application
 function createSkeletonCanvas () {
   var State = new SS({
-    currentAnimation: {
-      name: 'dance',
-      range: [0, 3],
-      startTime: 0
+    animationRanges: {
+      'dance': [0, 3],
+      'bend': [3, 6]
+    },
+    upperBody: {
+      currentAnimation: {
+        name: 'dance',
+        range: [0, 3],
+        startTime: 0
+      }
+    },
+    lowerBody: {
+      currentAnimation: {
+        name: 'dance',
+        range: [0, 3],
+        startTime: 0
+      }
     }
   })
 
@@ -823,7 +947,43 @@ function convertMatricesToDualQuats (jointMatrices) {
   }
 }
 
-},{"../../load-collada-dae":8,"./asset/old-man.json":12,"./create-canvas.js":14,"./render-canvas.js":16,"./render-controls":17,"gl-mat3/from-mat4":29,"gl-quat/fromMat3":31,"gl-quat/multiply":32,"gl-quat/scale":33,"main-loop":43,"raf-loop":49,"solid-state":52,"virtual-dom":59,"xhr":85}],16:[function(require,module,exports){
+},{"../../load-collada-dae":8,"./asset/old-man.json":12,"./create-canvas.js":17,"./render-canvas.js":20,"./render-controls":21,"gl-mat3/from-mat4":33,"gl-quat/fromMat3":35,"gl-quat/multiply":36,"gl-quat/scale":37,"main-loop":47,"raf-loop":53,"solid-state":56,"virtual-dom":63,"xhr":89}],19:[function(require,module,exports){
+var animationSystem = require('../')
+
+module.exports = lowerBody
+
+var jointNums = [5, 6, 7, 8, 9]
+
+function lowerBody (state, dualQuatKeyframes) {
+  var interpolatedQuats = animationSystem.interpolateJoints({
+    // TODO: Fix test case when current time is 0
+    currentTime: state.currentTime,
+    keyframes: dualQuatKeyframes,
+    jointNums: jointNums,
+    currentAnimation: {
+      range: state.lowerBody.currentAnimation.range,
+      // TODO: Fix test case when current time is 0
+      startTime: state.lowerBody.currentAnimation.startTime
+    },
+    previousAnimation: state.lowerBody.previousAnimation
+  })
+
+  var interpolatedRotQuats = []
+  var interpolatedTransQuats = []
+  jointNums.forEach(function (jointNum) {
+    interpolatedRotQuats[jointNum] = interpolatedQuats[jointNum].slice(0, 4)
+    interpolatedTransQuats[jointNum] = interpolatedQuats[jointNum].slice(4, 8)
+  })
+
+  return {
+    length: jointNums.length,
+    rot: interpolatedRotQuats,
+    trans: interpolatedTransQuats
+  }
+}
+
+
+},{"../":23}],20:[function(require,module,exports){
 var mat4Perspective = require('gl-mat4/perspective')
 
 module.exports = renderCanvas
@@ -832,10 +992,18 @@ function renderCanvas (gl, state, dt, opts) {
   gl.viewport(0, 0, state.viewport.width, state.viewport.height)
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-  var interpolatedQuats = require('./upper-body.js')(state, opts.dualQuatKeyframes)
+  var upperBodyQuats = require('./upper-body.js')(state, opts.dualQuatKeyframes)
+  var lowerBodyQuats = require('./lower-body.js')(state, opts.dualQuatKeyframes)
 
-  if (!interpolatedQuats) {
+  if (!upperBodyQuats || !lowerBodyQuats) {
     return
+  }
+
+  var interpolatedQuats = {rot: [], trans: []}
+  var totalJoints = upperBodyQuats.length + lowerBodyQuats.length
+  for (var i = 0; i < totalJoints; i++) {
+    interpolatedQuats.rot[i] = upperBodyQuats.rot[i] || lowerBodyQuats.rot[i]
+    interpolatedQuats.trans[i] = upperBodyQuats.trans[i] || lowerBodyQuats.trans[i]
   }
 
   // Once we've loaded our model we draw it every frame
@@ -851,46 +1019,27 @@ function renderCanvas (gl, state, dt, opts) {
   }
 }
 
-},{"./upper-body.js":18,"gl-mat4/perspective":30}],17:[function(require,module,exports){
+},{"./lower-body.js":19,"./upper-body.js":22,"gl-mat4/perspective":34}],21:[function(require,module,exports){
 var h = require('virtual-dom/h')
 
 module.exports = renderControls
-
-var animationRanges = {
-  'dance': [0, 3],
-  'bend': [3, 6]
-}
 
 function renderControls (State) {
   var controls = h('div', {
   }, [
     h('div', {
       style: {
+        alignItems: 'center',
         display: 'flex',
-        'align-items': 'center',
+        justifyContent: 'space-around',
         width: '100%',
         height: '100px'
+
       }
     }, [
-      h('button', {
-        style: {
-          cursor: 'pointer',
-          height: '30px'
-        },
-        onclick: function () {
-          State.set('previousAnimation', {
-            range: animationRanges[State.get().currentAnimation.name],
-            startTime: State.get().currentAnimation.startTime
-          })
-
-          var newAnimationName = State.get().currentAnimation.name === 'dance' ? 'bend' : 'dance'
-          State.set('currentAnimation', {
-            name: newAnimationName,
-            range: animationRanges[newAnimationName],
-            startTime: State.get().currentTime
-          })
-        }
-      }, 'Change animation')
+      require('./control/full-body-control.js')(h, State),
+      require('./control/upper-body-controls.js')(h, State),
+      require('./control/lower-body-controls.js')(h, State)
     ]),
     h('a', {
       href: 'https://github.com/chinedufn/skeletal-animation-system'
@@ -911,12 +1060,12 @@ function renderControls (State) {
   return controls
 }
 
-},{"virtual-dom/h":58}],18:[function(require,module,exports){
+},{"./control/full-body-control.js":14,"./control/lower-body-controls.js":15,"./control/upper-body-controls.js":16,"virtual-dom/h":62}],22:[function(require,module,exports){
 var animationSystem = require('../')
 
 module.exports = upperBody
 
-var jointNums = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+var jointNums = [0, 1, 2, 3, 4]
 
 function upperBody (state, dualQuatKeyframes) {
   var interpolatedQuats = animationSystem.interpolateJoints({
@@ -925,30 +1074,31 @@ function upperBody (state, dualQuatKeyframes) {
     keyframes: dualQuatKeyframes,
     jointNums: jointNums,
     currentAnimation: {
-      range: state.currentAnimation.range,
+      range: state.upperBody.currentAnimation.range,
       // TODO: Fix test case when current time is 0
-      startTime: state.currentAnimation.startTime
+      startTime: state.upperBody.currentAnimation.startTime
     },
-    previousAnimation: state.previousAnimation
+    previousAnimation: state.upperBody.previousAnimation
   })
 
   var interpolatedRotQuats = []
   var interpolatedTransQuats = []
-  Object.keys(interpolatedQuats).forEach(function (jointNum) {
+  jointNums.forEach(function (jointNum) {
     interpolatedRotQuats[jointNum] = interpolatedQuats[jointNum].slice(0, 4)
     interpolatedTransQuats[jointNum] = interpolatedQuats[jointNum].slice(4, 8)
   })
 
   return {
+    length: jointNums.length,
     rot: interpolatedRotQuats,
     trans: interpolatedTransQuats
   }
 }
 
-},{"../":19}],19:[function(require,module,exports){
+},{"../":23}],23:[function(require,module,exports){
 module.exports = require('./src/skeletal-animation-system')
 
-},{"./src/skeletal-animation-system":89}],20:[function(require,module,exports){
+},{"./src/skeletal-animation-system":93}],24:[function(require,module,exports){
 'use strict'
 
 module.exports = function assertFunction (value) {
@@ -957,9 +1107,9 @@ module.exports = function assertFunction (value) {
   }
 }
 
-},{}],21:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 
-},{}],22:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 module.exports = function(obj) {
     if (typeof obj === 'string') return camelCase(obj);
     return walk(obj);
@@ -1020,7 +1170,7 @@ function reduce (xs, f, acc) {
     return acc;
 }
 
-},{}],23:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 'use strict';
 var isObj = require('is-obj');
 
@@ -1133,7 +1283,7 @@ function getPathSegments(path) {
 	return parts;
 }
 
-},{"is-obj":41}],24:[function(require,module,exports){
+},{"is-obj":45}],28:[function(require,module,exports){
 'use strict'
 
 var assertFn = require('assert-function')
@@ -1171,7 +1321,7 @@ function Ear () {
   return listeners
 }
 
-},{"assert-function":20}],25:[function(require,module,exports){
+},{"assert-function":24}],29:[function(require,module,exports){
 var camelize = require("camelize")
 var template = require("string-template")
 var extend = require("xtend/mutable")
@@ -1221,7 +1371,7 @@ function TypedError(args) {
 }
 
 
-},{"camelize":22,"string-template":53,"xtend/mutable":87}],26:[function(require,module,exports){
+},{"camelize":26,"string-template":57,"xtend/mutable":91}],30:[function(require,module,exports){
 'use strict';
 
 var OneVersionConstraint = require('individual/one-version');
@@ -1243,7 +1393,7 @@ function EvStore(elem) {
     return hash;
 }
 
-},{"individual/one-version":38}],27:[function(require,module,exports){
+},{"individual/one-version":42}],31:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1547,7 +1697,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],28:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 var isFunction = require('is-function')
 
 module.exports = forEach
@@ -1595,7 +1745,7 @@ function forEachObject(object, iterator, context) {
     }
 }
 
-},{"is-function":40}],29:[function(require,module,exports){
+},{"is-function":44}],33:[function(require,module,exports){
 module.exports = fromMat4
 
 /**
@@ -1619,9 +1769,9 @@ function fromMat4(out, a) {
   return out
 }
 
-},{}],30:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 arguments[4][3][0].apply(exports,arguments)
-},{"dup":3}],31:[function(require,module,exports){
+},{"dup":3}],35:[function(require,module,exports){
 module.exports = fromMat3
 
 /**
@@ -1672,7 +1822,7 @@ function fromMat3 (out, m) {
   return out
 }
 
-},{}],32:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 module.exports = multiply
 
 /**
@@ -1694,7 +1844,7 @@ function multiply (out, a, b) {
   return out
 }
 
-},{}],33:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 /**
  * Scales a quat by a scalar number
  *
@@ -1706,7 +1856,7 @@ function multiply (out, a, b) {
  */
 module.exports = require('gl-vec4/scale')
 
-},{"gl-vec4/scale":34}],34:[function(require,module,exports){
+},{"gl-vec4/scale":38}],38:[function(require,module,exports){
 module.exports = scale
 
 /**
@@ -1725,7 +1875,7 @@ function scale (out, a, b) {
   return out
 }
 
-},{}],35:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 (function (global){
 var topLevel = typeof global !== 'undefined' ? global :
     typeof window !== 'undefined' ? window : {}
@@ -1744,7 +1894,7 @@ if (typeof document !== 'undefined') {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"min-document":21}],36:[function(require,module,exports){
+},{"min-document":25}],40:[function(require,module,exports){
 (function (global){
 if (typeof window !== "undefined") {
     module.exports = window;
@@ -1757,7 +1907,7 @@ if (typeof window !== "undefined") {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],37:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1780,7 +1930,7 @@ function Individual(key, value) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],38:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 'use strict';
 
 var Individual = require('./index.js');
@@ -1804,7 +1954,7 @@ function OneVersion(moduleName, version, defaultValue) {
     return Individual(key, defaultValue);
 }
 
-},{"./index.js":37}],39:[function(require,module,exports){
+},{"./index.js":41}],43:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -1829,7 +1979,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],40:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 module.exports = isFunction
 
 var toString = Object.prototype.toString
@@ -1846,21 +1996,21 @@ function isFunction (fn) {
       fn === window.prompt))
 };
 
-},{}],41:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 'use strict';
 module.exports = function (x) {
 	var type = typeof x;
 	return x !== null && (type === 'object' || type === 'function');
 };
 
-},{}],42:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 "use strict";
 
 module.exports = function isObject(x) {
 	return typeof x === "object" && x !== null;
 };
 
-},{}],43:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 var raf = require("raf")
 var TypedError = require("error/typed")
 
@@ -1942,7 +2092,7 @@ function main(initialState, view, opts) {
     }
 }
 
-},{"error/typed":25,"raf":45}],44:[function(require,module,exports){
+},{"error/typed":29,"raf":49}],48:[function(require,module,exports){
 (function (process){
 // Generated by CoffeeScript 1.6.3
 (function() {
@@ -1982,7 +2132,7 @@ function main(initialState, view, opts) {
 */
 
 }).call(this,require('_process'))
-},{"_process":48}],45:[function(require,module,exports){
+},{"_process":52}],49:[function(require,module,exports){
 var now = require('performance-now')
   , global = typeof window === 'undefined' ? {} : window
   , vendors = ['moz', 'webkit']
@@ -2064,7 +2214,7 @@ module.exports.cancel = function() {
   caf.apply(global, arguments)
 }
 
-},{"performance-now":44}],46:[function(require,module,exports){
+},{"performance-now":48}],50:[function(require,module,exports){
 var trim = require('trim')
   , forEach = require('for-each')
   , isArray = function(arg) {
@@ -2096,7 +2246,7 @@ module.exports = function (headers) {
 
   return result
 }
-},{"for-each":28,"trim":55}],47:[function(require,module,exports){
+},{"for-each":32,"trim":59}],51:[function(require,module,exports){
 (function (process){
 // Generated by CoffeeScript 1.7.1
 (function() {
@@ -2132,7 +2282,7 @@ module.exports = function (headers) {
 }).call(this);
 
 }).call(this,require('_process'))
-},{"_process":48}],48:[function(require,module,exports){
+},{"_process":52}],52:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -2314,7 +2464,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],49:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 var inherits = require('inherits')
 var EventEmitter = require('events').EventEmitter
 var now = require('right-now')
@@ -2359,7 +2509,7 @@ Engine.prototype.tick = function() {
     this.emit('tick', dt)
     this.last = time
 }
-},{"events":27,"inherits":39,"raf":50,"right-now":51}],50:[function(require,module,exports){
+},{"events":31,"inherits":43,"raf":54,"right-now":55}],54:[function(require,module,exports){
 (function (global){
 var now = require('performance-now')
   , root = typeof window === 'undefined' ? global : window
@@ -2435,7 +2585,7 @@ module.exports.polyfill = function() {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"performance-now":47}],51:[function(require,module,exports){
+},{"performance-now":51}],55:[function(require,module,exports){
 (function (global){
 module.exports =
   global.performance &&
@@ -2446,7 +2596,7 @@ module.exports =
   }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],52:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 var Listeners = require('ear')
 var dotProp = require('dot-prop')
 var extend = require('xtend')
@@ -2483,7 +2633,7 @@ State.prototype.del = function (key) {
   this.listeners(this.get())
 }
 
-},{"dot-prop":23,"ear":24,"traverse":54,"xtend":86}],53:[function(require,module,exports){
+},{"dot-prop":27,"ear":28,"traverse":58,"xtend":90}],57:[function(require,module,exports){
 var nargs = /\{([0-9a-zA-Z]+)\}/g
 var slice = Array.prototype.slice
 
@@ -2519,7 +2669,7 @@ function template(string) {
     })
 }
 
-},{}],54:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 var traverse = module.exports = function (obj) {
     return new Traverse(obj);
 };
@@ -2835,7 +2985,7 @@ var hasOwnProperty = Object.hasOwnProperty || function (obj, key) {
     return key in obj;
 };
 
-},{}],55:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 
 exports = module.exports = trim;
 
@@ -2851,22 +3001,22 @@ exports.right = function(str){
   return str.replace(/\s*$/, '');
 };
 
-},{}],56:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 var createElement = require("./vdom/create-element.js")
 
 module.exports = createElement
 
-},{"./vdom/create-element.js":63}],57:[function(require,module,exports){
+},{"./vdom/create-element.js":67}],61:[function(require,module,exports){
 var diff = require("./vtree/diff.js")
 
 module.exports = diff
 
-},{"./vtree/diff.js":83}],58:[function(require,module,exports){
+},{"./vtree/diff.js":87}],62:[function(require,module,exports){
 var h = require("./virtual-hyperscript/index.js")
 
 module.exports = h
 
-},{"./virtual-hyperscript/index.js":70}],59:[function(require,module,exports){
+},{"./virtual-hyperscript/index.js":74}],63:[function(require,module,exports){
 var diff = require("./diff.js")
 var patch = require("./patch.js")
 var h = require("./h.js")
@@ -2883,7 +3033,7 @@ module.exports = {
     VText: VText
 }
 
-},{"./create-element.js":56,"./diff.js":57,"./h.js":58,"./patch.js":61,"./vnode/vnode.js":79,"./vnode/vtext.js":81}],60:[function(require,module,exports){
+},{"./create-element.js":60,"./diff.js":61,"./h.js":62,"./patch.js":65,"./vnode/vnode.js":83,"./vnode/vtext.js":85}],64:[function(require,module,exports){
 /*!
  * Cross-Browser Split 1.1.1
  * Copyright 2007-2012 Steven Levithan <stevenlevithan.com>
@@ -2991,12 +3141,12 @@ module.exports = (function split(undef) {
   return self;
 })();
 
-},{}],61:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 var patch = require("./vdom/patch.js")
 
 module.exports = patch
 
-},{"./vdom/patch.js":66}],62:[function(require,module,exports){
+},{"./vdom/patch.js":70}],66:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook.js")
 
@@ -3095,7 +3245,7 @@ function getPrototype(value) {
     }
 }
 
-},{"../vnode/is-vhook.js":74,"is-object":42}],63:[function(require,module,exports){
+},{"../vnode/is-vhook.js":78,"is-object":46}],67:[function(require,module,exports){
 var document = require("global/document")
 
 var applyProperties = require("./apply-properties")
@@ -3143,7 +3293,7 @@ function createElement(vnode, opts) {
     return node
 }
 
-},{"../vnode/handle-thunk.js":72,"../vnode/is-vnode.js":75,"../vnode/is-vtext.js":76,"../vnode/is-widget.js":77,"./apply-properties":62,"global/document":35}],64:[function(require,module,exports){
+},{"../vnode/handle-thunk.js":76,"../vnode/is-vnode.js":79,"../vnode/is-vtext.js":80,"../vnode/is-widget.js":81,"./apply-properties":66,"global/document":39}],68:[function(require,module,exports){
 // Maps a virtual DOM tree onto a real DOM tree in an efficient manner.
 // We don't want to read all of the DOM nodes in the tree so we use
 // the in-order tree indexing to eliminate recursion down certain branches.
@@ -3230,7 +3380,7 @@ function ascending(a, b) {
     return a > b ? 1 : -1
 }
 
-},{}],65:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 var applyProperties = require("./apply-properties")
 
 var isWidget = require("../vnode/is-widget.js")
@@ -3383,7 +3533,7 @@ function replaceRoot(oldRoot, newRoot) {
     return newRoot;
 }
 
-},{"../vnode/is-widget.js":77,"../vnode/vpatch.js":80,"./apply-properties":62,"./update-widget":67}],66:[function(require,module,exports){
+},{"../vnode/is-widget.js":81,"../vnode/vpatch.js":84,"./apply-properties":66,"./update-widget":71}],70:[function(require,module,exports){
 var document = require("global/document")
 var isArray = require("x-is-array")
 
@@ -3465,7 +3615,7 @@ function patchIndices(patches) {
     return indices
 }
 
-},{"./create-element":63,"./dom-index":64,"./patch-op":65,"global/document":35,"x-is-array":84}],67:[function(require,module,exports){
+},{"./create-element":67,"./dom-index":68,"./patch-op":69,"global/document":39,"x-is-array":88}],71:[function(require,module,exports){
 var isWidget = require("../vnode/is-widget.js")
 
 module.exports = updateWidget
@@ -3482,7 +3632,7 @@ function updateWidget(a, b) {
     return false
 }
 
-},{"../vnode/is-widget.js":77}],68:[function(require,module,exports){
+},{"../vnode/is-widget.js":81}],72:[function(require,module,exports){
 'use strict';
 
 var EvStore = require('ev-store');
@@ -3511,7 +3661,7 @@ EvHook.prototype.unhook = function(node, propertyName) {
     es[propName] = undefined;
 };
 
-},{"ev-store":26}],69:[function(require,module,exports){
+},{"ev-store":30}],73:[function(require,module,exports){
 'use strict';
 
 module.exports = SoftSetHook;
@@ -3530,7 +3680,7 @@ SoftSetHook.prototype.hook = function (node, propertyName) {
     }
 };
 
-},{}],70:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 'use strict';
 
 var isArray = require('x-is-array');
@@ -3669,7 +3819,7 @@ function errorString(obj) {
     }
 }
 
-},{"../vnode/is-thunk":73,"../vnode/is-vhook":74,"../vnode/is-vnode":75,"../vnode/is-vtext":76,"../vnode/is-widget":77,"../vnode/vnode.js":79,"../vnode/vtext.js":81,"./hooks/ev-hook.js":68,"./hooks/soft-set-hook.js":69,"./parse-tag.js":71,"x-is-array":84}],71:[function(require,module,exports){
+},{"../vnode/is-thunk":77,"../vnode/is-vhook":78,"../vnode/is-vnode":79,"../vnode/is-vtext":80,"../vnode/is-widget":81,"../vnode/vnode.js":83,"../vnode/vtext.js":85,"./hooks/ev-hook.js":72,"./hooks/soft-set-hook.js":73,"./parse-tag.js":75,"x-is-array":88}],75:[function(require,module,exports){
 'use strict';
 
 var split = require('browser-split');
@@ -3725,7 +3875,7 @@ function parseTag(tag, props) {
     return props.namespace ? tagName : tagName.toUpperCase();
 }
 
-},{"browser-split":60}],72:[function(require,module,exports){
+},{"browser-split":64}],76:[function(require,module,exports){
 var isVNode = require("./is-vnode")
 var isVText = require("./is-vtext")
 var isWidget = require("./is-widget")
@@ -3767,14 +3917,14 @@ function renderThunk(thunk, previous) {
     return renderedThunk
 }
 
-},{"./is-thunk":73,"./is-vnode":75,"./is-vtext":76,"./is-widget":77}],73:[function(require,module,exports){
+},{"./is-thunk":77,"./is-vnode":79,"./is-vtext":80,"./is-widget":81}],77:[function(require,module,exports){
 module.exports = isThunk
 
 function isThunk(t) {
     return t && t.type === "Thunk"
 }
 
-},{}],74:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 module.exports = isHook
 
 function isHook(hook) {
@@ -3783,7 +3933,7 @@ function isHook(hook) {
        typeof hook.unhook === "function" && !hook.hasOwnProperty("unhook"))
 }
 
-},{}],75:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualNode
@@ -3792,7 +3942,7 @@ function isVirtualNode(x) {
     return x && x.type === "VirtualNode" && x.version === version
 }
 
-},{"./version":78}],76:[function(require,module,exports){
+},{"./version":82}],80:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualText
@@ -3801,17 +3951,17 @@ function isVirtualText(x) {
     return x && x.type === "VirtualText" && x.version === version
 }
 
-},{"./version":78}],77:[function(require,module,exports){
+},{"./version":82}],81:[function(require,module,exports){
 module.exports = isWidget
 
 function isWidget(w) {
     return w && w.type === "Widget"
 }
 
-},{}],78:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 module.exports = "2"
 
-},{}],79:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 var version = require("./version")
 var isVNode = require("./is-vnode")
 var isWidget = require("./is-widget")
@@ -3885,7 +4035,7 @@ function VirtualNode(tagName, properties, children, key, namespace) {
 VirtualNode.prototype.version = version
 VirtualNode.prototype.type = "VirtualNode"
 
-},{"./is-thunk":73,"./is-vhook":74,"./is-vnode":75,"./is-widget":77,"./version":78}],80:[function(require,module,exports){
+},{"./is-thunk":77,"./is-vhook":78,"./is-vnode":79,"./is-widget":81,"./version":82}],84:[function(require,module,exports){
 var version = require("./version")
 
 VirtualPatch.NONE = 0
@@ -3909,7 +4059,7 @@ function VirtualPatch(type, vNode, patch) {
 VirtualPatch.prototype.version = version
 VirtualPatch.prototype.type = "VirtualPatch"
 
-},{"./version":78}],81:[function(require,module,exports){
+},{"./version":82}],85:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = VirtualText
@@ -3921,7 +4071,7 @@ function VirtualText(text) {
 VirtualText.prototype.version = version
 VirtualText.prototype.type = "VirtualText"
 
-},{"./version":78}],82:[function(require,module,exports){
+},{"./version":82}],86:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook")
 
@@ -3981,7 +4131,7 @@ function getPrototype(value) {
   }
 }
 
-},{"../vnode/is-vhook":74,"is-object":42}],83:[function(require,module,exports){
+},{"../vnode/is-vhook":78,"is-object":46}],87:[function(require,module,exports){
 var isArray = require("x-is-array")
 
 var VPatch = require("../vnode/vpatch")
@@ -4410,7 +4560,7 @@ function appendPatch(apply, patch) {
     }
 }
 
-},{"../vnode/handle-thunk":72,"../vnode/is-thunk":73,"../vnode/is-vnode":75,"../vnode/is-vtext":76,"../vnode/is-widget":77,"../vnode/vpatch":80,"./diff-props":82,"x-is-array":84}],84:[function(require,module,exports){
+},{"../vnode/handle-thunk":76,"../vnode/is-thunk":77,"../vnode/is-vnode":79,"../vnode/is-vtext":80,"../vnode/is-widget":81,"../vnode/vpatch":84,"./diff-props":86,"x-is-array":88}],88:[function(require,module,exports){
 var nativeIsArray = Array.isArray
 var toString = Object.prototype.toString
 
@@ -4420,7 +4570,7 @@ function isArray(obj) {
     return toString.call(obj) === "[object Array]"
 }
 
-},{}],85:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 "use strict";
 var window = require("global/window")
 var isFunction = require("is-function")
@@ -4660,7 +4810,7 @@ function getXml(xhr) {
 
 function noop() {}
 
-},{"global/window":36,"is-function":40,"parse-headers":46,"xtend":86}],86:[function(require,module,exports){
+},{"global/window":40,"is-function":44,"parse-headers":50,"xtend":90}],90:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -4681,7 +4831,7 @@ function extend() {
     return target
 }
 
-},{}],87:[function(require,module,exports){
+},{}],91:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -4700,7 +4850,7 @@ function extend(target) {
     return target
 }
 
-},{}],88:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 module.exports = getPreviousAnimationData
 
 function getPreviousAnimationData (opts, keyframeTimes) {
@@ -4763,7 +4913,7 @@ function getPreviousAnimationData (opts, keyframeTimes) {
   }
 }
 
-},{}],89:[function(require,module,exports){
+},{}],93:[function(require,module,exports){
 module.exports = {
   interpolateJoints: interpolateJoints
 }
@@ -4892,4 +5042,4 @@ function defaultBlend (dt) {
 
 // TODO: Event emitter for when animation ends ?
 
-},{"./get-previous-animation-data.js":88}]},{},[13]);
+},{"./get-previous-animation-data.js":92}]},{},[13]);
