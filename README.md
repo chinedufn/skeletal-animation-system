@@ -43,18 +43,31 @@ var animationRanges = {
   'right-arm-punch': [17, 20]
 }
 
-var upperBodyJointNames = [
+// Convert our joint names into their associated joint number
+// This number comes from collada-dae-parser
+// (or your compatible parser of choice)
+var upperBodyJointNums = [
 'spine', 'chest_L', 'chest_R', 'bicep_L', 'bicep_R'
-]
-var lowerBodyJointNames = [
+].reduce(function (jointIndices, jointName) {
+  jointIndices.push(parsedColladaModel.jointNamePositionIndex[jointName])
+  return jointIndices
+}, [])
+
+var lowerBodyJointNums = [
 'hip', 'thigh_L', 'thigh_R', 'femur_L'
-]
+].reduce(function (jointIndices, jointName) {
+  jointIndices.push(parsedColladaModel.jointNamePositionIndex[jointName])
+  return jointIndices
+}, [])
+
+
 var fullBodyJoints = upperBodyJoints.concat(lowerBodyJoints)
 
+// Our options for animating our model's upper body
 var upperBodyOptions = {
   currentTime: 28.24,
   keyframes: keyframes,
-  jointNames: upperBodyJointsNames,
+  jointNames: upperBodyJointsNums,
   blendFunction: function (dt) {
     // Blend animations linearly over 2.5 seconds
     return 1 / 2.5 * dt
@@ -69,10 +82,11 @@ var upperBodyOptions = {
   }
 }
 
+// Our options for animating our model's lower body
 var lowerBodyOptions = {
   currentTime: 28.24,
   keyframes: keyframes,
-  jointNames: lowerBodyJointNames,
+  jointNums: lowerBodyJointNums,
   currentAnimation: {
     range: animationRanges['jump']
     startTime: 24.3
@@ -85,6 +99,7 @@ var interpolatedUpperBodyJoints = animationSystem
 var interpolatedLowerBodyJoints = animationSystem
 .interpolateJoints(lowerBodyJoints)
 
+// Tou can pass these joint dual quaternions into `load-collada-dae`
 var interpolatedJoints = Object.assign({}, interpolatedUpperBodyJoints, interpolatedLowerBodyJoints)
 ```
 
