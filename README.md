@@ -3,6 +3,8 @@ skeletal-animation-system [![npm version](https://badge.fury.io/js/skeletal-anim
 
 > A standalone, stateless, dual quaternion based skeletal animation system built with interactive applications in mind
 
+[View live demo](http://chinedufn.github.io/skeletal-animation-system/)
+
 ## Background / Initial Motivation
 
 skeletal-animation-system aims to give the user a flexible module for managing skeletal animations across different 3d models and bone groups.
@@ -24,6 +26,19 @@ This API is still experimental and will evolve as we use it and realize the kink
 ```sh
 $ npm install --save skeletal-animation-system
 ```
+
+## Demo
+
+To run the demo locally:
+
+```sh
+$ git clone https://github.com/chinedufn/skeletal-animation-system
+$ cd skeletal-animation-system
+$ npm install
+$ npm run demo
+```
+
+Changes to the `demo` and `src` files will now live reload in your browser.
 
 ## Usage
 

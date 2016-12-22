@@ -5,7 +5,7 @@ var quatMultiply = require('gl-quat/multiply')
 var quatFromMat3 = require('gl-quat/fromMat3')
 var quatScale = require('gl-quat/scale')
 
-var loadDae = require('../../load-collada-dae')
+var loadDae = require('load-collada-dae')
 var loaded3dModel
 
 var createCanvas = require('./create-canvas.js')

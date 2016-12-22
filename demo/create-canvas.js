@@ -1,6 +1,5 @@
 var cameraControls = require('orbit-controls')
 
-
 module.exports = createCanvas
 
 // TODO: Turn into module

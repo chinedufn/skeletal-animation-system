@@ -1,4 +1,3 @@
-var mat4Perspective = require('gl-mat4/perspective')
 var camera = require('perspective-camera')({
   fov: 50 * Math.PI / 180,
   position: [0, 0, 1],
