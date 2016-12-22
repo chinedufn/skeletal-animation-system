@@ -770,6 +770,9 @@ function renderUpperBodyControls (h, State) {
 }
 
 },{}],17:[function(require,module,exports){
+var cameraControls = require('orbit-controls')
+
+
 module.exports = createCanvas
 
 // TODO: Turn into module
@@ -789,7 +792,20 @@ function createCanvas (State) {
     State.set('viewport', {width: canvas.width, height: canvas.height})
   })
 
-  return canvas
+  canvas.addEventListener('touchstart', function preventScroll (e) {
+    e.preventDefault()
+  })
+
+  var controls = cameraControls({
+    position: [0, 0, -5],
+    element: canvas,
+    distanceBounds: [0.1, 100]
+  })
+
+  return {
+    cameraControls: controls,
+    canvas: canvas
+  }
 
   function stopObserving () {
     observer.disconnect()
@@ -809,7 +825,7 @@ function checkForCanvas (State, stop, canvas, mutationRecords) {
   })
 }
 
-},{}],18:[function(require,module,exports){
+},{"orbit-controls":81}],18:[function(require,module,exports){
 // TODO: Refactor this example out into modules that handle the boilerplate
 //  i.e. you shouldn't need to convert to dual quats yourself
 var mat3FromMat4 = require('gl-mat3/from-mat4')
@@ -884,7 +900,8 @@ function createSkeletonCanvas () {
   }
 
   // Create our canvas and WebGL context
-  var canvas = createCanvas(State)
+  var canvasData = createCanvas(State)
+  var canvas = canvasData.canvas
   var gl = canvas.getContext('webgl')
   gl.clearColor(0.0, 0.0, 0.0, 1.0)
   gl.enable(gl.DEPTH_TEST)
@@ -897,7 +914,7 @@ function createSkeletonCanvas () {
     currentTime += dt / 1000
     State.set('currentTime', currentTime)
     var state = State.get()
-    require('./render-canvas.js')(gl, state, dt, {
+    require('./render-canvas.js')(gl, state, canvasData.cameraControls, dt, {
       model: loaded3dModel,
       dualQuatKeyframes: dualQuatKeyframes
     })
@@ -947,7 +964,7 @@ function convertMatricesToDualQuats (jointMatrices) {
   }
 }
 
-},{"../../load-collada-dae":8,"./asset/old-man.json":12,"./create-canvas.js":17,"./render-canvas.js":20,"./render-controls":21,"gl-mat3/from-mat4":33,"gl-quat/fromMat3":35,"gl-quat/multiply":36,"gl-quat/scale":37,"main-loop":47,"raf-loop":53,"solid-state":56,"virtual-dom":63,"xhr":89}],19:[function(require,module,exports){
+},{"../../load-collada-dae":8,"./asset/old-man.json":12,"./create-canvas.js":17,"./render-canvas.js":20,"./render-controls":21,"gl-mat3/from-mat4":40,"gl-quat/fromMat3":46,"gl-quat/multiply":48,"gl-quat/scale":50,"main-loop":76,"raf-loop":93,"solid-state":101,"virtual-dom":110,"xhr":136}],19:[function(require,module,exports){
 var animationSystem = require('../')
 
 module.exports = lowerBody
@@ -985,10 +1002,16 @@ function lowerBody (state, dualQuatKeyframes) {
 
 },{"../":23}],20:[function(require,module,exports){
 var mat4Perspective = require('gl-mat4/perspective')
+var camera = require('perspective-camera')({
+  fov: 50 * Math.PI / 180,
+  position: [0, 0, 1],
+  near: 0.00001,
+  far: 100
+})
 
 module.exports = renderCanvas
 
-function renderCanvas (gl, state, dt, opts) {
+function renderCanvas (gl, state, cameraControls, dt, opts) {
   gl.viewport(0, 0, state.viewport.width, state.viewport.height)
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
@@ -1006,11 +1029,25 @@ function renderCanvas (gl, state, dt, opts) {
     interpolatedQuats.trans[i] = upperBodyQuats.trans[i] || lowerBodyQuats.trans[i]
   }
 
+  cameraControls.update()
+  cameraControls.copyInto(camera.position, camera.direction, camera.up)
+  camera.viewport = [0, 0, state.viewport.width, state.viewport.height]
+  camera.lookAt([0, 0, 0])
+
+  // Gets around an issue in our `orbit-controls` dependency
+  // when you try to view the model from the top or bottom
+  if (camera.up[0] + camera.up[1] + camera.up[2] === 0) {
+    camera.up = [0, -1, 0]
+  }
+
+  camera.update()
+
   // Once we've loaded our model we draw it every frame
   if (opts.model) {
     opts.model.draw({
-      perspective: mat4Perspective([], Math.PI / 3, state.viewport.width / state.viewport.height, 0.1, 20),
-      position: [0, 0, -3.1],
+      perspective: camera.projection,
+      viewMatrix: camera.view,
+      position: [0, 0, 0],
       rotQuaternions: interpolatedQuats.rot,
       transQuaternions: interpolatedQuats.trans
       // TODO: Leave comment in tutorial about using a view matrix to create a camera
@@ -1019,7 +1056,7 @@ function renderCanvas (gl, state, dt, opts) {
   }
 }
 
-},{"./lower-body.js":19,"./upper-body.js":22,"gl-mat4/perspective":34}],21:[function(require,module,exports){
+},{"./lower-body.js":19,"./upper-body.js":22,"gl-mat4/perspective":45,"perspective-camera":86}],21:[function(require,module,exports){
 var h = require('virtual-dom/h')
 
 module.exports = renderControls
@@ -1060,7 +1097,7 @@ function renderControls (State) {
   return controls
 }
 
-},{"./control/full-body-control.js":14,"./control/lower-body-controls.js":15,"./control/upper-body-controls.js":16,"virtual-dom/h":62}],22:[function(require,module,exports){
+},{"./control/full-body-control.js":14,"./control/lower-body-controls.js":15,"./control/upper-body-controls.js":16,"virtual-dom/h":109}],22:[function(require,module,exports){
 var animationSystem = require('../')
 
 module.exports = upperBody
@@ -1098,7 +1135,7 @@ function upperBody (state, dualQuatKeyframes) {
 },{"../":23}],23:[function(require,module,exports){
 module.exports = require('./src/skeletal-animation-system')
 
-},{"./src/skeletal-animation-system":93}],24:[function(require,module,exports){
+},{"./src/skeletal-animation-system":140}],24:[function(require,module,exports){
 'use strict'
 
 module.exports = function assertFunction (value) {
@@ -1171,6 +1208,152 @@ function reduce (xs, f, acc) {
 }
 
 },{}],27:[function(require,module,exports){
+var unproject = require('camera-unproject')
+var set = require('gl-vec3/set')
+var sub = require('gl-vec3/subtract')
+var normalize = require('gl-vec3/normalize')
+
+module.exports = createPickRay
+function createPickRay(origin, direction, point, viewport, invProjView) {
+  set(origin, point[0], point[1], 0)
+  set(direction, point[0], point[1], 1)
+  unproject(origin, origin, viewport, invProjView)
+  unproject(direction, direction, viewport, invProjView)
+  sub(direction, direction, origin)
+  normalize(direction, direction)
+}
+},{"camera-unproject":29,"gl-vec3/normalize":57,"gl-vec3/set":60,"gl-vec3/subtract":62}],28:[function(require,module,exports){
+var transformMat4 = require('gl-vec4/transformMat4')
+var set = require('gl-vec4/set')
+
+var NEAR_RANGE = 0
+var FAR_RANGE = 1
+var tmp4 = [0, 0, 0, 0]
+
+module.exports = cameraProject
+function cameraProject (out, vec, viewport, combinedProjView) {
+  var vX = viewport[0],
+    vY = viewport[1],
+    vWidth = viewport[2],
+    vHeight = viewport[3],
+    n = NEAR_RANGE,
+    f = FAR_RANGE
+
+  // convert: clip space -> NDC -> window coords
+  // implicit 1.0 for w component
+  set(tmp4, vec[0], vec[1], vec[2], 1.0)
+
+  // transform into clip space
+  transformMat4(tmp4, tmp4, combinedProjView)
+
+  // now transform into NDC
+  var w = tmp4[3]
+  if (w !== 0) { // how to handle infinity here?
+    tmp4[0] = tmp4[0] / w
+    tmp4[1] = tmp4[1] / w
+    tmp4[2] = tmp4[2] / w
+  }
+
+  // and finally into window coordinates
+  // the foruth component is (1/clip.w)
+  // which is the same as gl_FragCoord.w
+  out[0] = vX + vWidth / 2 * tmp4[0] + (0 + vWidth / 2)
+  out[1] = vY + vHeight / 2 * tmp4[1] + (0 + vHeight / 2)
+  out[2] = (f - n) / 2 * tmp4[2] + (f + n) / 2
+  out[3] = w === 0 ? 0 : 1 / w
+  return out
+}
+
+},{"gl-vec4/set":66,"gl-vec4/transformMat4":67}],29:[function(require,module,exports){
+var transform = require('./lib/projectMat4')
+
+module.exports = unproject
+
+/**
+ * Unproject a point from screen space to 3D space.
+ * The point should have its x and y properties set to
+ * 2D screen space, and the z either at 0 (near plane)
+ * or 1 (far plane). The provided matrix is assumed to already
+ * be combined, i.e. projection * view.
+ *
+ * After this operation, the out vector's [x, y, z] components will
+ * represent the unprojected 3D coordinate.
+ *
+ * @param  {vec3} out               the output vector
+ * @param  {vec3} vec               the 2D space vector to unproject
+ * @param  {vec4} viewport          screen x, y, width and height in pixels
+ * @param  {mat4} invProjectionView combined projection and view matrix
+ * @return {vec3}                   the output vector
+ */
+function unproject (out, vec, viewport, invProjectionView) {
+  var viewX = viewport[0],
+    viewY = viewport[1],
+    viewWidth = viewport[2],
+    viewHeight = viewport[3]
+
+  var x = vec[0],
+    y = vec[1],
+    z = vec[2]
+
+  x = x - viewX
+  y = viewHeight - y - 1
+  y = y - viewY
+
+  out[0] = (2 * x) / viewWidth - 1
+  out[1] = (2 * y) / viewHeight - 1
+  out[2] = 2 * z - 1
+  return transform(out, out, invProjectionView)
+}
+
+},{"./lib/projectMat4":30}],30:[function(require,module,exports){
+module.exports = project
+
+/**
+ * Multiplies the input vec by the specified matrix, 
+ * applying a W divide, and stores the result in out 
+ * vector. This is useful for projection,
+ * e.g. unprojecting a 2D point into 3D space.
+ *
+ * @method  prj
+ * @param {vec3} out the output vector
+ * @param {vec3} vec the input vector to project
+ * @param {mat4} m the 4x4 matrix to multiply with 
+ * @return {vec3} the out vector
+ */
+function project (out, vec, m) {
+  var x = vec[0],
+    y = vec[1],
+    z = vec[2],
+    a00 = m[0], a01 = m[1], a02 = m[2], a03 = m[3],
+    a10 = m[4], a11 = m[5], a12 = m[6], a13 = m[7],
+    a20 = m[8], a21 = m[9], a22 = m[10], a23 = m[11],
+    a30 = m[12], a31 = m[13], a32 = m[14], a33 = m[15]
+
+  var lw = 1 / (x * a03 + y * a13 + z * a23 + a33)
+
+  out[0] = (x * a00 + y * a10 + z * a20 + a30) * lw
+  out[1] = (x * a01 + y * a11 + z * a21 + a31) * lw
+  out[2] = (x * a02 + y * a12 + z * a22 + a32) * lw
+  return out
+}
+
+},{}],31:[function(require,module,exports){
+module.exports = clamp
+
+function clamp(value, min, max) {
+  return min < max
+    ? (value < min ? min : value > max ? max : value)
+    : (value < max ? max : value > min ? min : value)
+}
+
+},{}],32:[function(require,module,exports){
+module.exports = function () {
+    for (var i = 0; i < arguments.length; i++) {
+        if (arguments[i] !== undefined) return arguments[i];
+    }
+};
+
+},{}],33:[function(require,module,exports){
 'use strict';
 var isObj = require('is-obj');
 
@@ -1283,7 +1466,19 @@ function getPathSegments(path) {
 	return parts;
 }
 
-},{"is-obj":45}],28:[function(require,module,exports){
+},{"is-obj":74}],34:[function(require,module,exports){
+module.exports = defaultProperty
+
+function defaultProperty (get, set) {
+  return {
+    configurable: true,
+    enumerable: true,
+    get: get,
+    set: set
+  }
+}
+
+},{}],35:[function(require,module,exports){
 'use strict'
 
 var assertFn = require('assert-function')
@@ -1321,7 +1516,7 @@ function Ear () {
   return listeners
 }
 
-},{"assert-function":24}],29:[function(require,module,exports){
+},{"assert-function":24}],36:[function(require,module,exports){
 var camelize = require("camelize")
 var template = require("string-template")
 var extend = require("xtend/mutable")
@@ -1371,7 +1566,7 @@ function TypedError(args) {
 }
 
 
-},{"camelize":26,"string-template":57,"xtend/mutable":91}],30:[function(require,module,exports){
+},{"camelize":26,"string-template":102,"xtend/mutable":138}],37:[function(require,module,exports){
 'use strict';
 
 var OneVersionConstraint = require('individual/one-version');
@@ -1393,7 +1588,7 @@ function EvStore(elem) {
     return hash;
 }
 
-},{"individual/one-version":42}],31:[function(require,module,exports){
+},{"individual/one-version":71}],38:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1697,7 +1892,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],32:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 var isFunction = require('is-function')
 
 module.exports = forEach
@@ -1745,7 +1940,7 @@ function forEachObject(object, iterator, context) {
     }
 }
 
-},{"is-function":44}],33:[function(require,module,exports){
+},{"is-function":73}],40:[function(require,module,exports){
 module.exports = fromMat4
 
 /**
@@ -1769,9 +1964,186 @@ function fromMat4(out, a) {
   return out
 }
 
-},{}],34:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
+module.exports = identity;
+
+/**
+ * Set a mat4 to the identity matrix
+ *
+ * @param {mat4} out the receiving matrix
+ * @returns {mat4} out
+ */
+function identity(out) {
+    out[0] = 1;
+    out[1] = 0;
+    out[2] = 0;
+    out[3] = 0;
+    out[4] = 0;
+    out[5] = 1;
+    out[6] = 0;
+    out[7] = 0;
+    out[8] = 0;
+    out[9] = 0;
+    out[10] = 1;
+    out[11] = 0;
+    out[12] = 0;
+    out[13] = 0;
+    out[14] = 0;
+    out[15] = 1;
+    return out;
+};
+},{}],42:[function(require,module,exports){
+module.exports = invert;
+
+/**
+ * Inverts a mat4
+ *
+ * @param {mat4} out the receiving matrix
+ * @param {mat4} a the source matrix
+ * @returns {mat4} out
+ */
+function invert(out, a) {
+    var a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3],
+        a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7],
+        a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11],
+        a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15],
+
+        b00 = a00 * a11 - a01 * a10,
+        b01 = a00 * a12 - a02 * a10,
+        b02 = a00 * a13 - a03 * a10,
+        b03 = a01 * a12 - a02 * a11,
+        b04 = a01 * a13 - a03 * a11,
+        b05 = a02 * a13 - a03 * a12,
+        b06 = a20 * a31 - a21 * a30,
+        b07 = a20 * a32 - a22 * a30,
+        b08 = a20 * a33 - a23 * a30,
+        b09 = a21 * a32 - a22 * a31,
+        b10 = a21 * a33 - a23 * a31,
+        b11 = a22 * a33 - a23 * a32,
+
+        // Calculate the determinant
+        det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+
+    if (!det) { 
+        return null; 
+    }
+    det = 1.0 / det;
+
+    out[0] = (a11 * b11 - a12 * b10 + a13 * b09) * det;
+    out[1] = (a02 * b10 - a01 * b11 - a03 * b09) * det;
+    out[2] = (a31 * b05 - a32 * b04 + a33 * b03) * det;
+    out[3] = (a22 * b04 - a21 * b05 - a23 * b03) * det;
+    out[4] = (a12 * b08 - a10 * b11 - a13 * b07) * det;
+    out[5] = (a00 * b11 - a02 * b08 + a03 * b07) * det;
+    out[6] = (a32 * b02 - a30 * b05 - a33 * b01) * det;
+    out[7] = (a20 * b05 - a22 * b02 + a23 * b01) * det;
+    out[8] = (a10 * b10 - a11 * b08 + a13 * b06) * det;
+    out[9] = (a01 * b08 - a00 * b10 - a03 * b06) * det;
+    out[10] = (a30 * b04 - a31 * b02 + a33 * b00) * det;
+    out[11] = (a21 * b02 - a20 * b04 - a23 * b00) * det;
+    out[12] = (a11 * b07 - a10 * b09 - a12 * b06) * det;
+    out[13] = (a00 * b09 - a01 * b07 + a02 * b06) * det;
+    out[14] = (a31 * b01 - a30 * b03 - a32 * b00) * det;
+    out[15] = (a20 * b03 - a21 * b01 + a22 * b00) * det;
+
+    return out;
+};
+},{}],43:[function(require,module,exports){
+var identity = require('./identity');
+
+module.exports = lookAt;
+
+/**
+ * Generates a look-at matrix with the given eye position, focal point, and up axis
+ *
+ * @param {mat4} out mat4 frustum matrix will be written into
+ * @param {vec3} eye Position of the viewer
+ * @param {vec3} center Point the viewer is looking at
+ * @param {vec3} up vec3 pointing up
+ * @returns {mat4} out
+ */
+function lookAt(out, eye, center, up) {
+    var x0, x1, x2, y0, y1, y2, z0, z1, z2, len,
+        eyex = eye[0],
+        eyey = eye[1],
+        eyez = eye[2],
+        upx = up[0],
+        upy = up[1],
+        upz = up[2],
+        centerx = center[0],
+        centery = center[1],
+        centerz = center[2];
+
+    if (Math.abs(eyex - centerx) < 0.000001 &&
+        Math.abs(eyey - centery) < 0.000001 &&
+        Math.abs(eyez - centerz) < 0.000001) {
+        return identity(out);
+    }
+
+    z0 = eyex - centerx;
+    z1 = eyey - centery;
+    z2 = eyez - centerz;
+
+    len = 1 / Math.sqrt(z0 * z0 + z1 * z1 + z2 * z2);
+    z0 *= len;
+    z1 *= len;
+    z2 *= len;
+
+    x0 = upy * z2 - upz * z1;
+    x1 = upz * z0 - upx * z2;
+    x2 = upx * z1 - upy * z0;
+    len = Math.sqrt(x0 * x0 + x1 * x1 + x2 * x2);
+    if (!len) {
+        x0 = 0;
+        x1 = 0;
+        x2 = 0;
+    } else {
+        len = 1 / len;
+        x0 *= len;
+        x1 *= len;
+        x2 *= len;
+    }
+
+    y0 = z1 * x2 - z2 * x1;
+    y1 = z2 * x0 - z0 * x2;
+    y2 = z0 * x1 - z1 * x0;
+
+    len = Math.sqrt(y0 * y0 + y1 * y1 + y2 * y2);
+    if (!len) {
+        y0 = 0;
+        y1 = 0;
+        y2 = 0;
+    } else {
+        len = 1 / len;
+        y0 *= len;
+        y1 *= len;
+        y2 *= len;
+    }
+
+    out[0] = x0;
+    out[1] = y0;
+    out[2] = z0;
+    out[3] = 0;
+    out[4] = x1;
+    out[5] = y1;
+    out[6] = z1;
+    out[7] = 0;
+    out[8] = x2;
+    out[9] = y2;
+    out[10] = z2;
+    out[11] = 0;
+    out[12] = -(x0 * eyex + x1 * eyey + x2 * eyez);
+    out[13] = -(y0 * eyex + y1 * eyey + y2 * eyez);
+    out[14] = -(z0 * eyex + z1 * eyey + z2 * eyez);
+    out[15] = 1;
+
+    return out;
+};
+},{"./identity":41}],44:[function(require,module,exports){
+arguments[4][2][0].apply(exports,arguments)
+},{"dup":2}],45:[function(require,module,exports){
 arguments[4][3][0].apply(exports,arguments)
-},{"dup":3}],35:[function(require,module,exports){
+},{"dup":3}],46:[function(require,module,exports){
 module.exports = fromMat3
 
 /**
@@ -1822,7 +2194,31 @@ function fromMat3 (out, m) {
   return out
 }
 
-},{}],36:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
+module.exports = invert
+
+/**
+ * Calculates the inverse of a quat
+ *
+ * @param {quat} out the receiving quaternion
+ * @param {quat} a quat to calculate inverse of
+ * @returns {quat} out
+ */
+function invert (out, a) {
+  var a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3],
+    dot = a0 * a0 + a1 * a1 + a2 * a2 + a3 * a3,
+    invDot = dot ? 1.0 / dot : 0
+
+  // TODO: Would be faster to return [0,0,0,0] immediately if dot == 0
+
+  out[0] = -a0 * invDot
+  out[1] = -a1 * invDot
+  out[2] = -a2 * invDot
+  out[3] = a3 * invDot
+  return out
+}
+
+},{}],48:[function(require,module,exports){
 module.exports = multiply
 
 /**
@@ -1844,7 +2240,18 @@ function multiply (out, a, b) {
   return out
 }
 
-},{}],37:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
+/**
+ * Normalize a quat
+ *
+ * @param {quat} out the receiving quaternion
+ * @param {quat} a quaternion to normalize
+ * @returns {quat} out
+ * @function
+ */
+module.exports = require('gl-vec4/normalize')
+
+},{"gl-vec4/normalize":64}],50:[function(require,module,exports){
 /**
  * Scales a quat by a scalar number
  *
@@ -1856,7 +2263,268 @@ function multiply (out, a, b) {
  */
 module.exports = require('gl-vec4/scale')
 
-},{"gl-vec4/scale":38}],38:[function(require,module,exports){
+},{"gl-vec4/scale":65}],51:[function(require,module,exports){
+module.exports = distance
+
+/**
+ * Calculates the euclidian distance between two vec2's
+ *
+ * @param {vec2} a the first operand
+ * @param {vec2} b the second operand
+ * @returns {Number} distance between a and b
+ */
+function distance(a, b) {
+    var x = b[0] - a[0],
+        y = b[1] - a[1]
+    return Math.sqrt(x*x + y*y)
+}
+},{}],52:[function(require,module,exports){
+module.exports = add;
+
+/**
+ * Adds two vec3's
+ *
+ * @param {vec3} out the receiving vector
+ * @param {vec3} a the first operand
+ * @param {vec3} b the second operand
+ * @returns {vec3} out
+ */
+function add(out, a, b) {
+    out[0] = a[0] + b[0]
+    out[1] = a[1] + b[1]
+    out[2] = a[2] + b[2]
+    return out
+}
+},{}],53:[function(require,module,exports){
+module.exports = copy;
+
+/**
+ * Copy the values from one vec3 to another
+ *
+ * @param {vec3} out the receiving vector
+ * @param {vec3} a the source vector
+ * @returns {vec3} out
+ */
+function copy(out, a) {
+    out[0] = a[0]
+    out[1] = a[1]
+    out[2] = a[2]
+    return out
+}
+},{}],54:[function(require,module,exports){
+module.exports = cross;
+
+/**
+ * Computes the cross product of two vec3's
+ *
+ * @param {vec3} out the receiving vector
+ * @param {vec3} a the first operand
+ * @param {vec3} b the second operand
+ * @returns {vec3} out
+ */
+function cross(out, a, b) {
+    var ax = a[0], ay = a[1], az = a[2],
+        bx = b[0], by = b[1], bz = b[2]
+
+    out[0] = ay * bz - az * by
+    out[1] = az * bx - ax * bz
+    out[2] = ax * by - ay * bx
+    return out
+}
+},{}],55:[function(require,module,exports){
+module.exports = dot;
+
+/**
+ * Calculates the dot product of two vec3's
+ *
+ * @param {vec3} a the first operand
+ * @param {vec3} b the second operand
+ * @returns {Number} dot product of a and b
+ */
+function dot(a, b) {
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+}
+},{}],56:[function(require,module,exports){
+module.exports = length;
+
+/**
+ * Calculates the length of a vec3
+ *
+ * @param {vec3} a vector to calculate length of
+ * @returns {Number} length of a
+ */
+function length(a) {
+    var x = a[0],
+        y = a[1],
+        z = a[2]
+    return Math.sqrt(x*x + y*y + z*z)
+}
+},{}],57:[function(require,module,exports){
+module.exports = normalize;
+
+/**
+ * Normalize a vec3
+ *
+ * @param {vec3} out the receiving vector
+ * @param {vec3} a vector to normalize
+ * @returns {vec3} out
+ */
+function normalize(out, a) {
+    var x = a[0],
+        y = a[1],
+        z = a[2]
+    var len = x*x + y*y + z*z
+    if (len > 0) {
+        //TODO: evaluate use of glm_invsqrt here?
+        len = 1 / Math.sqrt(len)
+        out[0] = a[0] * len
+        out[1] = a[1] * len
+        out[2] = a[2] * len
+    }
+    return out
+}
+},{}],58:[function(require,module,exports){
+module.exports = scale;
+
+/**
+ * Scales a vec3 by a scalar number
+ *
+ * @param {vec3} out the receiving vector
+ * @param {vec3} a the vector to scale
+ * @param {Number} b amount to scale the vector by
+ * @returns {vec3} out
+ */
+function scale(out, a, b) {
+    out[0] = a[0] * b
+    out[1] = a[1] * b
+    out[2] = a[2] * b
+    return out
+}
+},{}],59:[function(require,module,exports){
+module.exports = scaleAndAdd;
+
+/**
+ * Adds two vec3's after scaling the second operand by a scalar value
+ *
+ * @param {vec3} out the receiving vector
+ * @param {vec3} a the first operand
+ * @param {vec3} b the second operand
+ * @param {Number} scale the amount to scale b by before adding
+ * @returns {vec3} out
+ */
+function scaleAndAdd(out, a, b, scale) {
+    out[0] = a[0] + (b[0] * scale)
+    out[1] = a[1] + (b[1] * scale)
+    out[2] = a[2] + (b[2] * scale)
+    return out
+}
+},{}],60:[function(require,module,exports){
+module.exports = set;
+
+/**
+ * Set the components of a vec3 to the given values
+ *
+ * @param {vec3} out the receiving vector
+ * @param {Number} x X component
+ * @param {Number} y Y component
+ * @param {Number} z Z component
+ * @returns {vec3} out
+ */
+function set(out, x, y, z) {
+    out[0] = x
+    out[1] = y
+    out[2] = z
+    return out
+}
+},{}],61:[function(require,module,exports){
+module.exports = squaredDistance;
+
+/**
+ * Calculates the squared euclidian distance between two vec3's
+ *
+ * @param {vec3} a the first operand
+ * @param {vec3} b the second operand
+ * @returns {Number} squared distance between a and b
+ */
+function squaredDistance(a, b) {
+    var x = b[0] - a[0],
+        y = b[1] - a[1],
+        z = b[2] - a[2]
+    return x*x + y*y + z*z
+}
+},{}],62:[function(require,module,exports){
+module.exports = subtract;
+
+/**
+ * Subtracts vector b from vector a
+ *
+ * @param {vec3} out the receiving vector
+ * @param {vec3} a the first operand
+ * @param {vec3} b the second operand
+ * @returns {vec3} out
+ */
+function subtract(out, a, b) {
+    out[0] = a[0] - b[0]
+    out[1] = a[1] - b[1]
+    out[2] = a[2] - b[2]
+    return out
+}
+},{}],63:[function(require,module,exports){
+module.exports = transformQuat;
+
+/**
+ * Transforms the vec3 with a quat
+ *
+ * @param {vec3} out the receiving vector
+ * @param {vec3} a the vector to transform
+ * @param {quat} q quaternion to transform with
+ * @returns {vec3} out
+ */
+function transformQuat(out, a, q) {
+    // benchmarks: http://jsperf.com/quaternion-transform-vec3-implementations
+
+    var x = a[0], y = a[1], z = a[2],
+        qx = q[0], qy = q[1], qz = q[2], qw = q[3],
+
+        // calculate quat * vec
+        ix = qw * x + qy * z - qz * y,
+        iy = qw * y + qz * x - qx * z,
+        iz = qw * z + qx * y - qy * x,
+        iw = -qx * x - qy * y - qz * z
+
+    // calculate result * inverse quat
+    out[0] = ix * qw + iw * -qx + iy * -qz - iz * -qy
+    out[1] = iy * qw + iw * -qy + iz * -qx - ix * -qz
+    out[2] = iz * qw + iw * -qz + ix * -qy - iy * -qx
+    return out
+}
+},{}],64:[function(require,module,exports){
+module.exports = normalize
+
+/**
+ * Normalize a vec4
+ *
+ * @param {vec4} out the receiving vector
+ * @param {vec4} a vector to normalize
+ * @returns {vec4} out
+ */
+function normalize (out, a) {
+  var x = a[0],
+    y = a[1],
+    z = a[2],
+    w = a[3]
+  var len = x * x + y * y + z * z + w * w
+  if (len > 0) {
+    len = 1 / Math.sqrt(len)
+    out[0] = x * len
+    out[1] = y * len
+    out[2] = z * len
+    out[3] = w * len
+  }
+  return out
+}
+
+},{}],65:[function(require,module,exports){
 module.exports = scale
 
 /**
@@ -1875,7 +2543,48 @@ function scale (out, a, b) {
   return out
 }
 
-},{}],39:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
+module.exports = set
+
+/**
+ * Set the components of a vec4 to the given values
+ *
+ * @param {vec4} out the receiving vector
+ * @param {Number} x X component
+ * @param {Number} y Y component
+ * @param {Number} z Z component
+ * @param {Number} w W component
+ * @returns {vec4} out
+ */
+function set (out, x, y, z, w) {
+  out[0] = x
+  out[1] = y
+  out[2] = z
+  out[3] = w
+  return out
+}
+
+},{}],67:[function(require,module,exports){
+module.exports = transformMat4
+
+/**
+ * Transforms the vec4 with a mat4.
+ *
+ * @param {vec4} out the receiving vector
+ * @param {vec4} a the vector to transform
+ * @param {mat4} m matrix to transform with
+ * @returns {vec4} out
+ */
+function transformMat4 (out, a, m) {
+  var x = a[0], y = a[1], z = a[2], w = a[3]
+  out[0] = m[0] * x + m[4] * y + m[8] * z + m[12] * w
+  out[1] = m[1] * x + m[5] * y + m[9] * z + m[13] * w
+  out[2] = m[2] * x + m[6] * y + m[10] * z + m[14] * w
+  out[3] = m[3] * x + m[7] * y + m[11] * z + m[15] * w
+  return out
+}
+
+},{}],68:[function(require,module,exports){
 (function (global){
 var topLevel = typeof global !== 'undefined' ? global :
     typeof window !== 'undefined' ? window : {}
@@ -1894,7 +2603,7 @@ if (typeof document !== 'undefined') {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"min-document":25}],40:[function(require,module,exports){
+},{"min-document":25}],69:[function(require,module,exports){
 (function (global){
 if (typeof window !== "undefined") {
     module.exports = window;
@@ -1907,7 +2616,7 @@ if (typeof window !== "undefined") {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],41:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1930,7 +2639,7 @@ function Individual(key, value) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],42:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 'use strict';
 
 var Individual = require('./index.js');
@@ -1954,7 +2663,7 @@ function OneVersion(moduleName, version, defaultValue) {
     return Individual(key, defaultValue);
 }
 
-},{"./index.js":41}],43:[function(require,module,exports){
+},{"./index.js":70}],72:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -1979,7 +2688,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],44:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 module.exports = isFunction
 
 var toString = Object.prototype.toString
@@ -1996,21 +2705,21 @@ function isFunction (fn) {
       fn === window.prompt))
 };
 
-},{}],45:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 'use strict';
 module.exports = function (x) {
 	var type = typeof x;
 	return x !== null && (type === 'object' || type === 'function');
 };
 
-},{}],46:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 "use strict";
 
 module.exports = function isObject(x) {
 	return typeof x === "object" && x !== null;
 };
 
-},{}],47:[function(require,module,exports){
+},{}],76:[function(require,module,exports){
 var raf = require("raf")
 var TypedError = require("error/typed")
 
@@ -2092,7 +2801,7 @@ function main(initialState, view, opts) {
     }
 }
 
-},{"error/typed":29,"raf":49}],48:[function(require,module,exports){
+},{"error/typed":36,"raf":78}],77:[function(require,module,exports){
 (function (process){
 // Generated by CoffeeScript 1.6.3
 (function() {
@@ -2132,7 +2841,7 @@ function main(initialState, view, opts) {
 */
 
 }).call(this,require('_process'))
-},{"_process":52}],49:[function(require,module,exports){
+},{"_process":91}],78:[function(require,module,exports){
 var now = require('performance-now')
   , global = typeof window === 'undefined' ? {} : window
   , vendors = ['moz', 'webkit']
@@ -2214,7 +2923,409 @@ module.exports.cancel = function() {
   caf.apply(global, arguments)
 }
 
-},{"performance-now":48}],50:[function(require,module,exports){
+},{"performance-now":77}],79:[function(require,module,exports){
+var rootPosition = { left: 0, top: 0 }
+
+module.exports = mouseEventOffset
+function mouseEventOffset (ev, target, out) {
+  target = target || ev.currentTarget || ev.srcElement
+  if (!Array.isArray(out)) {
+    out = [ 0, 0 ]
+  }
+  var cx = ev.clientX || 0
+  var cy = ev.clientY || 0
+  var rect = getBoundingClientOffset(target)
+  out[0] = cx - rect.left
+  out[1] = cy - rect.top
+  return out
+}
+
+function getBoundingClientOffset (element) {
+  if (element === window ||
+      element === document ||
+      element === document.body) {
+    return rootPosition
+  } else {
+    return element.getBoundingClientRect()
+  }
+}
+
+},{}],80:[function(require,module,exports){
+'use strict'
+
+var toPX = require('to-px')
+
+module.exports = mouseWheelListen
+
+function mouseWheelListen(element, callback, noScroll) {
+  if(typeof element === 'function') {
+    noScroll = !!callback
+    callback = element
+    element = window
+  }
+  var lineHeight = toPX('ex', element)
+  var listener = function(ev) {
+    if(noScroll) {
+      ev.preventDefault()
+    }
+    var dx = ev.deltaX || 0
+    var dy = ev.deltaY || 0
+    var dz = ev.deltaZ || 0
+    var mode = ev.deltaMode
+    var scale = 1
+    switch(mode) {
+      case 1:
+        scale = lineHeight
+      break
+      case 2:
+        scale = window.innerHeight
+      break
+    }
+    dx *= scale
+    dy *= scale
+    dz *= scale
+    if(dx || dy || dz) {
+      return callback(dx, dy, dz, ev)
+    }
+  }
+  element.addEventListener('wheel', listener)
+  return listener
+}
+
+},{"to-px":103}],81:[function(require,module,exports){
+var defined = require('defined')
+var clamp = require('clamp')
+
+var inputEvents = require('./lib/input')
+var quatFromVec3 = require('quat-from-unit-vec3')
+var quatInvert = require('gl-quat/invert')
+
+var glVec3 = {
+  length: require('gl-vec3/length'),
+  add: require('gl-vec3/add'),
+  subtract: require('gl-vec3/subtract'),
+  transformQuat: require('gl-vec3/transformQuat'),
+  copy: require('gl-vec3/copy'),
+  normalize: require('gl-vec3/normalize'),
+  cross: require('gl-vec3/cross')
+}
+
+var Y_UP = [0, 1, 0]
+var EPSILON = Math.pow(2, -23)
+var tmpVec3 = [0, 0, 0]
+
+module.exports = createOrbitControls
+function createOrbitControls (opt) {
+  opt = opt || {}
+
+  var inputDelta = [0, 0, 0] // x, y, zoom
+  var offset = [0, 0, 0]
+
+  var upQuat = [0, 0, 0, 1]
+  var upQuatInverse = upQuat.slice()
+
+  var controls = {
+    update: update,
+    copyInto: copyInto,
+
+    position: opt.position ? opt.position.slice() : [0, 0, 1],
+    direction: [0, 0, -1],
+    up: opt.up ? opt.up.slice() : [0, 1, 0],
+
+    target: opt.target ? opt.target.slice() : [0, 0, 0],
+    phi: defined(opt.phi, Math.PI / 2),
+    theta: opt.theta || 0,
+    distance: defined(opt.distance, 1),
+    damping: defined(opt.damping, 0.25),
+    rotateSpeed: defined(opt.rotateSpeed, 0.28),
+    zoomSpeed: defined(opt.zoomSpeed, 0.0075),
+    pinchSpeed: defined(opt.pinchSpeed, 0.0075),
+
+    pinch: opt.pinching !== false,
+    zoom: opt.zoom !== false,
+    rotate: opt.rotate !== false,
+
+    phiBounds: opt.phiBounds || [0, Math.PI],
+    thetaBounds: opt.thetaBounds || [-Infinity, Infinity],
+    distanceBounds: opt.distanceBounds || [0, Infinity]
+  }
+
+  // Compute distance if not defined in user options
+  if (typeof opt.distance !== 'number') {
+    glVec3.subtract(tmpVec3, controls.position, controls.target)
+    controls.distance = glVec3.length(tmpVec3)
+  }
+
+  // Apply an initial phi and theta
+  applyPhiTheta()
+
+  const input = inputEvents({
+    parent: opt.parent || window,
+    element: opt.element,
+    rotate: opt.rotate !== false ? inputRotate : null,
+    zoom: opt.zoom !== false ? inputZoom : null,
+    pinch: opt.pinch !== false ? inputPinch : null
+  })
+
+  controls.enable = input.enable
+  controls.disable = input.disable
+
+  return controls
+
+  function inputRotate (dx, dy) {
+    var PI2 = Math.PI * 2
+    inputDelta[0] -= PI2 * dx * controls.rotateSpeed
+    inputDelta[1] -= PI2 * dy * controls.rotateSpeed
+  }
+
+  function inputZoom (delta) {
+    inputDelta[2] += delta * controls.zoomSpeed
+  }
+
+  function inputPinch (delta) {
+    inputDelta[2] -= delta * controls.pinchSpeed
+  }
+
+  function update () {
+    var cameraUp = controls.up || Y_UP
+    quatFromVec3(upQuat, cameraUp, Y_UP)
+    quatInvert(upQuatInverse, upQuat)
+
+    var distance = controls.distance
+
+    glVec3.subtract(offset, controls.position, controls.target)
+    glVec3.transformQuat(offset, offset, upQuat)
+
+    var theta = Math.atan2(offset[0], offset[2])
+    var phi = Math.atan2(Math.sqrt(offset[0] * offset[0] + offset[2] * offset[2]), offset[1])
+
+    theta += inputDelta[0]
+    phi += inputDelta[1]
+
+    theta = clamp(theta, controls.thetaBounds[0], controls.thetaBounds[1])
+    phi = clamp(phi, controls.phiBounds[0], controls.phiBounds[1])
+    phi = clamp(phi, EPSILON, Math.PI - EPSILON)
+
+    distance += inputDelta[2]
+    distance = clamp(distance, controls.distanceBounds[0], controls.distanceBounds[1])
+
+    var radius = Math.abs(distance) <= EPSILON ? EPSILON : distance
+    offset[0] = radius * Math.sin(phi) * Math.sin(theta)
+    offset[1] = radius * Math.cos(phi)
+    offset[2] = radius * Math.sin(phi) * Math.cos(theta)
+
+    controls.phi = phi
+    controls.theta = theta
+    controls.distance = distance
+
+    glVec3.transformQuat(offset, offset, upQuatInverse)
+    glVec3.add(controls.position, controls.target, offset)
+    camLookAt(controls.direction, cameraUp, controls.position, controls.target)
+
+    var damp = typeof controls.damping === 'number' ? controls.damping : 1
+    for (var i = 0; i < inputDelta.length; i++) {
+      inputDelta[i] *= 1 - damp
+    }
+  }
+
+  function copyInto (position, direction, up) {
+    if (position) glVec3.copy(position, controls.position)
+    if (direction) glVec3.copy(direction, controls.direction)
+    if (up) glVec3.copy(up, controls.up)
+  }
+
+  function applyPhiTheta () {
+    var dist = Math.max(EPSILON, controls.distance)
+    controls.position[0] = dist * Math.sin(controls.phi) * Math.sin(controls.theta)
+    controls.position[1] = dist * Math.cos(controls.phi)
+    controls.position[2] = dist * Math.sin(controls.phi) * Math.cos(controls.theta)
+    glVec3.add(controls.position, controls.position, controls.target)
+  }
+}
+
+function camLookAt (direction, up, position, target) {
+  glVec3.copy(direction, target)
+  glVec3.subtract(direction, direction, position)
+  glVec3.normalize(direction, direction)
+}
+
+},{"./lib/input":82,"clamp":31,"defined":32,"gl-quat/invert":47,"gl-vec3/add":52,"gl-vec3/copy":53,"gl-vec3/cross":54,"gl-vec3/length":56,"gl-vec3/normalize":57,"gl-vec3/subtract":62,"gl-vec3/transformQuat":63,"quat-from-unit-vec3":92}],82:[function(require,module,exports){
+var mouseWheel = require('mouse-wheel')
+var eventOffset = require('mouse-event-offset')
+var createPinch = require('touch-pinch')
+
+module.exports = inputEvents
+function inputEvents (opt) {
+  var element = opt.element || window
+  var parent = opt.parent || element
+  var mouseStart = [0, 0]
+  var dragging = false
+  var tmp = [0, 0]
+  var tmp2 = [0, 0]
+  var pinch
+
+  var zoomFn = opt.zoom
+  var rotateFn = opt.rotate
+  var pinchFn = opt.pinch
+  var mouseWheelListener
+  var enabled = false
+  enable()
+
+  return {
+    enable: enable,
+    disable: disable
+  }
+
+  function enable () {
+    if (enabled) return
+    enabled = true
+    if (zoomFn) {
+      mouseWheelListener = mouseWheel(element, function (dx, dy) {
+        zoomFn(dy)
+      }, true)
+    }
+
+    if (rotateFn) {
+      // for dragging to work outside canvas bounds,
+      // mouse events have to be added to parent
+      parent.addEventListener('mousedown', onInputDown, false)
+      parent.addEventListener('mousemove', onInputMove, false)
+      parent.addEventListener('mouseup', onInputUp, false)
+    }
+
+    if (rotateFn || pinchFn) {
+      pinch = createPinch(element)
+
+      // don't allow simulated mouse events
+      element.addEventListener('touchstart', preventDefault, false)
+
+      if (rotateFn) {
+        element.addEventListener('touchmove', onTouchMove, false)
+        pinch.on('place', onPinchPlace)
+        pinch.on('lift', onPinchLift)
+      }
+      if (pinchFn) {
+        pinch.on('change', onPinchChange)
+      }
+    }
+  }
+
+  function disable () {
+    if (!enabled) return
+    enabled = false
+    if (mouseWheelListener) {
+      element.removeEventListener('wheel', mouseWheelListener)
+    }
+    if (pinch) {
+      pinch.disable()
+      element.removeEventListener('touchstart', preventDefault, false)
+      if (rotateFn) {
+        element.removeEventListener('touchmove', onTouchMove, false)
+      }
+    }
+    if (rotateFn) {
+      parent.removeEventListener('mousedown', onInputDown, false)
+      parent.removeEventListener('mousemove', onInputMove, false)
+      parent.removeEventListener('mouseup', onInputUp, false)
+    }
+  }
+
+  function preventDefault (ev) {
+    ev.preventDefault()
+  }
+
+  function onTouchMove (ev) {
+    if (!dragging || isPinching()) return
+
+    // find currently active finger
+    for (var i = 0; i < ev.changedTouches.length; i++) {
+      var changed = ev.changedTouches[i]
+      var idx = pinch.indexOfTouch(changed)
+      // if pinch is disabled but rotate enabled,
+      // only allow first finger to affect rotation
+      var allow = pinchFn ? idx !== -1 : idx === 0
+      if (allow) {
+        onInputMove(changed)
+        break
+      }
+    }
+  }
+
+  function onPinchPlace (newFinger, lastFinger) {
+    dragging = !isPinching()
+    if (dragging) {
+      var firstFinger = lastFinger || newFinger
+      onInputDown(firstFinger)
+    }
+  }
+
+  function onPinchLift (lifted, remaining) {
+    dragging = !isPinching()
+    if (dragging && remaining) {
+      eventOffset(remaining, element, mouseStart)
+    }
+  }
+
+  function isPinching () {
+    return pinch.pinching && pinchFn
+  }
+
+  function onPinchChange (current, prev) {
+    pinchFn(current - prev)
+  }
+
+  function onInputDown (ev) {
+    eventOffset(ev, element, mouseStart)
+    if (insideBounds(mouseStart)) {
+      dragging = true
+    }
+  }
+
+  function onInputUp () {
+    dragging = false
+  }
+
+  function onInputMove (ev) {
+    var end = eventOffset(ev, element, tmp)
+    if (pinch && isPinching()) {
+      mouseStart = end
+      return
+    }
+    if (!dragging) return
+    var rect = getClientSize(tmp2)
+    var dx = (end[0] - mouseStart[0]) / rect[0]
+    var dy = (end[1] - mouseStart[1]) / rect[1]
+    rotateFn(dx, dy)
+    mouseStart[0] = end[0]
+    mouseStart[1] = end[1]
+  }
+
+  function insideBounds (pos) {
+    if (element === window ||
+        element === document ||
+        element === document.body) {
+      return true
+    } else {
+      var rect = element.getBoundingClientRect()
+      return pos[0] >= 0 && pos[1] >= 0 &&
+        pos[0] < rect.width && pos[1] < rect.height
+    }
+  }
+
+  function getClientSize (out) {
+    var source = element
+    if (source === window ||
+        source === document ||
+        source === document.body) {
+      source = document.documentElement
+    }
+    out[0] = source.clientWidth
+    out[1] = source.clientHeight
+    return out
+  }
+}
+
+},{"mouse-event-offset":79,"mouse-wheel":80,"touch-pinch":104}],83:[function(require,module,exports){
 var trim = require('trim')
   , forEach = require('for-each')
   , isArray = function(arg) {
@@ -2246,7 +3357,18 @@ module.exports = function (headers) {
 
   return result
 }
-},{"for-each":32,"trim":59}],51:[function(require,module,exports){
+},{"for-each":39,"trim":106}],84:[function(require,module,exports){
+module.exports = function parseUnit(str, out) {
+    if (!out)
+        out = [ 0, '' ]
+
+    str = String(str)
+    var num = parseFloat(str, 10)
+    out[0] = num
+    out[1] = str.match(/[\d.\-\+]*\s*(.*)/)[1] || ''
+    return out
+}
+},{}],85:[function(require,module,exports){
 (function (process){
 // Generated by CoffeeScript 1.7.1
 (function() {
@@ -2282,7 +3404,200 @@ module.exports = function (headers) {
 }).call(this);
 
 }).call(this,require('_process'))
-},{"_process":52}],52:[function(require,module,exports){
+},{"_process":91}],86:[function(require,module,exports){
+module.exports = require('./lib/camera-perspective')
+
+},{"./lib/camera-perspective":89}],87:[function(require,module,exports){
+var assign = require('object-assign')
+var Ray = require('ray-3d')
+
+var cameraProject = require('camera-project')
+var cameraUnproject = require('camera-unproject')
+var cameraLookAt = require('./camera-look-at')
+var cameraPickRay = require('camera-picking-ray')
+
+var add = require('gl-vec3/add')
+var multiply4x4 = require('gl-mat4/multiply')
+var invert4x4 = require('gl-mat4/invert')
+var identity4x4 = require('gl-mat4/identity')
+var setVec3 = require('gl-vec3/set')
+
+// this could also be useful for a orthographic camera
+module.exports = function cameraBase (opt) {
+  opt = opt || {}
+
+  var camera = {
+    projection: identity4x4([]),
+    view: identity4x4([]),
+    position: opt.position || [0, 0, 0],
+    direction: opt.direction || [0, 0, -1],
+    up: opt.up || [0, 1, 0],
+    viewport: opt.viewport || [ -1, -1, 1, 1 ],
+    projView: identity4x4([]),
+    invProjView: identity4x4([])
+  }
+
+  function update () {
+    multiply4x4(camera.projView, camera.projection, camera.view)
+    var valid = invert4x4(camera.invProjView, camera.projView)
+    if (!valid) {
+      throw new Error('camera projection * view is non-invertible')
+    }
+  }
+
+  function lookAt (target) {
+    cameraLookAt(camera.direction, camera.up, camera.position, target)
+    return camera
+  }
+
+  function identity () {
+    setVec3(camera.position, 0, 0, 0)
+    setVec3(camera.direction, 0, 0, -1)
+    setVec3(camera.up, 0, 1, 0)
+    identity4x4(camera.view)
+    identity4x4(camera.projection)
+    identity4x4(camera.projView)
+    identity4x4(camera.invProjView)
+    return camera
+  }
+
+  function translate (vec) {
+    add(camera.position, camera.position, vec)
+    return camera
+  }
+
+  function createPickingRay (mouse) {
+    var ray = new Ray()
+    cameraPickRay(ray.origin, ray.direction, mouse, camera.viewport, camera.invProjView)
+    return ray
+  }
+
+  function project (point) {
+    return cameraProject([], point, camera.viewport, camera.projView)
+  }
+
+  function unproject (point) {
+    return cameraUnproject([], point, camera.viewport, camera.invProjView)
+  }
+
+  return assign(camera, {
+    translate: translate,
+    identity: identity,
+    lookAt: lookAt,
+    createPickingRay: createPickingRay,
+    update: update,
+    project: project,
+    unproject: unproject
+  })
+}
+
+},{"./camera-look-at":88,"camera-picking-ray":27,"camera-project":28,"camera-unproject":29,"gl-mat4/identity":41,"gl-mat4/invert":42,"gl-mat4/multiply":44,"gl-vec3/add":52,"gl-vec3/set":60,"object-assign":90,"ray-3d":95}],88:[function(require,module,exports){
+// could be modularized...
+var cross = require('gl-vec3/cross')
+var sub = require('gl-vec3/subtract')
+var normalize = require('gl-vec3/normalize')
+var copy = require('gl-vec3/copy')
+var dot = require('gl-vec3/dot')
+var scale = require('gl-vec3/scale')
+
+var tmp = [0, 0, 0]
+var epsilon = 0.000000001
+
+// modifies direction & up vectors in place
+module.exports = function (direction, up, position, target) {
+  sub(tmp, target, position)
+  normalize(tmp, tmp)
+  var isZero = tmp[0] === 0 && tmp[1] === 0 && tmp[2] === 0
+  if (!isZero) {
+    var d = dot(tmp, up)
+    if (Math.abs(d - 1) < epsilon) { // collinear
+      scale(up, direction, -1)
+    } else if (Math.abs(d + 1) < epsilon) { // collinear opposite
+      copy(up, direction)
+    }
+    copy(direction, tmp)
+
+    // normalize up vector
+    cross(tmp, direction, up)
+    normalize(tmp, tmp)
+
+    cross(up, tmp, direction)
+    normalize(up, up)
+  }
+}
+
+},{"gl-vec3/copy":53,"gl-vec3/cross":54,"gl-vec3/dot":55,"gl-vec3/normalize":57,"gl-vec3/scale":58,"gl-vec3/subtract":62}],89:[function(require,module,exports){
+var create = require('./camera-base')
+var assign = require('object-assign')
+var defined = require('defined')
+
+var perspective = require('gl-mat4/perspective')
+var lookAt4x4 = require('gl-mat4/lookAt')
+var add = require('gl-vec3/add')
+
+module.exports = function cameraPerspective (opt) {
+  opt = opt || {}
+
+  var camera = create(opt)
+  camera.fov = defined(opt.fov, Math.PI / 4)
+  camera.near = defined(opt.near, 1)
+  camera.far = defined(opt.far, 100)
+
+  var center = [0, 0, 0]
+
+  var updateCombined = camera.update
+
+  function update () {
+    var aspect = camera.viewport[2] / camera.viewport[3]
+
+    // build projection matrix
+    perspective(camera.projection, camera.fov, aspect, Math.abs(camera.near), Math.abs(camera.far))
+
+    // build view matrix
+    add(center, camera.position, camera.direction)
+    lookAt4x4(camera.view, camera.position, center, camera.up)
+
+    // update projection * view and invert
+    updateCombined()
+    return camera
+  }
+
+  // set it up initially from constructor options
+  update()
+  return assign(camera, {
+    update: update
+  })
+}
+
+},{"./camera-base":87,"defined":32,"gl-mat4/lookAt":43,"gl-mat4/perspective":45,"gl-vec3/add":52,"object-assign":90}],90:[function(require,module,exports){
+'use strict';
+
+function ToObject(val) {
+	if (val == null) {
+		throw new TypeError('Object.assign cannot be called with null or undefined');
+	}
+
+	return Object(val);
+}
+
+module.exports = Object.assign || function (target, source) {
+	var from;
+	var keys;
+	var to = ToObject(target);
+
+	for (var s = 1; s < arguments.length; s++) {
+		from = arguments[s];
+		keys = Object.keys(Object(from));
+
+		for (var i = 0; i < keys.length; i++) {
+			to[keys[i]] = from[keys[i]];
+		}
+	}
+
+	return to;
+};
+
+},{}],91:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -2464,7 +3779,46 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],53:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
+// Original implementation:
+// http://lolengine.net/blog/2014/02/24/quaternion-from-two-vectors-final
+
+var dot = require('gl-vec3/dot')
+var set = require('gl-vec3/set')
+var normalize = require('gl-quat/normalize')
+var cross = require('gl-vec3/cross')
+
+var tmp = [0, 0, 0]
+var EPS = 1e-6
+
+module.exports = quatFromUnitVec3
+function quatFromUnitVec3 (out, a, b) {
+  // assumes a and b are normalized
+  var r = dot(a, b) + 1
+  if (r < EPS) {
+    /* If u and v are exactly opposite, rotate 180 degrees
+     * around an arbitrary orthogonal axis. Axis normalisation
+     * can happen later, when we normalise the quaternion. */
+    r = 0
+    if (Math.abs(a[0]) > Math.abs(a[2])) {
+      set(tmp, -a[1], a[0], 0)
+    } else {
+      set(tmp, 0, -a[2], a[1])
+    }
+  } else {
+    /* Otherwise, build quaternion the standard way. */
+    cross(tmp, a, b)
+  }
+
+  out[0] = tmp[0]
+  out[1] = tmp[1]
+  out[2] = tmp[2]
+  out[3] = r
+  normalize(out, out)
+  return out
+}
+
+},{"gl-quat/normalize":49,"gl-vec3/cross":54,"gl-vec3/dot":55,"gl-vec3/set":60}],93:[function(require,module,exports){
 var inherits = require('inherits')
 var EventEmitter = require('events').EventEmitter
 var now = require('right-now')
@@ -2509,7 +3863,7 @@ Engine.prototype.tick = function() {
     this.emit('tick', dt)
     this.last = time
 }
-},{"events":31,"inherits":43,"raf":54,"right-now":55}],54:[function(require,module,exports){
+},{"events":38,"inherits":72,"raf":94,"right-now":100}],94:[function(require,module,exports){
 (function (global){
 var now = require('performance-now')
   , root = typeof window === 'undefined' ? global : window
@@ -2585,7 +3939,203 @@ module.exports.polyfill = function() {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"performance-now":51}],55:[function(require,module,exports){
+},{"performance-now":85}],95:[function(require,module,exports){
+var intersectRayTriangle = require('ray-triangle-intersection')
+var intersectRayPlane = require('ray-plane-intersection')
+var intersectRaySphere = require('ray-sphere-intersection')
+var intersectRayBox = require('ray-aabb-intersection')
+var copy3 = require('gl-vec3/copy')
+
+var tmpTriangle = [
+  [0, 0, 0],
+  [0, 0, 0],
+  [0, 0, 0]
+]
+
+var tmp3 = [0, 0, 0]
+
+module.exports = Ray
+function Ray (origin, direction) {
+  this.origin = origin || [ 0, 0, 0 ]
+  this.direction = direction || [ 0, 0, -1 ]
+}
+
+Ray.prototype.set = function (origin, direction) {
+  this.origin = origin
+  this.direction = direction
+}
+
+Ray.prototype.copy = function (other) {
+  copy3(this.origin, other.origin)
+  copy3(this.direction, other.direction)
+}
+
+Ray.prototype.clone = function () {
+  var other = new Ray()
+  other.copy(this)
+  return other
+}
+
+Ray.prototype.intersectsSphere = function (center, radius) {
+  return intersectRaySphere(tmp3, this.origin, this.direction, center, radius)
+}
+
+Ray.prototype.intersectsPlane = function (normal, distance) {
+  return intersectRayPlane(tmp3, this.origin, this.direction, normal, distance)
+}
+
+Ray.prototype.intersectsTriangle = function (triangle) {
+  return intersectRayTriangle(tmp3, this.origin, this.direction, triangle)
+}
+
+Ray.prototype.intersectsBox = function (aabb) {
+  return intersectRayBox(tmp3, this.origin, this.direction, aabb)
+}
+
+Ray.prototype.intersectsTriangleCell = function (cell, positions) {
+  var a = cell[0], b = cell[1], c = cell[2]
+  tmpTriangle[0] = positions[a]
+  tmpTriangle[1] = positions[b]
+  tmpTriangle[2] = positions[c]
+  return this.intersectsTriangle(tmpTriangle)
+}
+
+},{"gl-vec3/copy":53,"ray-aabb-intersection":96,"ray-plane-intersection":97,"ray-sphere-intersection":98,"ray-triangle-intersection":99}],96:[function(require,module,exports){
+module.exports = intersection
+module.exports.distance = distance
+
+function intersection (out, ro, rd, aabb) {
+  var d = distance(ro, rd, aabb)
+  if (d === Infinity) {
+    out = null
+  } else {
+    out = out || []
+    for (var i = 0; i < ro.length; i++) {
+      out[i] = ro[i] + rd[i] * d
+    }
+  }
+
+  return out
+}
+
+function distance (ro, rd, aabb) {
+  var dims = ro.length
+  var lo = -Infinity
+  var hi = +Infinity
+
+  for (var i = 0; i < dims; i++) {
+    var dimLo = (aabb[0][i] - ro[i]) / rd[i]
+    var dimHi = (aabb[1][i] - ro[i]) / rd[i]
+
+    if (dimLo > dimHi) {
+      var tmp = dimLo
+      dimLo = dimHi
+      dimHi = tmp
+    }
+
+    if (dimHi < lo || dimLo > hi) {
+      return Infinity
+    }
+
+    if (dimLo > lo) lo = dimLo
+    if (dimHi < hi) hi = dimHi
+  }
+
+  return lo > hi ? Infinity : lo
+}
+
+},{}],97:[function(require,module,exports){
+var dot = require('gl-vec3/dot')
+var add = require('gl-vec3/add')
+var scale = require('gl-vec3/scale')
+var copy = require('gl-vec3/copy')
+
+module.exports = intersectRayPlane
+
+var v0 = [0, 0, 0]
+
+function intersectRayPlane(out, origin, direction, normal, dist) {
+  var denom = dot(direction, normal)
+  if (denom !== 0) {
+    var t = -(dot(origin, normal) + dist) / denom
+    if (t < 0) {
+      return null
+    }
+    scale(v0, direction, t)
+    return add(out, origin, v0)
+  } else if (dot(normal, origin) + dist === 0) {
+    return copy(out, origin)
+  } else {
+    return null
+  }
+}
+
+},{"gl-vec3/add":52,"gl-vec3/copy":53,"gl-vec3/dot":55,"gl-vec3/scale":58}],98:[function(require,module,exports){
+var squaredDist = require('gl-vec3/squaredDistance')
+var dot = require('gl-vec3/dot')
+var sub = require('gl-vec3/subtract')
+var scaleAndAdd = require('gl-vec3/scaleAndAdd')
+var scale = require('gl-vec3/scale')
+var add = require('gl-vec3/add')
+
+var tmp = [0, 0, 0]
+
+module.exports = intersectRaySphere
+function intersectRaySphere (out, origin, direction, center, radius) {
+  sub(tmp, center, origin)
+  var len = dot(direction, tmp)
+  if (len < 0) { // sphere is behind ray
+    return null
+  }
+
+  scaleAndAdd(tmp, origin, direction, len)
+  var dSq = squaredDist(center, tmp)
+  var rSq = radius * radius
+  if (dSq > rSq) {
+    return null
+  }
+
+  scale(out, direction, len - Math.sqrt(rSq - dSq))
+  return add(out, out, origin)
+}
+
+},{"gl-vec3/add":52,"gl-vec3/dot":55,"gl-vec3/scale":58,"gl-vec3/scaleAndAdd":59,"gl-vec3/squaredDistance":61,"gl-vec3/subtract":62}],99:[function(require,module,exports){
+var cross = require('gl-vec3/cross');
+var dot = require('gl-vec3/dot');
+var sub = require('gl-vec3/subtract');
+
+var EPSILON = 0.000001;
+var edge1 = [0,0,0];
+var edge2 = [0,0,0];
+var tvec = [0,0,0];
+var pvec = [0,0,0];
+var qvec = [0,0,0];
+
+module.exports = intersectTriangle;
+
+function intersectTriangle (out, pt, dir, tri) {
+    sub(edge1, tri[1], tri[0]);
+    sub(edge2, tri[2], tri[0]);
+    
+    cross(pvec, dir, edge2);
+    var det = dot(edge1, pvec);
+    
+    if (det < EPSILON) return null;
+    sub(tvec, pt, tri[0]);
+    var u = dot(tvec, pvec);
+    if (u < 0 || u > det) return null;
+    cross(qvec, tvec, edge1);
+    var v = dot(dir, qvec);
+    if (v < 0 || u + v > det) return null;
+    
+    var t = dot(edge2, qvec) / det;
+    out[0] = pt[0] + t * dir[0];
+    out[1] = pt[1] + t * dir[1];
+    out[2] = pt[2] + t * dir[2];
+    return out;
+}
+
+},{"gl-vec3/cross":54,"gl-vec3/dot":55,"gl-vec3/subtract":62}],100:[function(require,module,exports){
 (function (global){
 module.exports =
   global.performance &&
@@ -2596,7 +4146,7 @@ module.exports =
   }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],56:[function(require,module,exports){
+},{}],101:[function(require,module,exports){
 var Listeners = require('ear')
 var dotProp = require('dot-prop')
 var extend = require('xtend')
@@ -2633,7 +4183,7 @@ State.prototype.del = function (key) {
   this.listeners(this.get())
 }
 
-},{"dot-prop":27,"ear":28,"traverse":58,"xtend":90}],57:[function(require,module,exports){
+},{"dot-prop":33,"ear":35,"traverse":105,"xtend":137}],102:[function(require,module,exports){
 var nargs = /\{([0-9a-zA-Z]+)\}/g
 var slice = Array.prototype.slice
 
@@ -2669,7 +4219,218 @@ function template(string) {
     })
 }
 
-},{}],58:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
+'use strict'
+
+var parseUnit = require('parse-unit')
+
+module.exports = toPX
+
+var PIXELS_PER_INCH = 96
+
+function getPropertyInPX(element, prop) {
+  var parts = parseUnit(getComputedStyle(element).getPropertyValue(prop))
+  return parts[0] * toPX(parts[1], element)
+}
+
+//This brutal hack is needed
+function getSizeBrutal(unit, element) {
+  var testDIV = document.createElement('div')
+  testDIV.style['font-size'] = '128' + unit
+  element.appendChild(testDIV)
+  var size = getPropertyInPX(testDIV, 'font-size') / 128
+  element.removeChild(testDIV)
+  return size
+}
+
+function toPX(str, element) {
+  element = element || document.body
+  str = (str || 'px').trim().toLowerCase()
+  if(element === window || element === document) {
+    element = document.body 
+  }
+  switch(str) {
+    case '%':  //Ambiguous, not sure if we should use width or height
+      return element.clientHeight / 100.0
+    case 'ch':
+    case 'ex':
+      return getSizeBrutal(str, element)
+    case 'em':
+      return getPropertyInPX(element, 'font-size')
+    case 'rem':
+      return getPropertyInPX(document.body, 'font-size')
+    case 'vw':
+      return window.innerWidth/100
+    case 'vh':
+      return window.innerHeight/100
+    case 'vmin':
+      return Math.min(window.innerWidth, window.innerHeight) / 100
+    case 'vmax':
+      return Math.max(window.innerWidth, window.innerHeight) / 100
+    case 'in':
+      return PIXELS_PER_INCH
+    case 'cm':
+      return PIXELS_PER_INCH / 2.54
+    case 'mm':
+      return PIXELS_PER_INCH / 25.4
+    case 'pt':
+      return PIXELS_PER_INCH / 72
+    case 'pc':
+      return PIXELS_PER_INCH / 6
+  }
+  return 1
+}
+},{"parse-unit":84}],104:[function(require,module,exports){
+var getDistance = require('gl-vec2/distance')
+var EventEmitter = require('events').EventEmitter
+var dprop = require('dprop')
+var eventOffset = require('mouse-event-offset')
+
+module.exports = touchPinch
+function touchPinch (target) {
+  target = target || window
+
+  var emitter = new EventEmitter()
+  var fingers = [ null, null ]
+  var activeCount = 0
+
+  var lastDistance = 0
+  var ended = false
+  var enabled = false
+
+  // some read-only values
+  Object.defineProperties(emitter, {
+    pinching: dprop(function () {
+      return activeCount === 2
+    }),
+
+    fingers: dprop(function () {
+      return fingers
+    })
+  })
+
+  enable()
+  emitter.enable = enable
+  emitter.disable = disable
+  emitter.indexOfTouch = indexOfTouch
+  return emitter
+
+  function indexOfTouch (touch) {
+    var id = touch.identifier
+    for (var i = 0; i < fingers.length; i++) {
+      if (fingers[i] &&
+        fingers[i].touch &&
+        fingers[i].touch.identifier === id) {
+        return i
+      }
+    }
+    return -1
+  }
+
+  function enable () {
+    if (enabled) return
+    enabled = true
+    target.addEventListener('touchstart', onTouchStart, false)
+    target.addEventListener('touchmove', onTouchMove, false)
+    target.addEventListener('touchend', onTouchRemoved, false)
+    target.addEventListener('touchcancel', onTouchRemoved, false)
+  }
+
+  function disable () {
+    if (!enabled) return
+    enabled = false
+    target.removeEventListener('touchstart', onTouchStart, false)
+    target.removeEventListener('touchmove', onTouchMove, false)
+    target.removeEventListener('touchend', onTouchRemoved, false)
+    target.removeEventListener('touchcancel', onTouchRemoved, false)
+  }
+
+  function onTouchStart (ev) {
+    for (var i = 0; i < ev.changedTouches.length; i++) {
+      var newTouch = ev.changedTouches[i]
+      var id = newTouch.identifier
+      var idx = indexOfTouch(id)
+
+      if (idx === -1 && activeCount < 2) {
+        var first = activeCount === 0
+
+        // newest and previous finger (previous may be undefined)
+        var newIndex = fingers[0] ? 1 : 0
+        var oldIndex = fingers[0] ? 0 : 1
+        var newFinger = new Finger()
+
+        // add to stack
+        fingers[newIndex] = newFinger
+        activeCount++
+
+        // update touch event & position
+        newFinger.touch = newTouch
+        eventOffset(newTouch, target, newFinger.position)
+
+        var oldTouch = fingers[oldIndex] ? fingers[oldIndex].touch : undefined
+        emitter.emit('place', newTouch, oldTouch)
+
+        if (!first) {
+          var initialDistance = computeDistance()
+          ended = false
+          emitter.emit('start', initialDistance)
+          lastDistance = initialDistance
+        }
+      }
+    }
+  }
+
+  function onTouchMove (ev) {
+    var changed = false
+    for (var i = 0; i < ev.changedTouches.length; i++) {
+      var movedTouch = ev.changedTouches[i]
+      var idx = indexOfTouch(movedTouch)
+      if (idx !== -1) {
+        changed = true
+        fingers[idx].touch = movedTouch // avoid caching touches
+        eventOffset(movedTouch, target, fingers[idx].position)
+      }
+    }
+
+    if (activeCount === 2 && changed) {
+      var currentDistance = computeDistance()
+      emitter.emit('change', currentDistance, lastDistance)
+      lastDistance = currentDistance
+    }
+  }
+
+  function onTouchRemoved (ev) {
+    for (var i = 0; i < ev.changedTouches.length; i++) {
+      var removed = ev.changedTouches[i]
+      var idx = indexOfTouch(removed)
+
+      if (idx !== -1) {
+        fingers[idx] = null
+        activeCount--
+        var otherIdx = idx === 0 ? 1 : 0
+        var otherTouch = fingers[otherIdx] ? fingers[otherIdx].touch : undefined
+        emitter.emit('lift', removed, otherTouch)
+      }
+    }
+
+    if (!ended && activeCount !== 2) {
+      ended = true
+      emitter.emit('end')
+    }
+  }
+
+  function computeDistance () {
+    if (activeCount < 2) return 0
+    return getDistance(fingers[0].position, fingers[1].position)
+  }
+}
+
+function Finger () {
+  this.position = [0, 0]
+  this.touch = null
+}
+
+},{"dprop":34,"events":38,"gl-vec2/distance":51,"mouse-event-offset":79}],105:[function(require,module,exports){
 var traverse = module.exports = function (obj) {
     return new Traverse(obj);
 };
@@ -2985,7 +4746,7 @@ var hasOwnProperty = Object.hasOwnProperty || function (obj, key) {
     return key in obj;
 };
 
-},{}],59:[function(require,module,exports){
+},{}],106:[function(require,module,exports){
 
 exports = module.exports = trim;
 
@@ -3001,22 +4762,22 @@ exports.right = function(str){
   return str.replace(/\s*$/, '');
 };
 
-},{}],60:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 var createElement = require("./vdom/create-element.js")
 
 module.exports = createElement
 
-},{"./vdom/create-element.js":67}],61:[function(require,module,exports){
+},{"./vdom/create-element.js":114}],108:[function(require,module,exports){
 var diff = require("./vtree/diff.js")
 
 module.exports = diff
 
-},{"./vtree/diff.js":87}],62:[function(require,module,exports){
+},{"./vtree/diff.js":134}],109:[function(require,module,exports){
 var h = require("./virtual-hyperscript/index.js")
 
 module.exports = h
 
-},{"./virtual-hyperscript/index.js":74}],63:[function(require,module,exports){
+},{"./virtual-hyperscript/index.js":121}],110:[function(require,module,exports){
 var diff = require("./diff.js")
 var patch = require("./patch.js")
 var h = require("./h.js")
@@ -3033,7 +4794,7 @@ module.exports = {
     VText: VText
 }
 
-},{"./create-element.js":60,"./diff.js":61,"./h.js":62,"./patch.js":65,"./vnode/vnode.js":83,"./vnode/vtext.js":85}],64:[function(require,module,exports){
+},{"./create-element.js":107,"./diff.js":108,"./h.js":109,"./patch.js":112,"./vnode/vnode.js":130,"./vnode/vtext.js":132}],111:[function(require,module,exports){
 /*!
  * Cross-Browser Split 1.1.1
  * Copyright 2007-2012 Steven Levithan <stevenlevithan.com>
@@ -3141,12 +4902,12 @@ module.exports = (function split(undef) {
   return self;
 })();
 
-},{}],65:[function(require,module,exports){
+},{}],112:[function(require,module,exports){
 var patch = require("./vdom/patch.js")
 
 module.exports = patch
 
-},{"./vdom/patch.js":70}],66:[function(require,module,exports){
+},{"./vdom/patch.js":117}],113:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook.js")
 
@@ -3245,7 +5006,7 @@ function getPrototype(value) {
     }
 }
 
-},{"../vnode/is-vhook.js":78,"is-object":46}],67:[function(require,module,exports){
+},{"../vnode/is-vhook.js":125,"is-object":75}],114:[function(require,module,exports){
 var document = require("global/document")
 
 var applyProperties = require("./apply-properties")
@@ -3293,7 +5054,7 @@ function createElement(vnode, opts) {
     return node
 }
 
-},{"../vnode/handle-thunk.js":76,"../vnode/is-vnode.js":79,"../vnode/is-vtext.js":80,"../vnode/is-widget.js":81,"./apply-properties":66,"global/document":39}],68:[function(require,module,exports){
+},{"../vnode/handle-thunk.js":123,"../vnode/is-vnode.js":126,"../vnode/is-vtext.js":127,"../vnode/is-widget.js":128,"./apply-properties":113,"global/document":68}],115:[function(require,module,exports){
 // Maps a virtual DOM tree onto a real DOM tree in an efficient manner.
 // We don't want to read all of the DOM nodes in the tree so we use
 // the in-order tree indexing to eliminate recursion down certain branches.
@@ -3380,7 +5141,7 @@ function ascending(a, b) {
     return a > b ? 1 : -1
 }
 
-},{}],69:[function(require,module,exports){
+},{}],116:[function(require,module,exports){
 var applyProperties = require("./apply-properties")
 
 var isWidget = require("../vnode/is-widget.js")
@@ -3533,7 +5294,7 @@ function replaceRoot(oldRoot, newRoot) {
     return newRoot;
 }
 
-},{"../vnode/is-widget.js":81,"../vnode/vpatch.js":84,"./apply-properties":66,"./update-widget":71}],70:[function(require,module,exports){
+},{"../vnode/is-widget.js":128,"../vnode/vpatch.js":131,"./apply-properties":113,"./update-widget":118}],117:[function(require,module,exports){
 var document = require("global/document")
 var isArray = require("x-is-array")
 
@@ -3615,7 +5376,7 @@ function patchIndices(patches) {
     return indices
 }
 
-},{"./create-element":67,"./dom-index":68,"./patch-op":69,"global/document":39,"x-is-array":88}],71:[function(require,module,exports){
+},{"./create-element":114,"./dom-index":115,"./patch-op":116,"global/document":68,"x-is-array":135}],118:[function(require,module,exports){
 var isWidget = require("../vnode/is-widget.js")
 
 module.exports = updateWidget
@@ -3632,7 +5393,7 @@ function updateWidget(a, b) {
     return false
 }
 
-},{"../vnode/is-widget.js":81}],72:[function(require,module,exports){
+},{"../vnode/is-widget.js":128}],119:[function(require,module,exports){
 'use strict';
 
 var EvStore = require('ev-store');
@@ -3661,7 +5422,7 @@ EvHook.prototype.unhook = function(node, propertyName) {
     es[propName] = undefined;
 };
 
-},{"ev-store":30}],73:[function(require,module,exports){
+},{"ev-store":37}],120:[function(require,module,exports){
 'use strict';
 
 module.exports = SoftSetHook;
@@ -3680,7 +5441,7 @@ SoftSetHook.prototype.hook = function (node, propertyName) {
     }
 };
 
-},{}],74:[function(require,module,exports){
+},{}],121:[function(require,module,exports){
 'use strict';
 
 var isArray = require('x-is-array');
@@ -3819,7 +5580,7 @@ function errorString(obj) {
     }
 }
 
-},{"../vnode/is-thunk":77,"../vnode/is-vhook":78,"../vnode/is-vnode":79,"../vnode/is-vtext":80,"../vnode/is-widget":81,"../vnode/vnode.js":83,"../vnode/vtext.js":85,"./hooks/ev-hook.js":72,"./hooks/soft-set-hook.js":73,"./parse-tag.js":75,"x-is-array":88}],75:[function(require,module,exports){
+},{"../vnode/is-thunk":124,"../vnode/is-vhook":125,"../vnode/is-vnode":126,"../vnode/is-vtext":127,"../vnode/is-widget":128,"../vnode/vnode.js":130,"../vnode/vtext.js":132,"./hooks/ev-hook.js":119,"./hooks/soft-set-hook.js":120,"./parse-tag.js":122,"x-is-array":135}],122:[function(require,module,exports){
 'use strict';
 
 var split = require('browser-split');
@@ -3875,7 +5636,7 @@ function parseTag(tag, props) {
     return props.namespace ? tagName : tagName.toUpperCase();
 }
 
-},{"browser-split":64}],76:[function(require,module,exports){
+},{"browser-split":111}],123:[function(require,module,exports){
 var isVNode = require("./is-vnode")
 var isVText = require("./is-vtext")
 var isWidget = require("./is-widget")
@@ -3917,14 +5678,14 @@ function renderThunk(thunk, previous) {
     return renderedThunk
 }
 
-},{"./is-thunk":77,"./is-vnode":79,"./is-vtext":80,"./is-widget":81}],77:[function(require,module,exports){
+},{"./is-thunk":124,"./is-vnode":126,"./is-vtext":127,"./is-widget":128}],124:[function(require,module,exports){
 module.exports = isThunk
 
 function isThunk(t) {
     return t && t.type === "Thunk"
 }
 
-},{}],78:[function(require,module,exports){
+},{}],125:[function(require,module,exports){
 module.exports = isHook
 
 function isHook(hook) {
@@ -3933,7 +5694,7 @@ function isHook(hook) {
        typeof hook.unhook === "function" && !hook.hasOwnProperty("unhook"))
 }
 
-},{}],79:[function(require,module,exports){
+},{}],126:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualNode
@@ -3942,7 +5703,7 @@ function isVirtualNode(x) {
     return x && x.type === "VirtualNode" && x.version === version
 }
 
-},{"./version":82}],80:[function(require,module,exports){
+},{"./version":129}],127:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualText
@@ -3951,17 +5712,17 @@ function isVirtualText(x) {
     return x && x.type === "VirtualText" && x.version === version
 }
 
-},{"./version":82}],81:[function(require,module,exports){
+},{"./version":129}],128:[function(require,module,exports){
 module.exports = isWidget
 
 function isWidget(w) {
     return w && w.type === "Widget"
 }
 
-},{}],82:[function(require,module,exports){
+},{}],129:[function(require,module,exports){
 module.exports = "2"
 
-},{}],83:[function(require,module,exports){
+},{}],130:[function(require,module,exports){
 var version = require("./version")
 var isVNode = require("./is-vnode")
 var isWidget = require("./is-widget")
@@ -4035,7 +5796,7 @@ function VirtualNode(tagName, properties, children, key, namespace) {
 VirtualNode.prototype.version = version
 VirtualNode.prototype.type = "VirtualNode"
 
-},{"./is-thunk":77,"./is-vhook":78,"./is-vnode":79,"./is-widget":81,"./version":82}],84:[function(require,module,exports){
+},{"./is-thunk":124,"./is-vhook":125,"./is-vnode":126,"./is-widget":128,"./version":129}],131:[function(require,module,exports){
 var version = require("./version")
 
 VirtualPatch.NONE = 0
@@ -4059,7 +5820,7 @@ function VirtualPatch(type, vNode, patch) {
 VirtualPatch.prototype.version = version
 VirtualPatch.prototype.type = "VirtualPatch"
 
-},{"./version":82}],85:[function(require,module,exports){
+},{"./version":129}],132:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = VirtualText
@@ -4071,7 +5832,7 @@ function VirtualText(text) {
 VirtualText.prototype.version = version
 VirtualText.prototype.type = "VirtualText"
 
-},{"./version":82}],86:[function(require,module,exports){
+},{"./version":129}],133:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook")
 
@@ -4131,7 +5892,7 @@ function getPrototype(value) {
   }
 }
 
-},{"../vnode/is-vhook":78,"is-object":46}],87:[function(require,module,exports){
+},{"../vnode/is-vhook":125,"is-object":75}],134:[function(require,module,exports){
 var isArray = require("x-is-array")
 
 var VPatch = require("../vnode/vpatch")
@@ -4560,7 +6321,7 @@ function appendPatch(apply, patch) {
     }
 }
 
-},{"../vnode/handle-thunk":76,"../vnode/is-thunk":77,"../vnode/is-vnode":79,"../vnode/is-vtext":80,"../vnode/is-widget":81,"../vnode/vpatch":84,"./diff-props":86,"x-is-array":88}],88:[function(require,module,exports){
+},{"../vnode/handle-thunk":123,"../vnode/is-thunk":124,"../vnode/is-vnode":126,"../vnode/is-vtext":127,"../vnode/is-widget":128,"../vnode/vpatch":131,"./diff-props":133,"x-is-array":135}],135:[function(require,module,exports){
 var nativeIsArray = Array.isArray
 var toString = Object.prototype.toString
 
@@ -4570,7 +6331,7 @@ function isArray(obj) {
     return toString.call(obj) === "[object Array]"
 }
 
-},{}],89:[function(require,module,exports){
+},{}],136:[function(require,module,exports){
 "use strict";
 var window = require("global/window")
 var isFunction = require("is-function")
@@ -4810,7 +6571,7 @@ function getXml(xhr) {
 
 function noop() {}
 
-},{"global/window":40,"is-function":44,"parse-headers":50,"xtend":90}],90:[function(require,module,exports){
+},{"global/window":69,"is-function":73,"parse-headers":83,"xtend":137}],137:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -4831,7 +6592,7 @@ function extend() {
     return target
 }
 
-},{}],91:[function(require,module,exports){
+},{}],138:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -4850,7 +6611,7 @@ function extend(target) {
     return target
 }
 
-},{}],92:[function(require,module,exports){
+},{}],139:[function(require,module,exports){
 module.exports = getPreviousAnimationData
 
 function getPreviousAnimationData (opts, keyframeTimes) {
@@ -4913,7 +6674,7 @@ function getPreviousAnimationData (opts, keyframeTimes) {
   }
 }
 
-},{}],93:[function(require,module,exports){
+},{}],140:[function(require,module,exports){
 module.exports = {
   interpolateJoints: interpolateJoints
 }
@@ -5042,4 +6803,4 @@ function defaultBlend (dt) {
 
 // TODO: Event emitter for when animation ends ?
 
-},{"./get-previous-animation-data.js":92}]},{},[13]);
+},{"./get-previous-animation-data.js":139}]},{},[13]);
