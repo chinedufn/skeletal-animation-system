@@ -23,7 +23,10 @@
     "animate",
     "blend",
     "bone",
-    "webgl"
+    "webgl",
+    "scene",
+    "canvas",
+    "game"
   ],
   "author": "Chinedu Francis Nwafili <frankie.nwafili@gmail.com>",
   "license": "MIT",

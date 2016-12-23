@@ -6,13 +6,15 @@ var jointNums = [0, 1, 2, 3, 4]
 
 function upperBody (state, dualQuatKeyframes) {
   var interpolatedQuats = animationSystem.interpolateJoints({
-    // TODO: Fix test case when current time is 0
+    blendFunction: function (dt) {
+      // Blend linearly over 1 second
+      return dt
+    },
     currentTime: state.currentTime,
     keyframes: dualQuatKeyframes,
     jointNums: jointNums,
     currentAnimation: {
       range: state.upperBody.currentAnimation.range,
-      // TODO: Fix test case when current time is 0
       startTime: state.upperBody.currentAnimation.startTime
     },
     previousAnimation: state.upperBody.previousAnimation

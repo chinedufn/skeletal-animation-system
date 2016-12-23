@@ -1,10 +1,16 @@
 var test = require('tape')
 var animationSystem = require('../')
 
+// Blend linearly over 2 seconds
+function blendFunction (dt) {
+  return 0.5 * dt
+}
+
 // TODO: Thoroughly comment tests. Hard to understand without more context
 test('Blend out previous animation', function (t) {
   var options = {
     // Our application clock has been running for 100.5 seconds
+    blendFunction: blendFunction,
     currentTime: 100.5,
     keyframes: {
       '0': [
@@ -51,6 +57,7 @@ test('Blend out previous animation', function (t) {
 
 test('Blending while passed previous animations upper keyframe', function (t) {
   var options = {
+    blendFunction: blendFunction,
     // Our application clock has been running for 100.5 seconds
     currentTime: 100.5,
     keyframes: {
@@ -100,6 +107,7 @@ test('Blending while passed previous animations upper keyframe', function (t) {
 
 test('Blend is above 100% complete', function (t) {
   var options = {
+    blendFunction: blendFunction,
     // Our application clock has been running for 100.5 seconds
     currentTime: 101.5,
     keyframes: {
@@ -147,6 +155,7 @@ test('Blend is above 100% complete', function (t) {
 
 test('Blends using time since current animation frame set began', function (t) {
   var options = {
+    blendFunction: blendFunction,
     // Our application clock has been running for 100.5 seconds
     currentTime: 100.5,
     keyframes: {
@@ -192,6 +201,7 @@ test('Blends using time since current animation frame set began', function (t) {
 
 test('Previous animation in middle of loop', function (t) {
   var options = {
+    blendFunction: blendFunction,
     // Our application clock has been running for 100.5 seconds
     currentTime: 101,
     keyframes: {
@@ -236,6 +246,7 @@ test('Previous animation in middle of loop', function (t) {
 
 test('Previous animation started in middle of loop but now passed final frame', function (t) {
   var options = {
+    blendFunction: blendFunction,
     // Our application clock has been running for 100.5 seconds
     currentTime: 102.5,
     keyframes: {
@@ -282,6 +293,7 @@ test('Previous animation started in middle of loop but now passed final frame', 
 // the lowest keyframe
 test('Previous animation elapsed time when previous animation starts from non first keyframe in set', function (t) {
   var options = {
+    blendFunction: blendFunction,
     // Our application clock has been running for 100.5 seconds
     currentTime: 100.5,
     keyframes: {
@@ -333,6 +345,7 @@ test('Previous animation elapsed time when previous animation starts from non fi
 // current keyframe it should be sure to chose the correct one
 test('Multiple keyframes larger than the current one', function (t) {
   var options = {
+    blendFunction: blendFunction,
     // Our application clock has been running for 100.5 seconds
     currentTime: 100.5,
     keyframes: {

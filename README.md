@@ -169,24 +169,25 @@ Default: `{}`
 
 TODO: Link to collada-dae-parser README on keyframes
 
-##### jointNames
+##### jointNums
 
-lorem ipsum
+Type: `Array`
 
 ##### blendFunction
 
 Type: `Function`
 
-Default: `Blend over 2 seconds`
+Default: `Blend linearly over 0.2 seconds`
 
-A function that accepts a time elapsed in seconds and returns a value between `0` and `1`.
+A function that accepts a time elapsed in seconds
+and returns a value between `0` and `1`.
 
-This returned value represents the weighing of the new animation.
+This returned value represents the weight of the new animation.
 
-```
+```js
 function myBlendFunction (dt) {
   // Blend the old animation into the new one linearly over 5 seconds
-  return 1 / (5 * dt)
+  return 0.2 * dt)
 }
 ```
 
@@ -194,26 +195,61 @@ function myBlendFunction (dt) {
 
 Type: `Object`
 
+An object containing parameters for the current animation
+
+If you supply a previous animation your current animation will be
+blended in using your `blendFunction`
+
+```js
+var currentAnimation = {
+  range: [0, 10],
+  startTime: 10
+}
+```
+
 ###### currentAnimation.range
 
-lorem ipsum
+Type: `Array`
+
+The index of the first and last key for your current animation.
+
+For example, if you have five keyframes at `0.2seconds`, `0.8s` `2.4s` `3.9s` and `13.8s`
+
+A range of `[0, 2]` would loop between the keyframes at `0.2s` , `0.8s` and `2.4s`
+
+A range of `[2, 3]` would loop between the keyframes at `2.4s` and `3.9s `
 
 ###### currentAnimation.startTime
 
-lorem ipsum
+Type: `Number`
+
+The time in seconds that your current animation was initiated. This gets compared with
+the `currentTime` in order to interpolate your joint data appropriately.
 
 ##### previousAnimation
 
+An object containing parameters for the previous animations.
+Your previous animation gets blended out using your `blendFunction`
+while your current animation gets blended in.
+
+Type: `Object`
+
 ###### previousAnimation.range
 
-lorem ipsum
+Type: `Array`
+
+The index of the first and last key for your previous animation.
 
 ###### previousAnimation.startTime
 
-lorem ipsum
+Type: `Number`
+
+The time in seconds that your previous animation was initiated.
+This is used in order to blend in the current animation.
 
 ## See Also
 
+- [load-collada-dae](https://github.com/chinedufn/load-collada-dae)
 - [collada-dae-parser](https://github.com/chinedufn/collada-dae-parser)
 
 ## References

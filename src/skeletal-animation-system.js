@@ -66,7 +66,7 @@ function interpolateJoints (opts) {
   var interpolatedJoints = opts.jointNums.reduce(function (acc, jointName) {
     // If there is a previous animation
     // TODO: don't blend if blend is > 1
-    var blend = defaultBlend(opts.currentTime - opts.currentAnimation.startTime)
+    var blend = (opts.blendFunction || defaultBlend)(opts.currentTime - opts.currentAnimation.startTime)
     if (opts.previousAnimation && blend < 1) {
       acc[jointName] = []
 
@@ -117,11 +117,14 @@ function interpolateJoints (opts) {
   return interpolatedJoints
 }
 
-// TODO: Comment on what `dt` represents
+// Give then number of seconds elapsed between the previous animation
+// and the current animation we return a blend factor between
+// zero and one
 function defaultBlend (dt) {
   // If zero time has elapsed we avoid dividing by 0
   if (!dt) { return 0 }
-  return 1 / 2 * dt
+  // Blender linearly over 0.5s
+  return 2 * dt
 }
 
 // TODO: Event emitter for when animation ends ?
