@@ -334,13 +334,15 @@ var jointNums = [5, 6, 7, 8, 9]
 
 function lowerBody (state, dualQuatKeyframes) {
   var interpolatedQuats = animationSystem.interpolateJoints({
-    // TODO: Fix test case when current time is 0
+    blendFunction: function (dt) {
+      // Blend linearly over 1 second
+      return dt
+    },
     currentTime: state.currentTime,
     keyframes: dualQuatKeyframes,
     jointNums: jointNums,
     currentAnimation: {
       range: state.lowerBody.currentAnimation.range,
-      // TODO: Fix test case when current time is 0
       startTime: state.lowerBody.currentAnimation.startTime
     },
     previousAnimation: state.lowerBody.previousAnimation
@@ -466,13 +468,15 @@ var jointNums = [0, 1, 2, 3, 4]
 
 function upperBody (state, dualQuatKeyframes) {
   var interpolatedQuats = animationSystem.interpolateJoints({
-    // TODO: Fix test case when current time is 0
+    blendFunction: function (dt) {
+      // Blend linearly over 1 second
+      return dt
+    },
     currentTime: state.currentTime,
     keyframes: dualQuatKeyframes,
     jointNums: jointNums,
     currentAnimation: {
       range: state.upperBody.currentAnimation.range,
-      // TODO: Fix test case when current time is 0
       startTime: state.upperBody.currentAnimation.startTime
     },
     previousAnimation: state.upperBody.previousAnimation
@@ -6737,7 +6741,7 @@ function interpolateJoints (opts) {
   var interpolatedJoints = opts.jointNums.reduce(function (acc, jointName) {
     // If there is a previous animation
     // TODO: don't blend if blend is > 1
-    var blend = defaultBlend(opts.currentTime - opts.currentAnimation.startTime)
+    var blend = (opts.blendFunction || defaultBlend)(opts.currentTime - opts.currentAnimation.startTime)
     if (opts.previousAnimation && blend < 1) {
       acc[jointName] = []
 
@@ -6788,11 +6792,14 @@ function interpolateJoints (opts) {
   return interpolatedJoints
 }
 
-// TODO: Comment on what `dt` represents
+// Give then number of seconds elapsed between the previous animation
+// and the current animation we return a blend factor between
+// zero and one
 function defaultBlend (dt) {
   // If zero time has elapsed we avoid dividing by 0
   if (!dt) { return 0 }
-  return 1 / 2 * dt
+  // Blender linearly over 0.5s
+  return 2 * dt
 }
 
 // TODO: Event emitter for when animation ends ?
