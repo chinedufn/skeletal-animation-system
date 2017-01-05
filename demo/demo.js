@@ -10,7 +10,7 @@ var loaded3dModel
 
 var createCanvas = require('./create-canvas.js')
 
-var modelJSON = require('./asset/old-man.json')
+var modelJSON
 
 var SS = require('solid-state')
 var xhr = require('xhr')
@@ -30,14 +30,14 @@ function createSkeletonCanvas () {
     upperBody: {
       currentAnimation: {
         name: 'dance',
-        range: [0, 3],
+        range: [0, 12],
         startTime: 0
       }
     },
     lowerBody: {
       currentAnimation: {
         name: 'dance',
-        range: [0, 3],
+        range: [0, 12],
         startTime: 0
       }
     }
@@ -53,15 +53,33 @@ function createSkeletonCanvas () {
     imageLoaded = true
     loadModel()
   }
-  image.src = 'suite01d.png'
+  image.src = 'cowboy-texture.png'
 
   // Download our model's JSON
-  xhr.get('old-man.json', function (err, resp) {
+  xhr.get('cowboy.json', function (err, resp) {
     if (err) { throw err }
     modelJSON = JSON.parse(resp.body)
     dualQuatKeyframes = convertKeyframesToDualQuats(modelJSON.keyframes)
     loadModel()
+
+    // Convert joint names to their associated numeric joint index ... i.e... ['Torso', 'Chest'] -> [13, 2]
+    //  ... because collada-dae-parser knows about numeric joint indices
+    var upperBodyJointNums = ['Torso', 'Chest', 'Bone_002', 'Head', 'Upper_Arm_L', 'Lower_Arm_L', 'Hand_L', 'Upper_Arm_R', 'Lower_Arm_R', 'Hand_R']
+    .reduce(function (jointNums, jointName) {
+      return jointNums.concat([modelJSON.jointNamePositionIndex[jointName]])
+    }, [])
+    var lowerBodyJointNums = ['Upper_Leg_L', 'Lower_Leg_L', 'Foot_L', 'Toe_L', 'Upper_Leg_R', 'Lower_Leg_R', 'Foot_R', 'Toe_R']
+    .reduce(function (jointNums, jointName) {
+      return jointNums.concat([modelJSON.jointNamePositionIndex[jointName]])
+    }, [])
+
+    // Add the upper and lower body joint nums to our app state singleton so that our render function can use them
+    State.set('upperBodyJointNums', upperBodyJointNums)
+    State.set('lowerBodyJointNums', lowerBodyJointNums)
   })
+
+  // TODO: Add per fragment lighting to the demo.. This will be a good test case for custom shaders in load-collada-dae
+  //  so we'll also need to fix the dual quaternion normals in our default shader
 
   // Once our model and image have been downloaded we
   // prepare our data for the GPU so that we can later draw it

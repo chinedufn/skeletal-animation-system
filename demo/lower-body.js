@@ -2,8 +2,6 @@ var animationSystem = require('../')
 
 module.exports = lowerBody
 
-var jointNums = [5, 6, 7, 8, 9]
-
 function lowerBody (state, dualQuatKeyframes) {
   var interpolatedQuats = animationSystem.interpolateJoints({
     blendFunction: function (dt) {
@@ -12,7 +10,7 @@ function lowerBody (state, dualQuatKeyframes) {
     },
     currentTime: state.currentTime,
     keyframes: dualQuatKeyframes,
-    jointNums: jointNums,
+    jointNums: state.lowerBodyJointNums,
     currentAnimation: {
       range: state.lowerBody.currentAnimation.range,
       startTime: state.lowerBody.currentAnimation.startTime
@@ -22,13 +20,13 @@ function lowerBody (state, dualQuatKeyframes) {
 
   var interpolatedRotQuats = []
   var interpolatedTransQuats = []
-  jointNums.forEach(function (jointNum) {
+  state.lowerBodyJointNums.forEach(function (jointNum) {
     interpolatedRotQuats[jointNum] = interpolatedQuats[jointNum].slice(0, 4)
     interpolatedTransQuats[jointNum] = interpolatedQuats[jointNum].slice(4, 8)
   })
 
   return {
-    length: jointNums.length,
+    length: state.lowerBodyJointNums.length,
     rot: interpolatedRotQuats,
     trans: interpolatedTransQuats
   }

@@ -41,9 +41,9 @@ function renderCanvas (gl, state, cameraControls, dt, opts) {
   // Once we've loaded our model we draw it every frame
   if (opts.model) {
     opts.model.draw({
-      perspective: camera.projection,
-      viewMatrix: camera.view,
-      position: [0, 0, 0],
+      perspective: require('gl-mat4/perspective')([], Math.PI / 3, state.viewport.width / state.viewport.height, 0.1, 100),
+      viewMatrix: require('gl-mat4/create')(),
+      position: [0, -10, -30],
       rotQuaternions: interpolatedQuats.rot,
       transQuaternions: interpolatedQuats.trans
       // TODO: Leave comment in tutorial about using a view matrix to create a camera
