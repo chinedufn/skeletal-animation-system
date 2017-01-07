@@ -1,9 +1,4 @@
-var camera = require('perspective-camera')({
-  fov: 50 * Math.PI / 180,
-  position: [0, 0, 1],
-  near: 0.00001,
-  far: 100
-})
+var createCamera = require('create-orbit-camera')
 
 module.exports = renderCanvas
 
@@ -18,6 +13,13 @@ function renderCanvas (gl, state, cameraControls, dt, opts) {
     return
   }
 
+  var cameraData = createCamera({
+    position: [15, 23, 25],
+    target: [0, 3.4, 0],
+    xRadians: state.camera.xRadians,
+    yRadians: state.camera.yRadians
+  })
+
   var interpolatedQuats = {rot: [], trans: []}
   var totalJoints = upperBodyQuats.length + lowerBodyQuats.length
   for (var i = 0; i < totalJoints; i++) {
@@ -25,25 +27,12 @@ function renderCanvas (gl, state, cameraControls, dt, opts) {
     interpolatedQuats.trans[i] = upperBodyQuats.trans[i] || lowerBodyQuats.trans[i]
   }
 
-  cameraControls.update()
-  cameraControls.copyInto(camera.position, camera.direction, camera.up)
-  camera.viewport = [0, 0, state.viewport.width, state.viewport.height]
-  camera.lookAt([0, 0, 0])
-
-  // Gets around an issue in our `orbit-controls` dependency
-  // when you try to view the model from the top or bottom
-  if (camera.up[0] + camera.up[1] + camera.up[2] === 0) {
-    camera.up = [0, -1, 0]
-  }
-
-  camera.update()
-
   // Once we've loaded our model we draw it every frame
   if (opts.model) {
     opts.model.draw({
       perspective: require('gl-mat4/perspective')([], Math.PI / 3, state.viewport.width / state.viewport.height, 0.1, 100),
-      viewMatrix: require('gl-mat4/create')(),
-      position: [0, -10, -30],
+      viewMatrix: cameraData.viewMatrix,
+      position: [0, 0, 0],
       rotQuaternions: interpolatedQuats.rot,
       transQuaternions: interpolatedQuats.trans
       // TODO: Leave comment in tutorial about using a view matrix to create a camera

@@ -1,5 +1,3 @@
-var cameraControls = require('orbit-controls')
-
 module.exports = createCanvas
 
 // TODO: Turn into module
@@ -12,7 +10,6 @@ function createCanvas (State) {
   observer.observe(document.body, {childList: true, subtree: true})
 
   window.addEventListener('resize', function () {
-    console.log('resize')
     var positionInfo = canvas.getBoundingClientRect()
     canvas.height = positionInfo.height
     canvas.width = positionInfo.width
@@ -21,28 +18,82 @@ function createCanvas (State) {
 
   canvas.addEventListener('touchstart', function preventScroll (e) {
     e.preventDefault()
+
+    for (var i = 0; i < e.changedTouches.length; i++) {
+      var touch = e.changedTouches[i]
+      var touchID = touch.identifier
+      State.set('touches.' + touchID, {
+        startXPos: touch.pageX,
+        startYPos: touch.pageY,
+        xPos: touch.pageX,
+        yPos: touch.pageY
+      })
+    }
   })
 
-  var controls = cameraControls({
-    position: [0, 0, -35],
-    element: canvas,
-    distanceBounds: [0.1, 100]
+  canvas.addEventListener('touchmove', function (e) {
+    var numTouches = e.changedTouches.length
+    if (numTouches === 1) {
+      var state = State.get()
+      var touch = e.changedTouches[0]
+      var xDelta = touch.pageX - state.touches[touch.identifier].xPos
+      var yDelta = touch.pageY - state.touches[touch.identifier].yPos
+
+      var newXRadians = state.camera.xRadians + (yDelta / 225)
+      var newYRadians = state.camera.yRadians - (xDelta / 225)
+      newXRadians = Math.min(newXRadians, 0.8)
+      newXRadians = Math.max(newXRadians, -0.8)
+
+      state.touches[touch.identifier] = {
+        xPos: touch.pageX,
+        yPos: touch.pageY
+      }
+      state.camera = {
+        xRadians: newXRadians,
+        yRadians: newYRadians
+      }
+      State.set(state)
+    } else if (numTouches === 2) {
+    }
+  })
+
+  canvas.addEventListener('touchend', function (e) {
+    e.preventDefault()
+
+    for (var i = 0; i < e.changedTouches.length; i++) {
+      var touch = e.changedTouches[i]
+      var touchID = touch.identifier
+      State.del('touches.' + touchID)
+    }
+  })
+
+  canvas.addEventListener('mousedown', function (e) {
+    State.set('mousepressed', true)
+  })
+
+  canvas.addEventListener('mousemove', function (e) {
+    /*
+    state = State.get()
+    if (state.mousepressed) {
+    }
+    */
+  })
+
+  canvas.addEventListener('mouseup', function (e) {
+    State.set('mousepressed', false)
   })
 
   return {
-    cameraControls: controls,
     canvas: canvas
   }
 
   function stopObserving () {
     observer.disconnect()
-    console.log('hi')
   }
 }
 
 function checkForCanvas (State, stop, canvas, mutationRecords) {
-  // TODO: Remove this console.log once we know this isn't getting called over and over again
-  console.log('mutation observed')
+  // wait this makes no sense. whatever
   mutationRecords.forEach(function (mutationRecord) {
     var positionInfo = canvas.getBoundingClientRect()
     canvas.width = positionInfo.width

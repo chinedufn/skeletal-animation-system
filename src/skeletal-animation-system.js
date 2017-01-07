@@ -1,3 +1,6 @@
+var lerp = require('gl-vec4/lerp')
+var dotProduct = require('gl-vec4/dot')
+
 module.exports = {
   interpolateJoints: interpolateJoints
 }
@@ -95,21 +98,25 @@ function interpolateJoints (opts) {
         return dualQuat
       }, [])
     } else {
-      // Blend the two dual quaternions based on where we are in the current keyframe
-      acc[jointName] = opts.keyframes[currentAnimLowerKeyframe][jointName].reduce(function (dualQuat, value, index) {
-        // If we have an exact keyframe we just return the value that we already have
-        // TODO: We can accomplish this without loopign through each value since we
-        // already know that we are at an exact keyframe
-        if (currentAnimUpperKeyframe === currentAnimLowerKeyframe) {
-          dualQuat[index] = opts.keyframes[currentAnimLowerKeyframe][jointName][index]
-          return dualQuat
-        }
+      // If we have an exact keyframe there is no need to blend
+      if (currentAnimUpperKeyframe === currentAnimLowerKeyframe) {
+        acc[jointName] = opts.keyframes[currentAnimLowerKeyframe][jointName]
+      } else {
+        var lowerRotQuat = opts.keyframes[currentAnimLowerKeyframe][jointName].slice(0, 4)
+        var upperRotQuat = opts.keyframes[currentAnimUpperKeyframe][jointName].slice(0, 4)
+        var lowerTransQuat = opts.keyframes[currentAnimLowerKeyframe][jointName].slice(4, 8)
+        var upperTransQuat = opts.keyframes[currentAnimUpperKeyframe][jointName].slice(4, 8)
 
-        dualQuat[index] = opts.keyframes[currentAnimLowerKeyframe][jointName][index] +
-        (opts.keyframes[currentAnimUpperKeyframe][jointName][index] - opts.keyframes[currentAnimLowerKeyframe][jointName][index]) *
-        (currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe))
-        return dualQuat
-      }, [])
+        if (dotProduct(lowerRotQuat, upperRotQuat) < 0) {
+          // TODO: Handle case when dot product between lower and upper rotation is negative
+          //  see this paper -> http://www.xbdev.net/misc_demos/demos/dual_quaternions_beyond/paper.pdf
+        }
+        // Blend the two dual quaternions based on where we are in the current keyframe
+        var percentBetweenKeyframes = (currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe))
+        var blendedRotQuat = lerp([], lowerRotQuat, upperRotQuat, percentBetweenKeyframes)
+        var blendedTransQuat = lerp([], lowerTransQuat, upperTransQuat, percentBetweenKeyframes)
+        acc[jointName] = blendedRotQuat.concat(blendedTransQuat)
+      }
     }
     return acc
   }, {})
