@@ -108,8 +108,18 @@ function interpolateJoints (opts) {
         var upperTransQuat = opts.keyframes[currentAnimUpperKeyframe][jointName].slice(4, 8)
 
         if (dotProduct(lowerRotQuat, upperRotQuat) < 0) {
-          // TODO: Handle case when dot product between lower and upper rotation is negative
+          // Handle case when dot product between lower and upper rotation is negative
+          // This ensures that we interpolate the rotation along the shortest path
           //  see this paper -> http://www.xbdev.net/misc_demos/demos/dual_quaternions_beyond/paper.pdf
+          // TODO: This works, but we need to add a unit test
+          /*
+          lowerRotQuat = lowerRotQuat.map(function (v) {
+            return -v
+          })
+          lowerTransQuat = lowerTransQuat.map(function (v) {
+            return -v
+          })
+          */
         }
         // Blend the two dual quaternions based on where we are in the current keyframe
         var percentBetweenKeyframes = (currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe))

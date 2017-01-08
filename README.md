@@ -256,6 +256,8 @@ This is used in order to blend in the current animation.
 ## References
 
 - [Anatomy of a skeletal animation system part 1](http://blog.demofox.org/2012/09/21/anatomy-of-a-skeletal-animation-system-part-1/), [part 2](http://blog.demofox.org/2012/09/21/anatomy-of-a-skeletal-animation-system-part-2/) and [part 3](http://blog.demofox.org/2012/09/21/anatomy-of-a-skeletal-animation-system-part-3/)
+- [Dual-Quaternions - From Classical Mechanics to Computer Graphics and Beyond](http://www.xbdev.net/misc_demos/demos/dual_quaternions_beyond/paper.pdf)
+  - This taught us to negate one of the dual quaternions if the dot product of the rotation quaternions was less than 0
 
 ## License
 
