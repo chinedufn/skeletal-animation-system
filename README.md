@@ -124,7 +124,8 @@ TODO: [Link to collada-dae-parser README]()
 
 ## TODO:
 
-- [ ] expose bone groups names when exporting JSON from collada-dae-parser
+- [ ] Handle rotation quaternion lerp when dot product is < 0
+- [ ] Implement more from the papers linked in `References` section below (whenever we need them)
 
 ## API
 
