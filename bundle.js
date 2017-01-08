@@ -35,7 +35,7 @@ function renderFullBodyControls (h, State) {
           range: state.animationRanges[State.get().upperBody.currentAnimation.name],
           startTime: State.get().upperBody.currentAnimation.startTime
         })
-        var upperBodyAnimName = State.get().upperBody.currentAnimation.name === 'dance' ? 'bend' : 'dance'
+        var upperBodyAnimName = State.get().upperBody.currentAnimation.name === 'walk' ? 'point' : 'walk'
         State.set('upperBody.currentAnimation', {
           name: upperBodyAnimName,
           range: state.animationRanges[upperBodyAnimName],
@@ -46,7 +46,7 @@ function renderFullBodyControls (h, State) {
           range: state.animationRanges[State.get().lowerBody.currentAnimation.name],
           startTime: State.get().lowerBody.currentAnimation.startTime
         })
-        var lowerBodyAnimName = State.get().lowerBody.currentAnimation.name === 'dance' ? 'bend' : 'dance'
+        var lowerBodyAnimName = State.get().lowerBody.currentAnimation.name === 'walk' ? 'point' : 'walk'
         State.set('lowerBody.currentAnimation', {
           name: lowerBodyAnimName,
           range: state.animationRanges[lowerBodyAnimName],
@@ -78,7 +78,7 @@ function renderLowerBodyControls (h, State) {
           range: state.animationRanges[State.get().lowerBody.currentAnimation.name],
           startTime: State.get().lowerBody.currentAnimation.startTime
         })
-        var lowerBodyAnimName = State.get().lowerBody.currentAnimation.name === 'dance' ? 'bend' : 'dance'
+        var lowerBodyAnimName = State.get().lowerBody.currentAnimation.name === 'walk' ? 'point' : 'walk'
         State.set('lowerBody.currentAnimation', {
           name: lowerBodyAnimName,
           range: state.animationRanges[lowerBodyAnimName],
@@ -112,7 +112,7 @@ function renderUpperBodyControls (h, State) {
           range: state.animationRanges[State.get().upperBody.currentAnimation.name],
           startTime: State.get().upperBody.currentAnimation.startTime
         })
-        var upperBodyAnimName = State.get().upperBody.currentAnimation.name === 'dance' ? 'bend' : 'dance'
+        var upperBodyAnimName = State.get().upperBody.currentAnimation.name === 'walk' ? 'point' : 'walk'
         State.set('upperBody.currentAnimation', {
           name: upperBodyAnimName,
           range: state.animationRanges[upperBodyAnimName],
@@ -261,8 +261,9 @@ module.exports = createSkeletonCanvas
 function createSkeletonCanvas () {
   var State = new SS({
     animationRanges: {
-      'dance': [0, 50],
-      'bend': [51, 82]
+      'throw': [0, 5],
+      'walk': [6, 17],
+      'point': [18, 22]
     },
     camera: {
       xRadians: 0,
@@ -270,15 +271,15 @@ function createSkeletonCanvas () {
     },
     upperBody: {
       currentAnimation: {
-        name: 'dance',
-        range: [0, 50],
+        name: 'walk',
+        range: [6, 17],
         startTime: 0
       }
     },
     lowerBody: {
       currentAnimation: {
-        name: 'dance',
-        range: [0, 50],
+        name: 'walk',
+        range: [6, 17],
         startTime: 0
       }
     }
