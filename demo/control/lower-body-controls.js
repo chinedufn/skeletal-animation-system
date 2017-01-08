@@ -15,7 +15,7 @@ function renderLowerBodyControls (h, State) {
           range: state.animationRanges[State.get().lowerBody.currentAnimation.name],
           startTime: State.get().lowerBody.currentAnimation.startTime
         })
-        var lowerBodyAnimName = State.get().lowerBody.currentAnimation.name === 'dance' ? 'bend' : 'dance'
+        var lowerBodyAnimName = State.get().lowerBody.currentAnimation.name === 'walk' ? 'point' : 'walk'
         State.set('lowerBody.currentAnimation', {
           name: lowerBodyAnimName,
           range: state.animationRanges[lowerBodyAnimName],

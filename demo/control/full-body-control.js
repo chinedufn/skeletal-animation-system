@@ -15,7 +15,7 @@ function renderFullBodyControls (h, State) {
           range: state.animationRanges[State.get().upperBody.currentAnimation.name],
           startTime: State.get().upperBody.currentAnimation.startTime
         })
-        var upperBodyAnimName = State.get().upperBody.currentAnimation.name === 'dance' ? 'bend' : 'dance'
+        var upperBodyAnimName = State.get().upperBody.currentAnimation.name === 'walk' ? 'point' : 'walk'
         State.set('upperBody.currentAnimation', {
           name: upperBodyAnimName,
           range: state.animationRanges[upperBodyAnimName],
@@ -26,7 +26,7 @@ function renderFullBodyControls (h, State) {
           range: state.animationRanges[State.get().lowerBody.currentAnimation.name],
           startTime: State.get().lowerBody.currentAnimation.startTime
         })
-        var lowerBodyAnimName = State.get().lowerBody.currentAnimation.name === 'dance' ? 'bend' : 'dance'
+        var lowerBodyAnimName = State.get().lowerBody.currentAnimation.name === 'walk' ? 'point' : 'walk'
         State.set('lowerBody.currentAnimation', {
           name: lowerBodyAnimName,
           range: state.animationRanges[lowerBodyAnimName],

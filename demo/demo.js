@@ -24,8 +24,9 @@ module.exports = createSkeletonCanvas
 function createSkeletonCanvas () {
   var State = new SS({
     animationRanges: {
-      'dance': [0, 50],
-      'bend': [51, 82]
+      'throw': [0, 5],
+      'walk': [6, 17],
+      'point': [18, 22]
     },
     camera: {
       xRadians: 0,
@@ -33,15 +34,15 @@ function createSkeletonCanvas () {
     },
     upperBody: {
       currentAnimation: {
-        name: 'dance',
-        range: [0, 50],
+        name: 'walk',
+        range: [6, 17],
         startTime: 0
       }
     },
     lowerBody: {
       currentAnimation: {
-        name: 'dance',
-        range: [0, 50],
+        name: 'walk',
+        range: [6, 17],
         startTime: 0
       }
     }

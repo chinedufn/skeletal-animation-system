@@ -15,7 +15,7 @@ function renderUpperBodyControls (h, State) {
           range: state.animationRanges[State.get().upperBody.currentAnimation.name],
           startTime: State.get().upperBody.currentAnimation.startTime
         })
-        var upperBodyAnimName = State.get().upperBody.currentAnimation.name === 'dance' ? 'bend' : 'dance'
+        var upperBodyAnimName = State.get().upperBody.currentAnimation.name === 'walk' ? 'point' : 'walk'
         State.set('upperBody.currentAnimation', {
           name: upperBodyAnimName,
           range: state.animationRanges[upperBodyAnimName],
