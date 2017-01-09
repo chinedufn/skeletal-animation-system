@@ -9,6 +9,7 @@ function createCanvas (State) {
   var observer = new window.MutationObserver(checkForCanvas.bind(observer, State, stopObserving, canvas))
   observer.observe(document.body, {childList: true, subtree: true})
 
+  // Adjust our viewport in state whenever the screen resizes, otherwise our would get distorted
   window.addEventListener('resize', function () {
     var positionInfo = canvas.getBoundingClientRect()
     canvas.height = positionInfo.height
@@ -32,6 +33,8 @@ function createCanvas (State) {
   })
 
   canvas.addEventListener('touchmove', function (e) {
+    e.preventDefault()
+
     var numTouches = e.changedTouches.length
     if (numTouches === 1) {
       var state = State.get()
@@ -54,6 +57,7 @@ function createCanvas (State) {
       }
       State.set(state)
     } else if (numTouches === 2) {
+      // Zoom in and out
     }
   })
 
@@ -68,17 +72,43 @@ function createCanvas (State) {
   })
 
   canvas.addEventListener('mousedown', function (e) {
-    State.set('mousepressed', true)
+    State.set('mousepressed', {
+      startXPos: e.pageX,
+      startYPos: e.pageY,
+      xPos: e.pageX,
+      yPos: e.pageY
+    })
   })
 
   canvas.addEventListener('mousemove', function (e) {
-    /*
-    state = State.get()
+    var state = State.get()
+    // If the mouse is currently held down then any mouse movement will cause the camera to move
     if (state.mousepressed) {
+      var xDelta = e.pageX - state.mousepressed.xPos
+      var yDelta = e.pageY - state.mousepressed.yPos
+
+      var newXRadians = state.camera.xRadians + (yDelta / 200)
+      var newYRadians = state.camera.yRadians - (xDelta / 200)
+
+      // Clamp the camera between a maximum and minimum up and down rotation
+      newXRadians = Math.min(newXRadians, 0.8)
+      newXRadians = Math.max(newXRadians, -0.8)
+
+      // Update our current mouse position so that we can compare against it on next mouse move
+      state.mousepressed = {
+        xPos: e.pageX,
+        yPos: e.pageY
+      }
+      // Update our camera's rotation
+      state.camera = {
+        xRadians: newXRadians,
+        yRadians: newYRadians
+      }
+      State.set(state)
     }
-    */
   })
 
+  // Set that the mouse is no longer pressed
   canvas.addEventListener('mouseup', function (e) {
     State.set('mousepressed', false)
   })
@@ -87,6 +117,7 @@ function createCanvas (State) {
     canvas: canvas
   }
 
+  // TODO: I forgot what I'm even using this for
   function stopObserving () {
     observer.disconnect()
   }
