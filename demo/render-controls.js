@@ -32,6 +32,16 @@ function renderControls (State) {
         },
         src: 'fork-github.png'
       })
+    ]),
+    h('div', {
+      style: { display: 'flex', flexDirection: 'column' }
+    }, [
+      h('span', {
+        style: { display: 'block' }
+      }, 'Looking to contribute? Open an Issue/PR with more interesting / cleaner controls!'),
+      h('span', {
+        style: { display: 'block', marginTop: '10px' }
+      }, 'Touch/Click and move to rotate the camera')
     ])
   ])
 
