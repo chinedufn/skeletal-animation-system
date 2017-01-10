@@ -1,5 +1,4 @@
-var lerp = require('gl-vec4/lerp')
-var dotProduct = require('gl-vec4/dot')
+var blendDualQuaternions = require('./blend-dual-quaternions.js')
 
 module.exports = {
   interpolateJoints: interpolateJoints
@@ -66,66 +65,52 @@ function interpolateJoints (opts) {
   }
 
   // Calculate the interpolated joint matrices for our consumer's animation
+  // TODO: acc is a bad variable name. Renaame it
   var interpolatedJoints = opts.jointNums.reduce(function (acc, jointName) {
     // If there is a previous animation
     // TODO: don't blend if blend is > 1
     var blend = (opts.blendFunction || defaultBlend)(opts.currentTime - opts.currentAnimation.startTime)
     if (opts.previousAnimation && blend < 1) {
-      acc[jointName] = []
+      var previousAnimJointDualQuat
+      var currentAnimJointDualQuat
 
-      var previousAnimJointMatrix = []
-      var currentAnimJointMatrix = []
-      // Blend the two dual quaternions based on where we are in the current keyframe
-      // TODO: Rename to previousAnimDualQuat
-      previousAnimJointMatrix = opts.keyframes[previousAnimLowerKeyframe][jointName].reduce(function (dualQuat, value, index) {
-        // If we are using an exact frame that we already have we do not need to blend
-        // TODO: No need to loop in this case
-        if (previousAnimUpperKeyframe === previousAnimLowerKeyframe) {
-          dualQuat[index] = opts.keyframes[previousAnimLowerKeyframe][jointName][index]
-        } else {
-          dualQuat[index] = opts.keyframes[previousAnimLowerKeyframe][jointName][index] + (opts.keyframes[previousAnimUpperKeyframe][jointName][index] - opts.keyframes[previousAnimLowerKeyframe][jointName][index]) * (prevAnimElapsedTime / (previousAnimUpperKeyframe - previousAnimLowerKeyframe))
-        }
-        return dualQuat
-      }, [])
+      if (previousAnimLowerKeyframe === previousAnimUpperKeyframe) {
+        // If our current frame happens to be one of our defined keyframes we use the existing frame
+        previousAnimJointDualQuat = opts.keyframes[previousAnimLowerKeyframe][jointName]
+      } else {
+        // Blend the dual quaternions for our previous animation that we are about to blend out
+        previousAnimJointDualQuat = blendDualQuaternions(
+          opts.keyframes[previousAnimLowerKeyframe][jointName],
+          opts.keyframes[previousAnimUpperKeyframe][jointName],
+          prevAnimElapsedTime / (previousAnimUpperKeyframe - previousAnimLowerKeyframe)
+        )
+      }
 
-      currentAnimJointMatrix = opts.keyframes[currentAnimLowerKeyframe][jointName].reduce(function (dualQuat, value, index) {
-        dualQuat[index] = opts.keyframes[currentAnimLowerKeyframe][jointName][index] + (opts.keyframes[currentAnimUpperKeyframe][jointName][index] - opts.keyframes[currentAnimLowerKeyframe][jointName][index]) * (currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe))
-        return dualQuat
-      }, [])
+      if (currentAnimLowerKeyframe === currentAnimUpperKeyframe) {
+        // If our current frame happens to be one of our defined keyframes we use the existing frame
+        currentAnimJointDualQuat = opts.keyframes[currentAnimLowerKeyframe][jointName]
+      } else {
+        currentAnimJointDualQuat = blendDualQuaternions(
+          opts.keyframes[currentAnimLowerKeyframe][jointName],
+          opts.keyframes[currentAnimUpperKeyframe][jointName],
+          currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe)
+        )
+      }
 
-      acc[jointName] = previousAnimJointMatrix.reduce(function (dualQuat, value, index) {
-        dualQuat[index] = (currentAnimJointMatrix[index] - previousAnimJointMatrix[index]) * blend + previousAnimJointMatrix[index]
-        return dualQuat
-      }, [])
+      acc[jointName] = blendDualQuaternions(previousAnimJointDualQuat, currentAnimJointDualQuat, blend)
     } else {
-      // If we have an exact keyframe there is no need to blend
+      // If we are on an exact, pre-defined keyframe there is no need to blend
       if (currentAnimUpperKeyframe === currentAnimLowerKeyframe) {
         acc[jointName] = opts.keyframes[currentAnimLowerKeyframe][jointName]
       } else {
-        var lowerRotQuat = opts.keyframes[currentAnimLowerKeyframe][jointName].slice(0, 4)
-        var upperRotQuat = opts.keyframes[currentAnimUpperKeyframe][jointName].slice(0, 4)
-        var lowerTransQuat = opts.keyframes[currentAnimLowerKeyframe][jointName].slice(4, 8)
-        var upperTransQuat = opts.keyframes[currentAnimUpperKeyframe][jointName].slice(4, 8)
-
-        if (dotProduct(lowerRotQuat, upperRotQuat) < 0) {
-          // Handle case when dot product between lower and upper rotation is negative
-          // This ensures that we interpolate the rotation along the shortest path
-          //  see this paper -> http://www.xbdev.net/misc_demos/demos/dual_quaternions_beyond/paper.pdf
-          // TODO: This works, but we need to add a unit test
-          /*
-          lowerRotQuat = lowerRotQuat.map(function (v) {
-            return -v
-          })
-          lowerTransQuat = lowerTransQuat.map(function (v) {
-            return -v
-          })
-          */
-        }
         // Blend the two dual quaternions based on where we are in the current keyframe
-        var percentBetweenKeyframes = (currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe))
-        var blendedRotQuat = lerp([], lowerRotQuat, upperRotQuat, percentBetweenKeyframes)
-        var blendedTransQuat = lerp([], lowerTransQuat, upperTransQuat, percentBetweenKeyframes)
-        acc[jointName] = blendedRotQuat.concat(blendedTransQuat)
+        acc[jointName] = blendDualQuaternions(
+          // The defined keyframe right below our current frame
+          opts.keyframes[currentAnimLowerKeyframe][jointName],
+          // The defined keyframe right above our current frame
+          opts.keyframes[currentAnimUpperKeyframe][jointName],
+          currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe)
+        )
       }
     }
     return acc
