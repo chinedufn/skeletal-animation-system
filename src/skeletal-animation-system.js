@@ -5,11 +5,8 @@ module.exports = {
 }
 
 // TODO: Add thorough comments
-// TODO: Refactor duplicative code
-// TODO: Rename animation time -> frame. We're dealing with frames not time
+// TODO: Refactor now that tests are passing
 // TODO: Benchmark perf
-// TODO: Document and accept a frame range AND a keyframe range
-//        you can specify the first and last pre-specified keyframes to use or just the actual frame
 function interpolateJoints (opts) {
   var currentAnimElapsedTime = opts.currentTime - opts.currentAnimation.startTime
 
@@ -116,6 +113,7 @@ function interpolateJoints (opts) {
     return acc
   }, {})
 
+  // Return the freshly interpolated dual quaternions for each of the joints that were passed in
   return interpolatedJoints
 }
 

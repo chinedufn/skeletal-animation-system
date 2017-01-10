@@ -1,4 +1,4 @@
-// var dotProduct = require('gl-vec4/dot')
+var dotProduct = require('gl-vec4/dot')
 var lerp = require('gl-vec4/lerp')
 
 // TODO: Pull this out into it's standalone own open source repo
@@ -28,9 +28,8 @@ function blendDualQuaternions (startDualQuat, endDualQuat, blendValue) {
   // If it's negative we need to negate one of the quaternions in order
   // to ensure the shortest path interpolation
   //  see this paper -> http://www.xbdev.net/misc_demos/demos/dual_quaternions_beyond/paper.pdf
-  /*
   if (dotProduct(lowerRotQuat, upperRotQuat) < 0) {
-    // TODO: This works, but we need to add a unit test
+    // TODO: This works, but we need to add a unit test that verifies it
     lowerRotQuat[0] = -lowerRotQuat[0]
     lowerRotQuat[1] = -lowerRotQuat[1]
     lowerRotQuat[2] = -lowerRotQuat[2]
@@ -40,7 +39,6 @@ function blendDualQuaternions (startDualQuat, endDualQuat, blendValue) {
     lowerTransQuat[2] = -lowerTransQuat[2]
     lowerTransQuat[3] = -lowerTransQuat[3]
   }
-  */
 
   // Blend our rotation and translation quaternions then combine them
   // back into a final blended dual quaternion
