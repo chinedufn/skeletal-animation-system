@@ -140,6 +140,7 @@ function createCanvas (State) {
   var observer = new window.MutationObserver(checkForCanvas.bind(observer, State, stopObserving, canvas))
   observer.observe(document.body, {childList: true, subtree: true})
 
+  // Adjust our viewport in state whenever the screen resizes, otherwise our would get distorted
   window.addEventListener('resize', function () {
     var positionInfo = canvas.getBoundingClientRect()
     canvas.height = positionInfo.height
@@ -163,6 +164,8 @@ function createCanvas (State) {
   })
 
   canvas.addEventListener('touchmove', function (e) {
+    e.preventDefault()
+
     var numTouches = e.changedTouches.length
     if (numTouches === 1) {
       var state = State.get()
@@ -185,6 +188,7 @@ function createCanvas (State) {
       }
       State.set(state)
     } else if (numTouches === 2) {
+      // Zoom in and out
     }
   })
 
@@ -199,17 +203,43 @@ function createCanvas (State) {
   })
 
   canvas.addEventListener('mousedown', function (e) {
-    State.set('mousepressed', true)
+    State.set('mousepressed', {
+      startXPos: e.pageX,
+      startYPos: e.pageY,
+      xPos: e.pageX,
+      yPos: e.pageY
+    })
   })
 
   canvas.addEventListener('mousemove', function (e) {
-    /*
-    state = State.get()
+    var state = State.get()
+    // If the mouse is currently held down then any mouse movement will cause the camera to move
     if (state.mousepressed) {
+      var xDelta = e.pageX - state.mousepressed.xPos
+      var yDelta = e.pageY - state.mousepressed.yPos
+
+      var newXRadians = state.camera.xRadians + (yDelta / 200)
+      var newYRadians = state.camera.yRadians - (xDelta / 200)
+
+      // Clamp the camera between a maximum and minimum up and down rotation
+      newXRadians = Math.min(newXRadians, 0.8)
+      newXRadians = Math.max(newXRadians, -0.8)
+
+      // Update our current mouse position so that we can compare against it on next mouse move
+      state.mousepressed = {
+        xPos: e.pageX,
+        yPos: e.pageY
+      }
+      // Update our camera's rotation
+      state.camera = {
+        xRadians: newXRadians,
+        yRadians: newYRadians
+      }
+      State.set(state)
     }
-    */
   })
 
+  // Set that the mouse is no longer pressed
   canvas.addEventListener('mouseup', function (e) {
     State.set('mousepressed', false)
   })
@@ -218,6 +248,7 @@ function createCanvas (State) {
     canvas: canvas
   }
 
+  // TODO: I forgot what I'm even using this for
   function stopObserving () {
     observer.disconnect()
   }
@@ -511,6 +542,16 @@ function renderControls (State) {
         },
         src: 'fork-github.png'
       })
+    ]),
+    h('div', {
+      style: { display: 'flex', flexDirection: 'column' }
+    }, [
+      h('span', {
+        style: { display: 'block' }
+      }, 'Looking to contribute? Open an Issue/PR with more interesting / cleaner controls!'),
+      h('span', {
+        style: { display: 'block', marginTop: '10px' }
+      }, 'Touch/Click and move to rotate the camera')
     ])
   ])
 
@@ -555,7 +596,7 @@ function upperBody (state, dualQuatKeyframes) {
 },{"../":11}],11:[function(require,module,exports){
 module.exports = require('./src/skeletal-animation-system')
 
-},{"./src/skeletal-animation-system":98}],12:[function(require,module,exports){
+},{"./src/skeletal-animation-system":99}],12:[function(require,module,exports){
 'use strict'
 
 module.exports = function assertFunction (value) {
@@ -5161,6 +5202,57 @@ function extend(target) {
 }
 
 },{}],97:[function(require,module,exports){
+var dotProduct = require('gl-vec4/dot')
+var lerp = require('gl-vec4/lerp')
+
+// TODO: Pull this out into it's standalone own open source repo
+module.exports = blendDualQuaternions
+
+var lowerRotQuat
+var lowerTransQuat
+var upperRotQuat
+var upperTransQuat
+
+// Blend between two dual quaternions using the shortest path.
+//
+// startDualQuat -> your first dual quaternion that you are blending away from
+// endDualQuat -> your second dual quaternion that you are blending towards
+// blendValue -> Number between 0 and 1. This is the blend fraction
+//  0 means startDualQuat, 0.5 means halfway between, 1 means endDualQuat
+//  etc...
+function blendDualQuaternions (startDualQuat, endDualQuat, blendValue) {
+  // Get the components of our dual quaternions
+  lowerRotQuat = startDualQuat.slice(0, 4)
+  lowerTransQuat = startDualQuat.slice(4, 8)
+
+  upperRotQuat = endDualQuat.slice(0, 4)
+  upperTransQuat = endDualQuat.slice(4, 8)
+
+  // Get the dot product between start and end rotation quaternions
+  // If it's negative we need to negate one of the quaternions in order
+  // to ensure the shortest path interpolation
+  //  see this paper -> http://www.xbdev.net/misc_demos/demos/dual_quaternions_beyond/paper.pdf
+  if (dotProduct(lowerRotQuat, upperRotQuat) < 0) {
+    // TODO: This works, but we need to add a unit test that verifies it
+    lowerRotQuat[0] = -lowerRotQuat[0]
+    lowerRotQuat[1] = -lowerRotQuat[1]
+    lowerRotQuat[2] = -lowerRotQuat[2]
+    lowerRotQuat[3] = -lowerRotQuat[3]
+    lowerTransQuat[0] = -lowerTransQuat[0]
+    lowerTransQuat[1] = -lowerTransQuat[1]
+    lowerTransQuat[2] = -lowerTransQuat[2]
+    lowerTransQuat[3] = -lowerTransQuat[3]
+  }
+
+  // Blend our rotation and translation quaternions then combine them
+  // back into a final blended dual quaternion
+  return lerp([], lowerRotQuat, upperRotQuat, blendValue)
+  .concat(
+    lerp([], lowerTransQuat, upperTransQuat, blendValue)
+  )
+}
+
+},{"gl-vec4/dot":34,"gl-vec4/lerp":35}],98:[function(require,module,exports){
 module.exports = getPreviousAnimationData
 
 function getPreviousAnimationData (opts, keyframeTimes) {
@@ -5223,20 +5315,16 @@ function getPreviousAnimationData (opts, keyframeTimes) {
   }
 }
 
-},{}],98:[function(require,module,exports){
-var lerp = require('gl-vec4/lerp')
-var dotProduct = require('gl-vec4/dot')
+},{}],99:[function(require,module,exports){
+var blendDualQuaternions = require('./blend-dual-quaternions.js')
 
 module.exports = {
   interpolateJoints: interpolateJoints
 }
 
 // TODO: Add thorough comments
-// TODO: Refactor duplicative code
-// TODO: Rename animation time -> frame. We're dealing with frames not time
+// TODO: Refactor now that tests are passing
 // TODO: Benchmark perf
-// TODO: Document and accept a frame range AND a keyframe range
-//        you can specify the first and last pre-specified keyframes to use or just the actual frame
 function interpolateJoints (opts) {
   var currentAnimElapsedTime = opts.currentTime - opts.currentAnimation.startTime
 
@@ -5292,61 +5380,58 @@ function interpolateJoints (opts) {
   }
 
   // Calculate the interpolated joint matrices for our consumer's animation
+  // TODO: acc is a bad variable name. Renaame it
   var interpolatedJoints = opts.jointNums.reduce(function (acc, jointName) {
     // If there is a previous animation
     // TODO: don't blend if blend is > 1
     var blend = (opts.blendFunction || defaultBlend)(opts.currentTime - opts.currentAnimation.startTime)
     if (opts.previousAnimation && blend < 1) {
-      acc[jointName] = []
+      var previousAnimJointDualQuat
+      var currentAnimJointDualQuat
 
-      var previousAnimJointMatrix = []
-      var currentAnimJointMatrix = []
-      // Blend the two dual quaternions based on where we are in the current keyframe
-      // TODO: Rename to previousAnimDualQuat
-      previousAnimJointMatrix = opts.keyframes[previousAnimLowerKeyframe][jointName].reduce(function (dualQuat, value, index) {
-        // If we are using an exact frame that we already have we do not need to blend
-        // TODO: No need to loop in this case
-        if (previousAnimUpperKeyframe === previousAnimLowerKeyframe) {
-          dualQuat[index] = opts.keyframes[previousAnimLowerKeyframe][jointName][index]
-        } else {
-          dualQuat[index] = opts.keyframes[previousAnimLowerKeyframe][jointName][index] + (opts.keyframes[previousAnimUpperKeyframe][jointName][index] - opts.keyframes[previousAnimLowerKeyframe][jointName][index]) * (prevAnimElapsedTime / (previousAnimUpperKeyframe - previousAnimLowerKeyframe))
-        }
-        return dualQuat
-      }, [])
+      if (previousAnimLowerKeyframe === previousAnimUpperKeyframe) {
+        // If our current frame happens to be one of our defined keyframes we use the existing frame
+        previousAnimJointDualQuat = opts.keyframes[previousAnimLowerKeyframe][jointName]
+      } else {
+        // Blend the dual quaternions for our previous animation that we are about to blend out
+        previousAnimJointDualQuat = blendDualQuaternions(
+          opts.keyframes[previousAnimLowerKeyframe][jointName],
+          opts.keyframes[previousAnimUpperKeyframe][jointName],
+          prevAnimElapsedTime / (previousAnimUpperKeyframe - previousAnimLowerKeyframe)
+        )
+      }
 
-      currentAnimJointMatrix = opts.keyframes[currentAnimLowerKeyframe][jointName].reduce(function (dualQuat, value, index) {
-        dualQuat[index] = opts.keyframes[currentAnimLowerKeyframe][jointName][index] + (opts.keyframes[currentAnimUpperKeyframe][jointName][index] - opts.keyframes[currentAnimLowerKeyframe][jointName][index]) * (currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe))
-        return dualQuat
-      }, [])
+      if (currentAnimLowerKeyframe === currentAnimUpperKeyframe) {
+        // If our current frame happens to be one of our defined keyframes we use the existing frame
+        currentAnimJointDualQuat = opts.keyframes[currentAnimLowerKeyframe][jointName]
+      } else {
+        currentAnimJointDualQuat = blendDualQuaternions(
+          opts.keyframes[currentAnimLowerKeyframe][jointName],
+          opts.keyframes[currentAnimUpperKeyframe][jointName],
+          currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe)
+        )
+      }
 
-      acc[jointName] = previousAnimJointMatrix.reduce(function (dualQuat, value, index) {
-        dualQuat[index] = (currentAnimJointMatrix[index] - previousAnimJointMatrix[index]) * blend + previousAnimJointMatrix[index]
-        return dualQuat
-      }, [])
+      acc[jointName] = blendDualQuaternions(previousAnimJointDualQuat, currentAnimJointDualQuat, blend)
     } else {
-      // If we have an exact keyframe there is no need to blend
+      // If we are on an exact, pre-defined keyframe there is no need to blend
       if (currentAnimUpperKeyframe === currentAnimLowerKeyframe) {
         acc[jointName] = opts.keyframes[currentAnimLowerKeyframe][jointName]
       } else {
-        var lowerRotQuat = opts.keyframes[currentAnimLowerKeyframe][jointName].slice(0, 4)
-        var upperRotQuat = opts.keyframes[currentAnimUpperKeyframe][jointName].slice(0, 4)
-        var lowerTransQuat = opts.keyframes[currentAnimLowerKeyframe][jointName].slice(4, 8)
-        var upperTransQuat = opts.keyframes[currentAnimUpperKeyframe][jointName].slice(4, 8)
-
-        if (dotProduct(lowerRotQuat, upperRotQuat) < 0) {
-          // TODO: Handle case when dot product between lower and upper rotation is negative
-          //  see this paper -> http://www.xbdev.net/misc_demos/demos/dual_quaternions_beyond/paper.pdf
-        }
         // Blend the two dual quaternions based on where we are in the current keyframe
-        var percentBetweenKeyframes = (currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe))
-        var blendedRotQuat = lerp([], lowerRotQuat, upperRotQuat, percentBetweenKeyframes)
-        var blendedTransQuat = lerp([], lowerTransQuat, upperTransQuat, percentBetweenKeyframes)
-        acc[jointName] = blendedRotQuat.concat(blendedTransQuat)
+        acc[jointName] = blendDualQuaternions(
+          // The defined keyframe right below our current frame
+          opts.keyframes[currentAnimLowerKeyframe][jointName],
+          // The defined keyframe right above our current frame
+          opts.keyframes[currentAnimUpperKeyframe][jointName],
+          currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe)
+        )
       }
     }
     return acc
   }, {})
 
+  // Return the freshly interpolated dual quaternions for each of the joints that were passed in
   return interpolatedJoints
 }
 
@@ -5362,4 +5447,4 @@ function defaultBlend (dt) {
 
 // TODO: Event emitter for when animation ends ?
 
-},{"./get-previous-animation-data.js":97,"gl-vec4/dot":34,"gl-vec4/lerp":35}]},{},[1]);
+},{"./blend-dual-quaternions.js":97,"./get-previous-animation-data.js":98}]},{},[1]);
