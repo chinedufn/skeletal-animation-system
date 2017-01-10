@@ -193,7 +193,8 @@ test('Blends using time since current animation frame set began', function (t) {
 
   t.deepEqual(
     interpolatedJoints[0],
-    [1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5],
+    // This is 1.625 because we negate one of the dual quats to ensure shortest path interpolation
+    [1.625, 1.625, 1.625, 1.625, 1.625, 1.625, 1.625, 1.625],
     'Blends using time since current animation frame set first started'
   )
   t.end()
