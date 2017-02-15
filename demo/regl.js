@@ -243,20 +243,29 @@ const drawCharacter = regl({
 //    numJoints: vertexData.numJoints
   },
 
-  uniforms: {
+  uniforms: Object.assign({
     uUseLighting: false,
     uAmbientColor: [0,0,0],
     uLightingDirection: [0,0,0],
     uDirectionalColor: [0,0,0],
 
-    // TODO not sure how regl passes in arrays to glsl
-    boneRotQuaternions: regl.prop('rotQuaternions'),
-    boneTransQuaternions: regl.prop('transQuaternions'),
+    //boneRotQuaternions: regl.prop('boneRotQuaternions'),
+    /* boneTransQuaternions: () => {
+     *   regl.prop('boneTransQuaternions').reduce((acc, val, index) =>{
+     *   return acc['boneTransQuaternion' + index] = val;
+     *   }, {})
+     * },*/
     uMVMatrix: drawOpts.perspective,
     uPMatrix: modelMatrix,
-  },
+  }, new Uint32Array(18).reduce((accum, value, index) => {
+    accum['boneRotQuaternions['+index+']'] = regl.prop('boneRotQuaternions['+index+']');
+    return accum;
+  }, {}), new Uint32Array(18).reduce((accum, value, index) => {
+    accum['boneTransQuaternions['+index+']'] = regl.prop('boneTransQuaternions['+index+']');
+    return accum;
+  }, {})),
 
-})
+});
 
 var currentTime = 0;
 regl.frame(({time}) => {  
@@ -282,12 +291,29 @@ regl.frame(({time}) => {
     interpolatedQuats.trans[i] = upperBodyQuats.trans[i] || lowerBodyQuats.trans[i]
   }
 
-  drawCharacter({
+  var drawProps = {
     dualQuatKeyframes: dualQuatKeyframes,
     perspective: mat4Perspective([], Math.PI / 3, window.innerWidth / window.innerHeight, 0.1, 100),
     viewMatrix: cameraData.viewMatrix,
     position: [0, 0, 0],
-    rotQuaternions: interpolatedQuats.rot,
-    transQuaternions: interpolatedQuats.trans
-  });
+    /* boneRotQuaternions: interpolatedQuats.rot,
+     * boneTransQuaternions: interpolatedQuats.trans*/
+  };
+
+  var boneRotQuaternionProps = interpolatedQuats.rot.reduce(function(accum, val, index){
+    accum['boneRotQuaternions['+index+']'] = val;
+    return accum;
+  }, {});
+
+  var boneTransQuaternionProps = interpolatedQuats.rot.reduce((accum, val, index) => {
+    accum['boneTransQuaternions['+index+']'] = val;
+    return accum;
+  }, {});
+
+  var mergedProps = Object.assign({},
+                                  drawProps,
+                                  boneRotQuaternionProps,
+                                  boneTransQuaternionProps
+  );
+  drawCharacter(mergedProps);
 })
