@@ -248,13 +248,8 @@ const drawCharacter = regl({
     uAmbientColor: [0,0,0],
     uLightingDirection: [0,0,0],
     uDirectionalColor: [0,0,0],
-
-    //boneRotQuaternions: regl.prop('boneRotQuaternions'),
-    /* boneTransQuaternions: () => {
-     *   regl.prop('boneTransQuaternions').reduce((acc, val, index) =>{
-     *   return acc['boneTransQuaternion' + index] = val;
-     *   }, {})
-     * },*/
+    boneRotQuaternions: regl.prop('boneRotQuaternions'),
+    boneTransQuaternions: regl.prop('boneTransQuaternions'),
     uMVMatrix: drawOpts.perspective,
     uPMatrix: modelMatrix,
   }, new Uint32Array(18).reduce((accum, value, index) => {
@@ -263,7 +258,7 @@ const drawCharacter = regl({
   }, {}), new Uint32Array(18).reduce((accum, value, index) => {
     accum['boneTransQuaternions['+index+']'] = regl.prop('boneTransQuaternions['+index+']');
     return accum;
-  }, {})),
+  }, {}))
 
 });
 
@@ -296,8 +291,8 @@ regl.frame(({time}) => {
     perspective: mat4Perspective([], Math.PI / 3, window.innerWidth / window.innerHeight, 0.1, 100),
     viewMatrix: cameraData.viewMatrix,
     position: [0, 0, 0],
-    /* boneRotQuaternions: interpolatedQuats.rot,
-     * boneTransQuaternions: interpolatedQuats.trans*/
+    boneRotQuaternions: interpolatedQuats.rot,
+    boneTransQuaternions: interpolatedQuats.trans
   };
 
   var boneRotQuaternionProps = interpolatedQuats.rot.reduce(function(accum, val, index){
