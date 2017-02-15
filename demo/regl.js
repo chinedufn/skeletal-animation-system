@@ -211,22 +211,26 @@ const drawCharacter = regl({
             t2,
             1
             );
+
       vec4 leftWorldSpace = weightedMatrix * vec4(aVertexPosition, 1.0);
       float y = leftWorldSpace.z;
       float z = -leftWorldSpace.y;
       leftWorldSpace.y = y;
       leftWorldSpace.z = z;
+
       if (uUseLighting) {
         vec3 transformedNormal = (weightedMatrix * vec4(aVertexNormal, 0.0)).xyz;
         y = transformedNormal.z;
         z = -transformedNormal.y;
         transformedNormal.y = y;
         transformedNormal.z = z;
+
         float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);
         vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;
       } else {
         vLightWeighting = vec3(1.0, 1.0, 1.0);
       }     
+
       gl_Position = uPMatrix * uMVMatrix * leftWorldSpace;
     }`,
 
@@ -238,12 +242,10 @@ const drawCharacter = regl({
     }`,
 
   attributes: {
-    position: simplicalCowboy.positions,
     aVertexPosition: cowboy.vertexPositions,
     aVertexNormal: vertexData.vertexNormals,
     aJointIndex: vertexData.vertexJointAffectors,
     aJointWeight: vertexData.vertexJointWeights,
-//    numJoints: vertexData.numJoints
   },
 
   uniforms: Object.assign({
@@ -272,9 +274,9 @@ regl.frame(({time}) => {
   state.currentTime = currentTime;
 
   regl.clear({
-    color: [2.04, 2.04, 2.04, 0],
+    color: [0.4, 0.4, 0.4, 1],
     depth: 1
-  })
+  });
 
   var upperBodyQuats = getUpperBodyQuats(state, dualQuatKeyframes);
   var lowerBodyQuats = getLowerBodyQuats(state, dualQuatKeyframes);
@@ -292,7 +294,6 @@ regl.frame(({time}) => {
 
   var drawProps = {
     dualQuatKeyframes: dualQuatKeyframes,
-    perspective: mat4Perspective([], Math.PI / 3, window.innerWidth / window.innerHeight, 0.1, 100),
     viewMatrix: cameraData.viewMatrix,
     position: [0, 0, 0],
     boneRotQuaternions: interpolatedQuats.rot,
@@ -309,8 +310,7 @@ regl.frame(({time}) => {
     return accum;
   }, {});
 
-  var mergedProps = Object.assign({},
-                                  drawProps,
+  var mergedProps = Object.assign(drawProps,
                                   boneRotQuaternionProps,
                                   boneTransQuaternionProps
   );
