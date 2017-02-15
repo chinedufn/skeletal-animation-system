@@ -22,6 +22,8 @@ const mat4RotateZ = require('gl-mat4/rotateZ');
 const getUpperBodyQuats = require('./upper-body.js');
 const getLowerBodyQuats = require('./lower-body.js');
 
+const meshReindex = require('mesh-reindex');
+
 var state = {
   animationRanges: {
     'throw': [0, 5],
@@ -90,6 +92,8 @@ mat4Multiply(modelMatrix, drawOpts.viewMatrix, modelMatrix);
 
 var vertexData = expandVertices(cowboy, {});
 
+var simplicalCowboy = meshReindex(cowboy.vertexPositions);
+
 function convertKeyframesToDualQuats (keyframes) {
   return Object.keys(cowboy.keyframes)
                .reduce(function (acc, time) {
@@ -103,7 +107,6 @@ function convertKeyframesToDualQuats (keyframes) {
                }, {});
 }
 
-// TODO: Turn into module
 function convertMatricesToDualQuats (jointMatrices) {
   var rotQuaternions = []
   var transQuaternions = []
@@ -128,7 +131,6 @@ function convertMatricesToDualQuats (jointMatrices) {
 const dualQuatKeyframes = convertKeyframesToDualQuats(cowboy.keyframes);
 
 
-// Calling regl() creates a new partially evaluated draw command
 const drawCharacter = regl({
   vert: `
     attribute vec3 aVertexPosition;
@@ -236,6 +238,7 @@ const drawCharacter = regl({
     }`,
 
   attributes: {
+    position: simplicalCowboy.positions,
     aVertexPosition: cowboy.vertexPositions,
     aVertexNormal: vertexData.vertexNormals,
     aJointIndex: vertexData.vertexJointAffectors,
@@ -258,8 +261,9 @@ const drawCharacter = regl({
   }, {}), new Uint32Array(18).reduce((accum, value, index) => {
     accum['boneTransQuaternions['+index+']'] = regl.prop('boneTransQuaternions['+index+']');
     return accum;
-  }, {}))
+  }, {})),
 
+  elements: simplicalCowboy.cells,
 });
 
 var currentTime = 0;
