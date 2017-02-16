@@ -242,8 +242,8 @@ const drawCharacter = regl({
     }`,
 
   attributes: {
-    aVertexPosition: cowboy.vertexPositions,
-    aVertexNormal: vertexData.vertexNormals,
+    aVertexPosition: regl.buffer(cowboy.vertexPositions),
+    aVertexNormal: regl.buffer(vertexData.vertexNormals),
     aJointIndex: vertexData.vertexJointAffectors,
     aJointWeight: vertexData.vertexJointWeights,
   },
