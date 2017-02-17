@@ -137,6 +137,7 @@ const drawCharacter = regl({
     attribute vec3 aVertexNormal;
     attribute vec4 aJointIndex;
     attribute vec4 aJointWeight;
+
     varying vec3 vLightWeighting;
     uniform bool uUseLighting;
     uniform vec3 uAmbientColor;
@@ -229,7 +230,7 @@ const drawCharacter = regl({
         vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;
       } else {
         vLightWeighting = vec3(1.0, 1.0, 1.0);
-      }     
+      }
 
       gl_Position = uPMatrix * uMVMatrix * leftWorldSpace;
     }`,
@@ -242,10 +243,37 @@ const drawCharacter = regl({
     }`,
 
   attributes: {
-    aVertexPosition: regl.buffer(cowboy.vertexPositions),
-    aVertexNormal: regl.buffer(vertexData.vertexNormals),
-    aJointIndex: vertexData.vertexJointAffectors,
-    aJointWeight: vertexData.vertexJointWeights,
+    aVertexPosition: {
+      buffer: regl.buffer({
+        data: cowboy.vertexPositions,
+        type: 'float32',
+      }),
+      size: 3
+    },
+    
+    aVertexNormal: {
+      buffer: regl.buffer({
+        data: vertexData.vertexNormals,
+        type: 'float32'
+      }),
+      size: 3
+    },
+    
+    aJointIndex: {
+      buffer: regl.buffer({
+        data: vertexData.vertexJointAffectors,
+        type: 'float32'
+      }),
+      size: 4
+    },
+    
+    aJointWeight: {
+      buffer: regl.buffer({
+        buffer: vertexData.vertexJointWeights,
+        type: 'float32'
+      }),
+      size: 4
+    },
   },
 
   uniforms: Object.assign({
@@ -265,7 +293,13 @@ const drawCharacter = regl({
     return accum;
   }, {})),
 
-  elements: simplicalCowboy.cells,
+  elements: regl.elements({
+    data: vertexData.vertexPositionIndices,
+    type: 'uint16',
+    primitive: 'triangles'
+  }),
+  
+  //count: cowboy.vertexPositions.length
 });
 
 var currentTime = 0;
