@@ -276,6 +276,12 @@ const drawCharacter = regl({
     },
   },
 
+  elements: regl.elements({
+    data: vertexData.vertexPositionIndices,
+    type: 'uint16',
+    primitive: 'triangles'
+  }),
+  
   uniforms: Object.assign({
     uUseLighting: false,
     uAmbientColor: [0,0,0],
@@ -293,11 +299,7 @@ const drawCharacter = regl({
     return accum;
   }, {})),
 
-  elements: regl.elements({
-    data: vertexData.vertexPositionIndices,
-    type: 'uint16',
-    primitive: 'triangles'
-  }),
+
   
   //count: cowboy.vertexPositions.length
 });
