@@ -269,7 +269,7 @@ const drawCharacter = regl({
     
     aJointWeight: {
       buffer: regl.buffer({
-        buffer: vertexData.vertexJointWeights,
+        data: vertexData.vertexJointWeights,
         type: 'float32'
       }),
       size: 4
