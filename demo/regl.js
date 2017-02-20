@@ -54,11 +54,11 @@ var state = {
 state.upperBodyJointNums = ['Torso', 'Chest', 'Bone_002', 'Head', 'Upper_Arm_L', 'Lower_Arm_L', 'Hand_L', 'Upper_Arm_R', 'Lower_Arm_R', 'Hand_R']
   .reduce(function (jointNums, jointName) {
     return jointNums.concat([cowboy.jointNamePositionIndex[jointName]])
-  }, [])
+  }, []);
 state.lowerBodyJointNums = ['Upper_Leg_L', 'Lower_Leg_L', 'Foot_L', 'Toe_L', 'Upper_Leg_R', 'Lower_Leg_R', 'Foot_R', 'Toe_R']
   .reduce(function (jointNums, jointName) {
     return jointNums.concat([cowboy.jointNamePositionIndex[jointName]])
-  }, [])
+  }, []);
 
 
 var cameraData = createCamera({
@@ -66,13 +66,13 @@ var cameraData = createCamera({
   target: [0, 3.4, 0],
   xRadians: state.camera.xRadians,
   yRadians: state.camera.yRadians
-})
+});
 
 
 const drawOpts = {
-  perspective: mat4Perspective([], Math.PI / 4, 256 / 256, 0.1, 100),
+  perspective: mat4Perspective([], Math.PI / 3, window.innerWidth / window.innerHeight, 0.1, 100),
   position: [0.0, 0.0, -5.0],
-  viewMatrix: mat4Create(),
+  viewMatrix: cameraData.viewMatrix,
   lighting: {
     useLighting: false
   },
@@ -89,10 +89,8 @@ mat4RotateY(modelMatrix, modelMatrix, drawOpts.yRotation);
 mat4RotateZ(modelMatrix, modelMatrix, drawOpts.zRotation);
 mat4Multiply(modelMatrix, drawOpts.viewMatrix, modelMatrix);
 
+var vertexData = expandVertices(cowboy, {hasTexture: true});
 
-var vertexData = expandVertices(cowboy, {});
-
-var simplicalCowboy = meshReindex(cowboy.vertexPositions);
 
 function convertKeyframesToDualQuats (keyframes) {
   return Object.keys(cowboy.keyframes)
@@ -108,8 +106,8 @@ function convertKeyframesToDualQuats (keyframes) {
 }
 
 function convertMatricesToDualQuats (jointMatrices) {
-  var rotQuaternions = []
-  var transQuaternions = []
+  var rotQuaternions = [];
+  var transQuaternions = [];
 
   jointMatrices.forEach(function (joint, index) {
     // Create our dual quaternion
@@ -120,37 +118,47 @@ function convertMatricesToDualQuats (jointMatrices) {
 
     rotQuaternions.push(rotationQuat)
     transQuaternions.push(transQuat)
-  })
+  });
 
   return {
     rotQuaternions: rotQuaternions,
     transQuaternions: transQuaternions
-  }
+  };
 }
 
 const dualQuatKeyframes = convertKeyframesToDualQuats(cowboy.keyframes);
 
+require('resl')({
+  manifest: {
+    'texture': {
+      type: 'image',
+      src: 'cowboy-texture.png'
+    }
+  },
 
-const drawCharacter = regl({
-  vert: `
+  onDone: (assets) => {
+    const drawCharacter = regl({
+      vert:`
     attribute vec3 aVertexPosition;
-    attribute vec3 aVertexNormal;
+    attribute vec2 aTextureCoord;
+    varying vec2 vTextureCoord;
+    
+    uniform mat3 uNMatrix;
+
     attribute vec4 aJointIndex;
     attribute vec4 aJointWeight;
 
-    varying vec3 vLightWeighting;
-    uniform bool uUseLighting;
-    uniform vec3 uAmbientColor;
-    uniform vec3 uLightingDirection;
-    uniform vec3 uDirectionalColor;
-    uniform vec4 boneRotQuaternions[${vertexData.numJoints}];
-    uniform vec4 boneTransQuaternions[${vertexData.numJoints}];
+    uniform vec4 boneRotQuaternions[18];
+    uniform vec4 boneTransQuaternions[18];
+
     uniform mat4 uMVMatrix;
     uniform mat4 uPMatrix;
+
     void main (void) {
       vec4 rotQuaternion[4];
       vec4 transQuaternion[4];
-      for (int i = 0; i < ${vertexData.numJoints}; i++) {
+
+      for (int i = 0; i < 18; i++) {
         if (aJointIndex.x == float(i)) {
           rotQuaternion[0] = boneRotQuaternions[i];
           transQuaternion[0] = boneTransQuaternions[i];
@@ -168,14 +176,17 @@ const drawCharacter = regl({
           transQuaternion[3] = boneTransQuaternions[i];
         }
       }
+
       vec4 weightedRotQuat = rotQuaternion[0] * aJointWeight.x +
         rotQuaternion[1] * aJointWeight.y +
         rotQuaternion[2] * aJointWeight.z +
         rotQuaternion[3] * aJointWeight.w;
+
       vec4 weightedTransQuat = transQuaternion[0] * aJointWeight.x +
         transQuaternion[1] * aJointWeight.y +
         transQuaternion[2] * aJointWeight.z +
         transQuaternion[3] * aJointWeight.w;
+
       float xRot = weightedRotQuat[0];
       float yRot = weightedRotQuat[1];
       float zRot = weightedRotQuat[2];
@@ -183,17 +194,21 @@ const drawCharacter = regl({
       float rotQuatMagnitude = sqrt(xRot * xRot + yRot * yRot + zRot * zRot + wRot * wRot);
       weightedRotQuat = weightedRotQuat / rotQuatMagnitude;
       weightedTransQuat = weightedTransQuat / rotQuatMagnitude;
+
       float xR = weightedRotQuat[0];
       float yR = weightedRotQuat[1];
       float zR = weightedRotQuat[2];
       float wR = weightedRotQuat[3];
+
       float xT = weightedTransQuat[0];
       float yT = weightedTransQuat[1];
       float zT = weightedTransQuat[2];
       float wT = weightedTransQuat[3];
+
       float t0 = 2.0 * (-wT * xR + xT * wR - yT * zR + zT * yR);
       float t1 = 2.0 * (-wT * yR + xT * zR + yT * wR - zT * xR);
       float t2 = 2.0 * (-wT * zR - xT * yR + yT * xR + zT * wR);
+
       mat4 weightedMatrix = mat4(
             1.0 - (2.0 * yR * yR) - (2.0 * zR * zR),
             (2.0 * xR * yR) + (2.0 * wR * zR),
@@ -219,136 +234,145 @@ const drawCharacter = regl({
       leftWorldSpace.y = y;
       leftWorldSpace.z = z;
 
-      if (uUseLighting) {
-        vec3 transformedNormal = (weightedMatrix * vec4(aVertexNormal, 0.0)).xyz;
-        y = transformedNormal.z;
-        z = -transformedNormal.y;
-        transformedNormal.y = y;
-        transformedNormal.z = z;
-
-        float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);
-        vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;
-      } else {
-        vLightWeighting = vec3(1.0, 1.0, 1.0);
-      }
+      
+      vTextureCoord = aTextureCoord;
+    
 
       gl_Position = uPMatrix * uMVMatrix * leftWorldSpace;
-    }`,
+     }`,
 
-  frag: `
-    precision mediump float;
-    varying vec3 vLightWeighting;
+      frag: `
+        precision mediump float;
+
+          varying vec2 vTextureCoord;
+      varying vec3 vLightWeighting;
+
+      uniform sampler2D uSampler;
+    
+
     void main (void) {
-      gl_FragColor = vec4(vLightWeighting, 1.0);
+      vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+      gl_FragColor = vec4(textureColor.rgb, textureColor.a);
     }`,
 
-  attributes: {
-    aVertexPosition: {
-      buffer: regl.buffer({
-        data: cowboy.vertexPositions,
-        type: 'float32',
+      attributes: {
+        aVertexPosition: {
+          buffer: regl.buffer({
+            data: cowboy.vertexPositions,
+            type: 'float32',
+          }),
+          size: 3
+        },
+        
+        aVertexNormal: {
+          buffer: regl.buffer({
+            data: vertexData.vertexNormals,
+            type: 'float32'
+          }),
+          size: 3
+        },
+        
+        aJointIndex: {
+          buffer: regl.buffer({
+            data: vertexData.vertexJointAffectors,
+            type: 'float32'
+          }),
+          size: 4
+        },
+        
+        aJointWeight: {
+          buffer: regl.buffer({
+            data: vertexData.vertexJointWeights,
+            type: 'float32'
+          }),
+          size: 4
+        },
+
+        aTextureCoord: {
+          buffer: regl.buffer({
+            data: vertexData.vertexUVs,
+            type: 'float32'
+          }),
+        }
+      },
+
+      primitive: 'triangles',
+      count: vertexData.vertexPositionIndices.length,
+      
+      elements: regl.elements({
+        data: vertexData.vertexPositionIndices,
+        type: 'uint16',
+        primitive: 'triangles'
       }),
-      size: 3
-    },
-    
-    aVertexNormal: {
-      buffer: regl.buffer({
-        data: vertexData.vertexNormals,
-        type: 'float32'
-      }),
-      size: 3
-    },
-    
-    aJointIndex: {
-      buffer: regl.buffer({
-        data: vertexData.vertexJointAffectors,
-        type: 'float32'
-      }),
-      size: 4
-    },
-    
-    aJointWeight: {
-      buffer: regl.buffer({
-        data: vertexData.vertexJointWeights,
-        type: 'float32'
-      }),
-      size: 4
-    },
+      
+      uniforms: Object.assign({
+        uUseLighting: false,
+        uAmbientColor: [0,0,0],
+        uLightingDirection: [0,0,0],
+        uDirectionalColor: [0,0,0],
+        boneRotQuaternions: regl.prop('boneRotQuaternions'),
+        boneTransQuaternions: regl.prop('boneTransQuaternions'),
+        uMVMatrix: drawOpts.perspective,
+        uPMatrix: modelMatrix,
+        uSampler: regl.texture(assets.texture),
+      }, new Uint32Array(18).reduce((accum, value, index) => {
+        accum['boneRotQuaternions['+index+']'] = regl.prop('boneRotQuaternions['+index+']');
+        return accum;
+      }, {}), new Uint32Array(18).reduce((accum, value, index) => {
+        accum['boneTransQuaternions['+index+']'] = regl.prop('boneTransQuaternions['+index+']');
+        return accum;
+      }, {})),
+    });
+
+    var currentTime = 0;
+    regl.frame(({time}) => {
+      currentTime += time;
+      state.currentTime = currentTime;
+
+      regl.clear({
+        color: [0.4, 0.4, 0.4, 1],
+        depth: 1
+      });
+
+      var upperBodyQuats = getUpperBodyQuats(state, dualQuatKeyframes);
+      var lowerBodyQuats = getLowerBodyQuats(state, dualQuatKeyframes);
+
+      if (!upperBodyQuats || !lowerBodyQuats) {
+        return;
+      }
+
+      var interpolatedQuats = {rot: [], trans: []}
+      var totalJoints = upperBodyQuats.length + lowerBodyQuats.length
+      for (var i = 0; i < totalJoints; i++) {
+        interpolatedQuats.rot[i] = upperBodyQuats.rot[i] || lowerBodyQuats.rot[i]
+        interpolatedQuats.trans[i] = upperBodyQuats.trans[i] || lowerBodyQuats.trans[i]
+      }
+
+      var drawProps = {
+        dualQuatKeyframes: dualQuatKeyframes,
+        viewMatrix: cameraData.viewMatrix,
+        position: [0, 0, 0],
+        boneRotQuaternions: interpolatedQuats.rot,
+        boneTransQuaternions: interpolatedQuats.trans
+      };
+
+      var boneRotQuaternionProps = interpolatedQuats.rot.reduce(function(accum, val, index){
+        accum['boneRotQuaternions['+index+']'] = val;
+        return accum;
+      }, {});
+
+      var boneTransQuaternionProps = interpolatedQuats.rot.reduce((accum, val, index) => {
+        accum['boneTransQuaternions['+index+']'] = val;
+        return accum;
+      }, {});
+
+      var mergedProps = Object.assign({},
+                                      vertexData,
+                                      drawProps,
+                                      boneRotQuaternionProps,
+                                      boneTransQuaternionProps
+      );
+      drawCharacter(mergedProps);
+    });
   },
-
-  elements: regl.elements({
-    data: vertexData.vertexPositionIndices,
-    type: 'uint16',
-    primitive: 'triangles'
-  }),
-  
-  uniforms: Object.assign({
-    uUseLighting: false,
-    uAmbientColor: [0,0,0],
-    uLightingDirection: [0,0,0],
-    uDirectionalColor: [0,0,0],
-    boneRotQuaternions: regl.prop('boneRotQuaternions'),
-    boneTransQuaternions: regl.prop('boneTransQuaternions'),
-    uMVMatrix: drawOpts.perspective,
-    uPMatrix: modelMatrix,
-  }, new Uint32Array(18).reduce((accum, value, index) => {
-    accum['boneRotQuaternions['+index+']'] = regl.prop('boneRotQuaternions['+index+']');
-    return accum;
-  }, {}), new Uint32Array(18).reduce((accum, value, index) => {
-    accum['boneTransQuaternions['+index+']'] = regl.prop('boneTransQuaternions['+index+']');
-    return accum;
-  }, {})),
-
-
-  
-  //count: cowboy.vertexPositions.length
 });
-
-var currentTime = 0;
-regl.frame(({time}) => {  
-  currentTime += time / 1000;
-  state.currentTime = currentTime;
-
-  regl.clear({
-    color: [0.4, 0.4, 0.4, 1],
-    depth: 1
-  });
-
-  var upperBodyQuats = getUpperBodyQuats(state, dualQuatKeyframes);
-  var lowerBodyQuats = getLowerBodyQuats(state, dualQuatKeyframes);
-
-  if (!upperBodyQuats || !lowerBodyQuats) {
-    return;
-  }
-
-  var interpolatedQuats = {rot: [], trans: []}
-  var totalJoints = upperBodyQuats.length + lowerBodyQuats.length
-  for (var i = 0; i < totalJoints; i++) {
-    interpolatedQuats.rot[i] = upperBodyQuats.rot[i] || lowerBodyQuats.rot[i]
-    interpolatedQuats.trans[i] = upperBodyQuats.trans[i] || lowerBodyQuats.trans[i]
-  }
-
-  var drawProps = {
-    dualQuatKeyframes: dualQuatKeyframes,
-    viewMatrix: cameraData.viewMatrix,
-    position: [0, 0, 0],
-    boneRotQuaternions: interpolatedQuats.rot,
-    boneTransQuaternions: interpolatedQuats.trans
-  };
-
-  var boneRotQuaternionProps = interpolatedQuats.rot.reduce(function(accum, val, index){
-    accum['boneRotQuaternions['+index+']'] = val;
-    return accum;
-  }, {});
-
-  var boneTransQuaternionProps = interpolatedQuats.rot.reduce((accum, val, index) => {
-    accum['boneTransQuaternions['+index+']'] = val;
-    return accum;
-  }, {});
-
-  var mergedProps = Object.assign(drawProps,
-                                  boneRotQuaternionProps,
-                                  boneTransQuaternionProps
-  );
-  drawCharacter(mergedProps);
-})
