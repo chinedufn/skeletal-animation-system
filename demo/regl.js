@@ -243,11 +243,10 @@ require('resl')({
 
       frag: `
         precision mediump float;
+        varying vec2 vTextureCoord;
+        varying vec3 vLightWeighting;
 
-          varying vec2 vTextureCoord;
-      varying vec3 vLightWeighting;
-
-      uniform sampler2D uSampler;
+        uniform sampler2D uSampler;
     
 
     void main (void) {
@@ -306,10 +305,6 @@ require('resl')({
       }),
       
       uniforms: Object.assign({
-        uUseLighting: false,
-        uAmbientColor: [0,0,0],
-        uLightingDirection: [0,0,0],
-        uDirectionalColor: [0,0,0],
         boneRotQuaternions: regl.prop('boneRotQuaternions'),
         boneTransQuaternions: regl.prop('boneTransQuaternions'),
         uMVMatrix: drawOpts.perspective,
@@ -361,17 +356,17 @@ require('resl')({
         return accum;
       }, {});
 
-      var boneTransQuaternionProps = interpolatedQuats.rot.reduce((accum, val, index) => {
+      var boneTransQuaternionProps = interpolatedQuats.trans.reduce((accum, val, index) => {
         accum['boneTransQuaternions['+index+']'] = val;
         return accum;
       }, {});
-
+      
       var mergedProps = Object.assign({},
-                                      vertexData,
                                       drawProps,
                                       boneRotQuaternionProps,
                                       boneTransQuaternionProps
       );
+
       drawCharacter(mergedProps);
     });
   },
