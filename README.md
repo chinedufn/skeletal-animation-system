@@ -15,7 +15,7 @@ It supports blending between
 your previous and current animation when you switch animations. It also supports splitting your model into different bone groups such as the upper
 and lower body, allowing you to, for example, play a walking animation for your legs while playing a punch animation for your upper body.
 
-`skeletal-animation-system` does not maintain an internal state, but instead lets the modules consumer track thigns such as the current animation and the current clock time.
+`skeletal-animation-system` does not maintain an internal state, but instead lets the modules consumer track things such as the current animation and the current clock time.
 
 ## Notes
 
