@@ -22,9 +22,7 @@ const mat4RotateZ = require('gl-mat4/rotateZ');
 const getUpperBodyQuats = require('./upper-body.js');
 const getLowerBodyQuats = require('./lower-body.js');
 
-const meshReindex = require('mesh-reindex');
-
-var state = {
+const state = {
   animationRanges: {
     'throw': [0, 5],
     'walk': [6, 17],
