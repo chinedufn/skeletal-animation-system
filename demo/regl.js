@@ -307,8 +307,8 @@ require('resl')({
       uniforms: Object.assign({
         boneRotQuaternions: regl.prop('boneRotQuaternions'),
         boneTransQuaternions: regl.prop('boneTransQuaternions'),
-        uMVMatrix: drawOpts.perspective,
-        uPMatrix: modelMatrix,
+        uMVMatrix: modelMatrix,
+        uPMatrix: drawOpts.perspective,
         uSampler: regl.texture(assets.texture),
       }, new Uint32Array(18).reduce((accum, value, index) => {
         accum['boneRotQuaternions['+index+']'] = regl.prop('boneRotQuaternions['+index+']');
