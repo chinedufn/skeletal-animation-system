@@ -321,8 +321,7 @@ require('resl')({
 
     var currentTime = 0;
     regl.frame(({time}) => {
-      currentTime += time;
-      state.currentTime = currentTime;
+      state.currentTime = time;
 
       regl.clear({
         color: [0.4, 0.4, 0.4, 1],
