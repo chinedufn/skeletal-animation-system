@@ -293,14 +293,7 @@ require('resl')({
         }
       },
 
-      primitive: 'triangles',
-      count: vertexData.vertexPositionIndices.length,
-      
-      elements: regl.elements({
-        data: vertexData.vertexPositionIndices,
-        type: 'uint16',
-        primitive: 'triangles'
-      }),
+      elements: vertexData.vertexPositionIndices,
       
       uniforms: Object.assign({
         boneRotQuaternions: regl.prop('boneRotQuaternions'),
