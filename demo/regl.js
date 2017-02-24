@@ -307,7 +307,12 @@ require('resl')({
         boneTransQuaternions: regl.prop('boneTransQuaternions'),
         uMVMatrix: modelMatrix,
         uPMatrix: drawOpts.perspective,
-        uSampler: regl.texture(assets.texture),
+        uSampler: regl.texture({
+          data: assets.texture,
+          width: 256,
+          height: 256,
+          flipY: true
+        }),
       }, new Uint32Array(18).reduce((accum, value, index) => {
         accum['boneRotQuaternions['+index+']'] = regl.prop('boneRotQuaternions['+index+']');
         return accum;
