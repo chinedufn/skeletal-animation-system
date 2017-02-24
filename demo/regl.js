@@ -253,13 +253,7 @@ require('resl')({
     }`,
 
       attributes: {
-        aVertexPosition: {
-          buffer: regl.buffer({
-            data: cowboy.vertexPositions,
-            type: 'float32',
-          }),
-          size: 3
-        },
+        aVertexPosition: cowboy.vertexPositions,        
         
         aVertexNormal: {
           buffer: regl.buffer({
