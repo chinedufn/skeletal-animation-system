@@ -242,7 +242,6 @@ require('resl')({
       frag: `
         precision mediump float;
         varying vec2 vTextureCoord;
-        varying vec3 vLightWeighting;
 
         uniform sampler2D uSampler;
     
