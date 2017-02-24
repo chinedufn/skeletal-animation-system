@@ -256,15 +256,7 @@ require('resl')({
         aVertexPosition: cowboy.vertexPositions,        
         aVertexNormal: vertexData.vertexNormals,
         aJointIndex: vertexData.vertexJointAffectors,
-        
-        aJointWeight: {
-          buffer: regl.buffer({
-            data: vertexData.vertexJointWeights,
-            type: 'float32'
-          }),
-          size: 4
-        },
-
+        aJointWeight: vertexData.vertexJointWeights,
         aTextureCoord: {
           buffer: regl.buffer({
             data: vertexData.vertexUVs,
