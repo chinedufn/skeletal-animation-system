@@ -257,12 +257,7 @@ require('resl')({
         aVertexNormal: vertexData.vertexNormals,
         aJointIndex: vertexData.vertexJointAffectors,
         aJointWeight: vertexData.vertexJointWeights,
-        aTextureCoord: {
-          buffer: regl.buffer({
-            data: vertexData.vertexUVs,
-            type: 'float32'
-          }),
-        }
+        aTextureCoord: vertexData.vertexUVs,
       },
 
       elements: vertexData.vertexPositionIndices,
