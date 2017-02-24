@@ -1,8 +1,7 @@
-'use strict';
-const regl = require('regl')();
-const cowboy = require('./asset/cowboy.json');
-const skeletalAnimationSystem = require('../');
-const expandVertices = require('load-collada-dae/src/expand-vertices.js');
+'use strict'
+const regl = require('regl')()
+const cowboy = require('./asset/cowboy.json')
+const expandVertices = require('load-collada-dae/src/expand-vertices.js')
 
 const mat3FromMat4 = require('gl-mat3/from-mat4')
 const quatMultiply = require('gl-quat/multiply')
@@ -11,16 +10,16 @@ const quatScale = require('gl-quat/scale')
 
 const createCamera = require('create-orbit-camera')
 
-const mat4Create = require('gl-mat4/create');
-const mat4Perspective = require('gl-mat4/perspective');
-const mat4Translate = require('gl-mat4/translate');
-const mat4Multiply = require('gl-mat4/multiply');
-const mat4RotateX = require('gl-mat4/rotateX');
-const mat4RotateY = require('gl-mat4/rotateY');
-const mat4RotateZ = require('gl-mat4/rotateZ');
+const mat4Create = require('gl-mat4/create')
+const mat4Perspective = require('gl-mat4/perspective')
+const mat4Translate = require('gl-mat4/translate')
+const mat4Multiply = require('gl-mat4/multiply')
+const mat4RotateX = require('gl-mat4/rotateX')
+const mat4RotateY = require('gl-mat4/rotateY')
+const mat4RotateZ = require('gl-mat4/rotateZ')
 
-const getUpperBodyQuats = require('./upper-body.js');
-const getLowerBodyQuats = require('./lower-body.js');
+const getUpperBodyQuats = require('./upper-body.js')
+const getLowerBodyQuats = require('./lower-body.js')
 
 const state = {
   animationRanges: {
@@ -46,26 +45,23 @@ const state = {
       startTime: 0
     }
   }
-};
-
+}
 
 state.upperBodyJointNums = ['Torso', 'Chest', 'Bone_002', 'Head', 'Upper_Arm_L', 'Lower_Arm_L', 'Hand_L', 'Upper_Arm_R', 'Lower_Arm_R', 'Hand_R']
   .reduce(function (jointNums, jointName) {
     return jointNums.concat([cowboy.jointNamePositionIndex[jointName]])
-  }, []);
+  }, [])
 state.lowerBodyJointNums = ['Upper_Leg_L', 'Lower_Leg_L', 'Foot_L', 'Toe_L', 'Upper_Leg_R', 'Lower_Leg_R', 'Foot_R', 'Toe_R']
   .reduce(function (jointNums, jointName) {
     return jointNums.concat([cowboy.jointNamePositionIndex[jointName]])
-  }, []);
-
+  }, [])
 
 var cameraData = createCamera({
   position: [15, 23, 25],
   target: [0, 3.4, 0],
   xRadians: state.camera.xRadians,
   yRadians: state.camera.yRadians
-});
-
+})
 
 const drawOpts = {
   perspective: mat4Perspective([], Math.PI / 3, window.innerWidth / window.innerHeight, 0.1, 100),
@@ -77,35 +73,34 @@ const drawOpts = {
   xRotation: 0.0,
   yRotation: 0.0,
   zRotation: 0.0
-};
+}
 
-var modelMatrix = mat4Create();
+var modelMatrix = mat4Create()
 
-mat4Translate(modelMatrix, modelMatrix, drawOpts.position);
-mat4RotateX(modelMatrix, modelMatrix, drawOpts.xRotation);
-mat4RotateY(modelMatrix, modelMatrix, drawOpts.yRotation);
-mat4RotateZ(modelMatrix, modelMatrix, drawOpts.zRotation);
-mat4Multiply(modelMatrix, drawOpts.viewMatrix, modelMatrix);
+mat4Translate(modelMatrix, modelMatrix, drawOpts.position)
+mat4RotateX(modelMatrix, modelMatrix, drawOpts.xRotation)
+mat4RotateY(modelMatrix, modelMatrix, drawOpts.yRotation)
+mat4RotateZ(modelMatrix, modelMatrix, drawOpts.zRotation)
+mat4Multiply(modelMatrix, drawOpts.viewMatrix, modelMatrix)
 
-var vertexData = expandVertices(cowboy, {hasTexture: true});
-
+var vertexData = expandVertices(cowboy, {hasTexture: true})
 
 function convertKeyframesToDualQuats (keyframes) {
   return Object.keys(cowboy.keyframes)
                .reduce(function (acc, time) {
-                 var keyframes = convertMatricesToDualQuats(cowboy.keyframes[time]);
+                 var keyframes = convertMatricesToDualQuats(cowboy.keyframes[time])
                  keyframes = keyframes.rotQuaternions.reduce(function (all, quat, index) {
-                   all[index] = keyframes.rotQuaternions[index].concat(keyframes.transQuaternions[index]);
-                   return all;
-                 }, {});
-                 acc[time] = keyframes;
-                 return acc;
-               }, {});
+                   all[index] = keyframes.rotQuaternions[index].concat(keyframes.transQuaternions[index])
+                   return all
+                 }, {})
+                 acc[time] = keyframes
+                 return acc
+               }, {})
 }
 
 function convertMatricesToDualQuats (jointMatrices) {
-  var rotQuaternions = [];
-  var transQuaternions = [];
+  var rotQuaternions = []
+  var transQuaternions = []
 
   jointMatrices.forEach(function (joint, index) {
     // Create our dual quaternion
@@ -116,15 +111,15 @@ function convertMatricesToDualQuats (jointMatrices) {
 
     rotQuaternions.push(rotationQuat)
     transQuaternions.push(transQuat)
-  });
+  })
 
   return {
     rotQuaternions: rotQuaternions,
     transQuaternions: transQuaternions
-  };
+  }
 }
 
-const dualQuatKeyframes = convertKeyframesToDualQuats(cowboy.keyframes);
+const dualQuatKeyframes = convertKeyframesToDualQuats(cowboy.keyframes)
 
 require('resl')({
   manifest: {
@@ -136,7 +131,7 @@ require('resl')({
 
   onDone: (assets) => {
     const drawCharacter = regl({
-      vert:`
+      vert: `
     attribute vec3 aVertexPosition;
     attribute vec2 aTextureCoord;
     varying vec2 vTextureCoord;
@@ -252,15 +247,15 @@ require('resl')({
     }`,
 
       attributes: {
-        aVertexPosition: cowboy.vertexPositions,        
+        aVertexPosition: cowboy.vertexPositions,
         aVertexNormal: vertexData.vertexNormals,
         aJointIndex: vertexData.vertexJointAffectors,
         aJointWeight: vertexData.vertexJointWeights,
-        aTextureCoord: vertexData.vertexUVs,
+        aTextureCoord: vertexData.vertexUVs
       },
 
       elements: vertexData.vertexPositionIndices,
-      
+
       uniforms: Object.assign({
         boneRotQuaternions: regl.prop('boneRotQuaternions'),
         boneTransQuaternions: regl.prop('boneTransQuaternions'),
@@ -271,29 +266,29 @@ require('resl')({
           width: 256,
           height: 256,
           flipY: true
-        }),
+        })
       }, new Uint32Array(18).reduce((accum, value, index) => {
-        accum['boneRotQuaternions['+index+']'] = regl.prop('boneRotQuaternions['+index+']');
-        return accum;
+        accum['boneRotQuaternions[' + index + ']'] = regl.prop('boneRotQuaternions[' + index + ']')
+        return accum
       }, {}), new Uint32Array(18).reduce((accum, value, index) => {
-        accum['boneTransQuaternions['+index+']'] = regl.prop('boneTransQuaternions['+index+']');
-        return accum;
-      }, {})),
-    });
+        accum['boneTransQuaternions[' + index + ']'] = regl.prop('boneTransQuaternions[' + index + ']')
+        return accum
+      }, {}))
+    })
 
     regl.frame(({time}) => {
-      state.currentTime = time;
+      state.currentTime = time
 
       regl.clear({
         color: [0.4, 0.4, 0.4, 1],
         depth: 1
-      });
+      })
 
-      var upperBodyQuats = getUpperBodyQuats(state, dualQuatKeyframes);
-      var lowerBodyQuats = getLowerBodyQuats(state, dualQuatKeyframes);
+      var upperBodyQuats = getUpperBodyQuats(state, dualQuatKeyframes)
+      var lowerBodyQuats = getLowerBodyQuats(state, dualQuatKeyframes)
 
       if (!upperBodyQuats || !lowerBodyQuats) {
-        return;
+        return
       }
 
       var interpolatedQuats = {rot: [], trans: []}
@@ -306,25 +301,25 @@ require('resl')({
       var drawProps = {
         boneRotQuaternions: interpolatedQuats.rot,
         boneTransQuaternions: interpolatedQuats.trans
-      };
+      }
 
-      var boneRotQuaternionProps = interpolatedQuats.rot.reduce(function(accum, val, index){
-        accum['boneRotQuaternions['+index+']'] = val;
-        return accum;
-      }, {});
+      var boneRotQuaternionProps = interpolatedQuats.rot.reduce(function (accum, val, index) {
+        accum['boneRotQuaternions[' + index + ']'] = val
+        return accum
+      }, {})
 
       var boneTransQuaternionProps = interpolatedQuats.trans.reduce((accum, val, index) => {
-        accum['boneTransQuaternions['+index+']'] = val;
-        return accum;
-      }, {});
-      
+        accum['boneTransQuaternions[' + index + ']'] = val
+        return accum
+      }, {})
+
       var mergedProps = Object.assign({},
                                       drawProps,
                                       boneRotQuaternionProps,
                                       boneTransQuaternionProps
-      );
+      )
 
-      drawCharacter(mergedProps);
-    });
-  },
-});
+      drawCharacter(mergedProps)
+    })
+  }
+})
