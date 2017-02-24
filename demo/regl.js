@@ -315,7 +315,6 @@ require('resl')({
       }, {})),
     });
 
-    var currentTime = 0;
     regl.frame(({time}) => {
       state.currentTime = time;
 
@@ -339,9 +338,6 @@ require('resl')({
       }
 
       var drawProps = {
-        dualQuatKeyframes: dualQuatKeyframes,
-        viewMatrix: cameraData.viewMatrix,
-        position: [0, 0, 0],
         boneRotQuaternions: interpolatedQuats.rot,
         boneTransQuaternions: interpolatedQuats.trans
       };
