@@ -255,14 +255,7 @@ require('resl')({
       attributes: {
         aVertexPosition: cowboy.vertexPositions,        
         aVertexNormal: vertexData.vertexNormals,
-        
-        aJointIndex: {
-          buffer: regl.buffer({
-            data: vertexData.vertexJointAffectors,
-            type: 'float32'
-          }),
-          size: 4
-        },
+        aJointIndex: vertexData.vertexJointAffectors,
         
         aJointWeight: {
           buffer: regl.buffer({
