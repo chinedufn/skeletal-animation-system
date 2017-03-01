@@ -427,7 +427,7 @@ function convertMatricesToDualQuats (jointMatrices) {
   }
 }
 
-},{"./create-canvas.js":5,"./render-canvas.js":8,"./render-controls":9,"gl-mat3/from-mat4":25,"gl-quat/fromMat3":31,"gl-quat/multiply":32,"gl-quat/scale":33,"load-collada-dae":48,"main-loop":52,"raf-loop":58,"solid-state":61,"virtual-dom":68,"xhr":94}],7:[function(require,module,exports){
+},{"./create-canvas.js":5,"./render-canvas.js":8,"./render-controls":9,"gl-mat3/from-mat4":26,"gl-quat/fromMat3":35,"gl-quat/multiply":36,"gl-quat/scale":37,"load-collada-dae":55,"main-loop":59,"raf-loop":65,"solid-state":68,"virtual-dom":75,"xhr":101}],7:[function(require,module,exports){
 var animationSystem = require('../')
 
 module.exports = lowerBody
@@ -465,6 +465,8 @@ function lowerBody (state, dualQuatKeyframes) {
 
 },{"../":11}],8:[function(require,module,exports){
 var createCamera = require('create-orbit-camera')
+var vec3Normalize = require('gl-vec3/normalize')
+var vec3Scale = require('gl-vec3/scale')
 
 module.exports = renderCanvas
 
@@ -488,26 +490,39 @@ function renderCanvas (gl, state, cameraControls, dt, opts) {
 
   var interpolatedQuats = {rot: [], trans: []}
   var totalJoints = upperBodyQuats.length + lowerBodyQuats.length
+
+  var lightingDirection = [1, -3, -1]
+  var normalizedLD = []
+  vec3Normalize(normalizedLD, lightingDirection)
+  vec3Scale(normalizedLD, normalizedLD, -1)
+
+  var uniforms = {
+    uUseLighting: true,
+    uAmbientColor: [0.3, 0.3, 0.3],
+    uLightingDirection: normalizedLD,
+    uDirectionalColor: [0.0, 0.4, 0.7],
+    uMVMatrix: cameraData.viewMatrix,
+    uPMatrix: require('gl-mat4/perspective')([], Math.PI / 3, state.viewport.width / state.viewport.height, 0.1, 100)
+  }
+
   for (var i = 0; i < totalJoints; i++) {
-    interpolatedQuats.rot[i] = upperBodyQuats.rot[i] || lowerBodyQuats.rot[i]
-    interpolatedQuats.trans[i] = upperBodyQuats.trans[i] || lowerBodyQuats.trans[i]
+    uniforms['boneRotQuaternions' + i] = upperBodyQuats.rot[i] || lowerBodyQuats.rot[i]
+    uniforms['boneTransQuaternions' + i] = upperBodyQuats.trans[i] || lowerBodyQuats.trans[i]
   }
 
   // Once we've loaded our model we draw it every frame
   if (opts.model) {
+    gl.useProgram(opts.model.shaderProgram)
     opts.model.draw({
-      perspective: require('gl-mat4/perspective')([], Math.PI / 3, state.viewport.width / state.viewport.height, 0.1, 100),
-      viewMatrix: cameraData.viewMatrix,
-      position: [0, 0, 0],
+      attributes: opts.model.attributes,
+      uniforms: uniforms,
       rotQuaternions: interpolatedQuats.rot,
       transQuaternions: interpolatedQuats.trans
-      // TODO: Leave comment in tutorial about using a view matrix to create a camera
-      //  If you're interested in that let me know on twitter
     })
   }
 }
 
-},{"./lower-body.js":7,"./upper-body.js":10,"create-orbit-camera":15,"gl-mat4/perspective":29}],9:[function(require,module,exports){
+},{"./lower-body.js":7,"./upper-body.js":10,"create-orbit-camera":15,"gl-mat4/perspective":30,"gl-vec3/normalize":38,"gl-vec3/scale":39}],9:[function(require,module,exports){
 var h = require('virtual-dom/h')
 
 module.exports = renderControls
@@ -558,7 +573,7 @@ function renderControls (State) {
   return controls
 }
 
-},{"./control/full-body-control.js":2,"./control/lower-body-controls.js":3,"./control/upper-body-controls.js":4,"virtual-dom/h":67}],10:[function(require,module,exports){
+},{"./control/full-body-control.js":2,"./control/lower-body-controls.js":3,"./control/upper-body-controls.js":4,"virtual-dom/h":74}],10:[function(require,module,exports){
 var animationSystem = require('../')
 
 module.exports = upperBody
@@ -596,7 +611,7 @@ function upperBody (state, dualQuatKeyframes) {
 },{"../":11}],11:[function(require,module,exports){
 module.exports = require('./src/skeletal-animation-system')
 
-},{"./src/skeletal-animation-system":99}],12:[function(require,module,exports){
+},{"./src/skeletal-animation-system":106}],12:[function(require,module,exports){
 'use strict'
 
 module.exports = function assertFunction (value) {
@@ -722,7 +737,7 @@ function createOrbitCamera (opts) {
   }
 }
 
-},{"./matrix-math/make-look-at.js":16,"./matrix-math/make-x-rotation.js":17,"./matrix-math/make-y-rotation.js":18,"gl-mat4/invert":27,"gl-mat4/multiply":28,"gl-mat4/translate":30}],16:[function(require,module,exports){
+},{"./matrix-math/make-look-at.js":16,"./matrix-math/make-x-rotation.js":17,"./matrix-math/make-y-rotation.js":18,"gl-mat4/invert":28,"gl-mat4/multiply":29,"gl-mat4/translate":34}],16:[function(require,module,exports){
 module.exports = MakeLookAt
 
 function MakeLookAt (cameraPosition, target, up) {
@@ -904,7 +919,7 @@ function getPathSegments(path) {
 	return parts;
 }
 
-},{"is-obj":43}],20:[function(require,module,exports){
+},{"is-obj":49}],20:[function(require,module,exports){
 'use strict'
 
 var assertFn = require('assert-function')
@@ -992,7 +1007,7 @@ function TypedError(args) {
 }
 
 
-},{"camelize":14,"string-template":62,"xtend/mutable":96}],22:[function(require,module,exports){
+},{"camelize":14,"string-template":69,"xtend/mutable":103}],22:[function(require,module,exports){
 'use strict';
 
 var OneVersionConstraint = require('individual/one-version');
@@ -1014,7 +1029,7 @@ function EvStore(elem) {
     return hash;
 }
 
-},{"individual/one-version":40}],23:[function(require,module,exports){
+},{"individual/one-version":46}],23:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1366,7 +1381,59 @@ function forEachObject(object, iterator, context) {
     }
 }
 
-},{"is-function":42}],25:[function(require,module,exports){
+},{"is-function":48}],25:[function(require,module,exports){
+module.exports = getAttributesUniforms
+
+// Given a fragment or vertex shader we
+// return all of the attributes and uniforms
+//  One potential use case is to use this
+//  information to automatically retrieve a shader's
+//  uniform and attribute locations
+function getAttributesUniforms (shaderString) {
+  // All attribute and uniform definitions come before
+  // the void statement
+  var voidIndex = shaderString.indexOf(' void ')
+
+  var shaderBeforeVoid = shaderString.substring(0, voidIndex)
+
+  // Split the shader into individual statements
+  var shaderStatements = shaderBeforeVoid.split(';')
+
+  // Find all of the uniforms and attributes in each statement in the shader
+  // statements end with a semicolon `;`
+  return shaderStatements.reduce(function (attrsAndUniforms, statement) {
+    // Find the location of our defined attribute or uniform in this particular statement
+    // We know that the type and name come right after this part of the statement
+    // see: test/get-attributes-uniforms for examples
+    var attribLocation = statement.indexOf(' attribute ')
+    var uniformLocation = statement.indexOf(' uniform ')
+
+    // If we have an attribute or a uniform in this statement we add it to our list
+    if (attribLocation !== -1) {
+      // Remove any comment lines that come before our attribute declaration
+      statement = statement.substring(Math.min(statement.lastIndexOf('\n'), attribLocation))
+
+      // Tokenize the attribute declaration.. ex: [attribute, vec3, position]
+      var attributeStatementTokens = statement.trim().replace('\n', ' ').split(/[ ]+/)
+      // The token that is one spot after `attribute` is the type (ex: vec2, vec4, ... etc)
+      // The token that comes two spots after our `attribute` is the name (ex: aVertexPosition, aVertexNormal...)
+      // So this turns into ex: attributes['position'] = 'vec3'
+      attrsAndUniforms.attributes[attributeStatementTokens[2]] = attributeStatementTokens[1]
+    } else if (uniformLocation !== -1) {
+      // Remove any comment lines that come before our uniform declaration
+      statement = statement.substring(Math.min(statement.lastIndexOf('\n'), uniformLocation))
+
+      var uniformStatementTokens = statement.trim().replace('\n', ' ').split(/[ ]+/)
+      // The token that is one spot after `uniform` is the type (ex: vec2, vec4, ... etc)
+      // Find the token that comes two spots after our `uniform` (the name)
+      attrsAndUniforms.uniforms[uniformStatementTokens[2]] = uniformStatementTokens[1]
+    }
+
+    return attrsAndUniforms
+  }, {attributes: {}, uniforms: {}})
+}
+
+},{}],26:[function(require,module,exports){
 module.exports = fromMat4
 
 /**
@@ -1390,7 +1457,7 @@ function fromMat4(out, a) {
   return out
 }
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 module.exports = create;
 
 /**
@@ -1418,7 +1485,7 @@ function create() {
     out[15] = 1;
     return out;
 };
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 module.exports = invert;
 
 /**
@@ -1474,7 +1541,7 @@ function invert(out, a) {
 
     return out;
 };
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 module.exports = multiply;
 
 /**
@@ -1517,7 +1584,7 @@ function multiply(out, a, b) {
     out[15] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
     return out;
 };
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 module.exports = perspective;
 
 /**
@@ -1551,7 +1618,142 @@ function perspective(out, fovy, aspect, near, far) {
     out[15] = 0;
     return out;
 };
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
+module.exports = rotateX;
+
+/**
+ * Rotates a matrix by the given angle around the X axis
+ *
+ * @param {mat4} out the receiving matrix
+ * @param {mat4} a the matrix to rotate
+ * @param {Number} rad the angle to rotate the matrix by
+ * @returns {mat4} out
+ */
+function rotateX(out, a, rad) {
+    var s = Math.sin(rad),
+        c = Math.cos(rad),
+        a10 = a[4],
+        a11 = a[5],
+        a12 = a[6],
+        a13 = a[7],
+        a20 = a[8],
+        a21 = a[9],
+        a22 = a[10],
+        a23 = a[11];
+
+    if (a !== out) { // If the source and destination differ, copy the unchanged rows
+        out[0]  = a[0];
+        out[1]  = a[1];
+        out[2]  = a[2];
+        out[3]  = a[3];
+        out[12] = a[12];
+        out[13] = a[13];
+        out[14] = a[14];
+        out[15] = a[15];
+    }
+
+    // Perform axis-specific matrix multiplication
+    out[4] = a10 * c + a20 * s;
+    out[5] = a11 * c + a21 * s;
+    out[6] = a12 * c + a22 * s;
+    out[7] = a13 * c + a23 * s;
+    out[8] = a20 * c - a10 * s;
+    out[9] = a21 * c - a11 * s;
+    out[10] = a22 * c - a12 * s;
+    out[11] = a23 * c - a13 * s;
+    return out;
+};
+},{}],32:[function(require,module,exports){
+module.exports = rotateY;
+
+/**
+ * Rotates a matrix by the given angle around the Y axis
+ *
+ * @param {mat4} out the receiving matrix
+ * @param {mat4} a the matrix to rotate
+ * @param {Number} rad the angle to rotate the matrix by
+ * @returns {mat4} out
+ */
+function rotateY(out, a, rad) {
+    var s = Math.sin(rad),
+        c = Math.cos(rad),
+        a00 = a[0],
+        a01 = a[1],
+        a02 = a[2],
+        a03 = a[3],
+        a20 = a[8],
+        a21 = a[9],
+        a22 = a[10],
+        a23 = a[11];
+
+    if (a !== out) { // If the source and destination differ, copy the unchanged rows
+        out[4]  = a[4];
+        out[5]  = a[5];
+        out[6]  = a[6];
+        out[7]  = a[7];
+        out[12] = a[12];
+        out[13] = a[13];
+        out[14] = a[14];
+        out[15] = a[15];
+    }
+
+    // Perform axis-specific matrix multiplication
+    out[0] = a00 * c - a20 * s;
+    out[1] = a01 * c - a21 * s;
+    out[2] = a02 * c - a22 * s;
+    out[3] = a03 * c - a23 * s;
+    out[8] = a00 * s + a20 * c;
+    out[9] = a01 * s + a21 * c;
+    out[10] = a02 * s + a22 * c;
+    out[11] = a03 * s + a23 * c;
+    return out;
+};
+},{}],33:[function(require,module,exports){
+module.exports = rotateZ;
+
+/**
+ * Rotates a matrix by the given angle around the Z axis
+ *
+ * @param {mat4} out the receiving matrix
+ * @param {mat4} a the matrix to rotate
+ * @param {Number} rad the angle to rotate the matrix by
+ * @returns {mat4} out
+ */
+function rotateZ(out, a, rad) {
+    var s = Math.sin(rad),
+        c = Math.cos(rad),
+        a00 = a[0],
+        a01 = a[1],
+        a02 = a[2],
+        a03 = a[3],
+        a10 = a[4],
+        a11 = a[5],
+        a12 = a[6],
+        a13 = a[7];
+
+    if (a !== out) { // If the source and destination differ, copy the unchanged last row
+        out[8]  = a[8];
+        out[9]  = a[9];
+        out[10] = a[10];
+        out[11] = a[11];
+        out[12] = a[12];
+        out[13] = a[13];
+        out[14] = a[14];
+        out[15] = a[15];
+    }
+
+    // Perform axis-specific matrix multiplication
+    out[0] = a00 * c + a10 * s;
+    out[1] = a01 * c + a11 * s;
+    out[2] = a02 * c + a12 * s;
+    out[3] = a03 * c + a13 * s;
+    out[4] = a10 * c - a00 * s;
+    out[5] = a11 * c - a01 * s;
+    out[6] = a12 * c - a02 * s;
+    out[7] = a13 * c - a03 * s;
+    return out;
+};
+},{}],34:[function(require,module,exports){
 module.exports = translate;
 
 /**
@@ -1590,7 +1792,7 @@ function translate(out, a, v) {
 
     return out;
 };
-},{}],31:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 module.exports = fromMat3
 
 /**
@@ -1641,7 +1843,7 @@ function fromMat3 (out, m) {
   return out
 }
 
-},{}],32:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 module.exports = multiply
 
 /**
@@ -1663,7 +1865,7 @@ function multiply (out, a, b) {
   return out
 }
 
-},{}],33:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 /**
  * Scales a quat by a scalar number
  *
@@ -1675,7 +1877,48 @@ function multiply (out, a, b) {
  */
 module.exports = require('gl-vec4/scale')
 
-},{"gl-vec4/scale":36}],34:[function(require,module,exports){
+},{"gl-vec4/scale":42}],38:[function(require,module,exports){
+module.exports = normalize;
+
+/**
+ * Normalize a vec3
+ *
+ * @param {vec3} out the receiving vector
+ * @param {vec3} a vector to normalize
+ * @returns {vec3} out
+ */
+function normalize(out, a) {
+    var x = a[0],
+        y = a[1],
+        z = a[2]
+    var len = x*x + y*y + z*z
+    if (len > 0) {
+        //TODO: evaluate use of glm_invsqrt here?
+        len = 1 / Math.sqrt(len)
+        out[0] = a[0] * len
+        out[1] = a[1] * len
+        out[2] = a[2] * len
+    }
+    return out
+}
+},{}],39:[function(require,module,exports){
+module.exports = scale;
+
+/**
+ * Scales a vec3 by a scalar number
+ *
+ * @param {vec3} out the receiving vector
+ * @param {vec3} a the vector to scale
+ * @param {Number} b amount to scale the vector by
+ * @returns {vec3} out
+ */
+function scale(out, a, b) {
+    out[0] = a[0] * b
+    out[1] = a[1] * b
+    out[2] = a[2] * b
+    return out
+}
+},{}],40:[function(require,module,exports){
 module.exports = dot
 
 /**
@@ -1689,7 +1932,7 @@ function dot (a, b) {
   return a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3]
 }
 
-},{}],35:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 module.exports = lerp
 
 /**
@@ -1713,7 +1956,7 @@ function lerp (out, a, b, t) {
   return out
 }
 
-},{}],36:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 module.exports = scale
 
 /**
@@ -1732,7 +1975,7 @@ function scale (out, a, b) {
   return out
 }
 
-},{}],37:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 (function (global){
 var topLevel = typeof global !== 'undefined' ? global :
     typeof window !== 'undefined' ? window : {}
@@ -1751,7 +1994,7 @@ if (typeof document !== 'undefined') {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"min-document":13}],38:[function(require,module,exports){
+},{"min-document":13}],44:[function(require,module,exports){
 (function (global){
 if (typeof window !== "undefined") {
     module.exports = window;
@@ -1764,7 +2007,7 @@ if (typeof window !== "undefined") {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],39:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1787,7 +2030,7 @@ function Individual(key, value) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],40:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 'use strict';
 
 var Individual = require('./index.js');
@@ -1811,7 +2054,7 @@ function OneVersion(moduleName, version, defaultValue) {
     return Individual(key, defaultValue);
 }
 
-},{"./index.js":39}],41:[function(require,module,exports){
+},{"./index.js":45}],47:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -1836,7 +2079,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],42:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 module.exports = isFunction
 
 var toString = Object.prototype.toString
@@ -1853,32 +2096,45 @@ function isFunction (fn) {
       fn === window.prompt))
 };
 
-},{}],43:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 'use strict';
 module.exports = function (x) {
 	var type = typeof x;
 	return x !== null && (type === 'object' || type === 'function');
 };
 
-},{}],44:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 "use strict";
 
 module.exports = function isObject(x) {
 	return typeof x === "object" && x !== null;
 };
 
-},{}],45:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 var mat4Create = require('gl-mat4/create')
 var mat4Multiply = require('gl-mat4/multiply')
 var mat4Perspective = require('gl-mat4/perspective')
 var mat4Translate = require('gl-mat4/translate')
+
+var mat4RotateX = require('gl-mat4/rotateX')
+var mat4RotateY = require('gl-mat4/rotateY')
+var mat4RotateZ = require('gl-mat4/rotateZ')
+
+var vec3Normalize = require('gl-vec3/normalize')
+var vec3Scale = require('gl-vec3/scale')
 
 module.exports = drawModel
 
 var defaultDrawOpts = {
   perspective: mat4Perspective([], Math.PI / 4, 256 / 256, 0.1, 100),
   position: [0.0, 0.0, -5.0],
-  viewMatrix: mat4Create()
+  viewMatrix: mat4Create(),
+  lighting: {
+    useLighting: false
+  },
+  xRotation: 0.0,
+  yRotation: 0.0,
+  zRotation: 0.0
 }
 
 /*
@@ -1892,58 +2148,77 @@ function drawModel (gl, bufferData, drawOpts) {
   // Move our model to the specified position
   var modelMatrix = mat4Create()
   mat4Translate(modelMatrix, modelMatrix, drawOpts.position)
+
+  // Rotate the model in place. If you want to rotate that about an axis
+  // you can handle externally and then pass in the corresponding position
+  mat4RotateX(modelMatrix, modelMatrix, drawOpts.xRotation)
+  mat4RotateY(modelMatrix, modelMatrix, drawOpts.yRotation)
+  mat4RotateZ(modelMatrix, modelMatrix, drawOpts.zRotation)
+
   mat4Multiply(modelMatrix, drawOpts.viewMatrix, modelMatrix)
 
   // TODO: Should we just let the consumer handle this?
   gl.useProgram(bufferData.shader.program)
 
   // TODO: Don't need to enable vertex attribs if we are re-drawing the same model
-  gl.bindBuffer(gl.ARRAY_BUFFER, bufferData.vertexPositionBuffer)
+  gl.bindBuffer(gl.ARRAY_BUFFER, bufferData.aVertexPosition)
   // TODO: See if we can move all of these enable calls to the top, or if order matters
   //  easier to refactor the enabling process later if they're all together
-  gl.enableVertexAttribArray(bufferData.shader.vertexPositionAttribute)
-  gl.vertexAttribPointer(bufferData.shader.vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0)
+  gl.enableVertexAttribArray(bufferData.shader.attributes.aVertexPosition.location)
+  gl.vertexAttribPointer(bufferData.shader.attributes.aVertexPosition.location, 3, gl.FLOAT, false, 0, 0)
 
   // TODO: Instead of having if statements we should generate our JavaScript
   //  Haven't done this before.. maybe we can use eval?
   if (bufferData.modelTexture) {
     // Texture
     gl.bindBuffer(gl.ARRAY_BUFFER, bufferData.vertexTextureBuffer)
-    gl.enableVertexAttribArray(bufferData.shader.textureCoordAttribute)
-    gl.vertexAttribPointer(bufferData.shader.textureCoordAttribute, 2, gl.FLOAT, false, 0, 0)
+    gl.enableVertexAttribArray(bufferData.shader.attributes.aTextureCoord.location)
+    gl.vertexAttribPointer(bufferData.shader.attributes.aTextureCoord.location, 2, gl.FLOAT, false, 0, 0)
 
     gl.activeTexture(gl.TEXTURE0)
     gl.bindTexture(gl.TEXTURE_2D, bufferData.modelTexture)
-    gl.uniform1i(bufferData.shader.samplerUniform, 0)
+    gl.uniform1i(bufferData.shader.uniforms.uSampler.location, 0)
   }
 
-  /*
   // Vertex normals
-  gl.bindBuffer(gl.ARRAY_BUFFER, bufferData.shader.vertexNormalBuffer)
-  gl.enableVertexAttribArray(bufferData.shader.vertexNormalAttribute)
-  gl.vertexAttribPointer(bufferData.shader.vertexNormalAttribute, 3, gl.FLOAT, false, 0, 0)
-  */
+  if (bufferData.shader.attributes.aVertexNormal) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufferData.aVertexNormal)
+    gl.enableVertexAttribArray(bufferData.shader.attributes.aVertexNormal.location)
+    gl.vertexAttribPointer(bufferData.shader.attributes.aVertexNormal.location, 3, gl.FLOAT, false, 0, 0)
+  }
 
   // Vertex joints
-  gl.bindBuffer(gl.ARRAY_BUFFER, bufferData.vertexJointIndexBuffer)
-  gl.enableVertexAttribArray(bufferData.shader.vertexJointIndexAttribute)
-  gl.vertexAttribPointer(bufferData.shader.vertexJointIndexAttribute, 4, gl.FLOAT, false, 0, 0)
+  gl.bindBuffer(gl.ARRAY_BUFFER, bufferData.aJointIndex)
+  gl.enableVertexAttribArray(bufferData.shader.attributes.aJointIndex.location)
+  gl.vertexAttribPointer(bufferData.shader.attributes.aJointIndex.location, 4, gl.FLOAT, false, 0, 0)
 
   // Vertex joint weights
-  gl.bindBuffer(gl.ARRAY_BUFFER, bufferData.weightBuffer)
-  gl.enableVertexAttribArray(bufferData.shader.vertexJointWeightAttribute)
-  gl.vertexAttribPointer(bufferData.shader.vertexJointWeightAttribute, 4, gl.FLOAT, false, 0, 0)
+  gl.bindBuffer(gl.ARRAY_BUFFER, bufferData.aJointWeight)
+  gl.enableVertexAttribArray(bufferData.shader.attributes.aJointWeight.location)
+  gl.vertexAttribPointer(bufferData.shader.attributes.aJointWeight.location, 4, gl.FLOAT, false, 0, 0)
 
   // Joint uniforms
-  // TODO: Don't hard code number of joints
   for (var jointNum = 0; jointNum < bufferData.numJoints; jointNum++) {
-    gl.uniform4fv(bufferData.shader['boneRotQuaternion' + jointNum], drawOpts.rotQuaternions[jointNum])
-    gl.uniform4fv(bufferData.shader['boneTransQuaternion' + jointNum], drawOpts.transQuaternions[jointNum])
+    gl.uniform4fv(bufferData.shader.uniforms['boneRotQuaternions' + jointNum].location, drawOpts.rotQuaternions[jointNum])
+    gl.uniform4fv(bufferData.shader.uniforms['boneTransQuaternions' + jointNum].location, drawOpts.transQuaternions[jointNum])
   }
 
-  // TODO: Just pre-multiply these?
-  gl.uniformMatrix4fv(bufferData.shader.pMatrixUniform, false, drawOpts.perspective)
-  gl.uniformMatrix4fv(bufferData.shader.mvMatrixUniform, false, modelMatrix)
+  // Lighting
+  var lightingDirection = [1, -0.5, -1]
+  var normalizedLD = []
+  vec3Normalize(normalizedLD, lightingDirection)
+  vec3Scale(normalizedLD, normalizedLD, -1)
+
+  if (bufferData.shader.uniforms.uAmbientColor) {
+    gl.uniform3fv(bufferData.shader.uniforms.uAmbientColor.location, [0.5, 0.5, 0.5])
+    gl.uniform3fv(bufferData.shader.uniforms.uLightingDirection.location, normalizedLD)
+    gl.uniform3f(bufferData.shader.uniforms.uDirectionalColor.location, 1.0, 1.0, 1.0)
+    gl.uniform1i(bufferData.shader.uniforms.uUseLighting.location, drawOpts.lighting.useLighting)
+  }
+
+  // Model-view and perspective matrices
+  gl.uniformMatrix4fv(bufferData.shader.uniforms.uPMatrix.location, false, drawOpts.perspective)
+  gl.uniformMatrix4fv(bufferData.shader.uniforms.uMVMatrix.location, false, modelMatrix)
 
   // Draw our model
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufferData.vertexPositionIndexBuffer)
@@ -1951,14 +2226,146 @@ function drawModel (gl, bufferData, drawOpts) {
 
   // Clean up
   // TODO: Only disable when we're done re-drawing a model multiple times
-  gl.disableVertexAttribArray(bufferData.shader.vertexPositionAttribute)
-  // gl.disableVertexAttribArray(bufferData.shader.vertexNormalAttribute)
-  gl.disableVertexAttribArray(bufferData.shader.vertexJointIndexAttribute)
-  gl.disableVertexAttribArray(bufferData.shader.vertexJointWeightAttribute)
-  gl.disableVertexAttribArray(bufferData.shader.textureCoordAttribute)
+  gl.disableVertexAttribArray(bufferData.shader.attributes.aVertexPosition.location)
+  gl.disableVertexAttribArray(bufferData.shader.attributes.aJointIndex.location)
+  gl.disableVertexAttribArray(bufferData.shader.attributes.aJointWeight.location)
+  if (bufferData.shader.attributes.aVertexNormal) {
+    gl.disableVertexAttribArray(bufferData.shader.attributes.aVertexNormal.location)
+  }
+  if (bufferData.modelTexture) {
+    gl.disableVertexAttribArray(bufferData.shader.attributes.aTextureCoord.location)
+  }
 }
 
-},{"gl-mat4/create":26,"gl-mat4/multiply":28,"gl-mat4/perspective":29,"gl-mat4/translate":30}],46:[function(require,module,exports){
+},{"gl-mat4/create":27,"gl-mat4/multiply":29,"gl-mat4/perspective":30,"gl-mat4/rotateX":31,"gl-mat4/rotateY":32,"gl-mat4/rotateZ":33,"gl-mat4/translate":34,"gl-vec3/normalize":38,"gl-vec3/scale":39}],52:[function(require,module,exports){
+// We use this when auto generating our draw function code. This map
+// helps us determine the size of attributes and the function that we need
+// to buffer a uniform
+// This could be auto generated but don't see a reason to quite yet.
+// Readability wins until performance becomes an issue
+// TODO: Better name than `typeInformation`
+var typeInformation = {
+  vec2: {
+    attributeSize: 2,
+    uniformType: 'uniform2fv'
+  },
+  vec3: {
+    attributeSize: 3,
+    uniformType: 'uniform3fv'
+  },
+  vec4: {
+    attributeSize: 4,
+    uniformType: 'uniform4fv'
+  },
+  bool: {
+    uniformType: 'uniform1i'
+  },
+  mat4: {
+    uniformType: 'uniformMatrix4fv'
+  },
+  sampler2D: {
+    uniformType: 'uniform1i'
+  }
+}
+
+module.exports = createDrawFunction
+
+/**
+ * A super experimental function that creates a draw function based on
+ * the shader program
+ *
+ * TODO: Pull out into separate tested repo
+ * TODO: Create separate disable and enable functions
+ * TODO: Cite `regl` as inspiration
+ * TODO: Detailed commenting
+ */
+function createDrawFunction (gl, program, attributeData, uniformData, elementBuffer, numIndices, textures) {
+  // Loop through each attribute and generate a string of JavaScript
+  // that will buffer it's data
+  var allAttributesString = Object.keys(attributeData).reduce(function bufferAttributeData (allAttributesString, attributeName) {
+    // Attribute locations are integers so we can just pass it right in
+    var attributeLocation = attributeData[attributeName].location
+    var attributeSize = typeInformation[attributeData[attributeName].type].attributeSize
+
+    allAttributesString += `
+      gl.bindBuffer(gl.ARRAY_BUFFER, drawOpts.attributes.${attributeName})
+      gl.enableVertexAttribArray(${attributeLocation})
+      gl.vertexAttribPointer(${attributeLocation}, ${attributeSize}, gl.FLOAT, false, 0, 0)
+    `
+
+    return allAttributesString
+  }, '')
+
+  // Uniform locations are objects so we we will pass into the generated function
+  var uniformLocations = {}
+
+  // Loop through each uniform and generate a string of JavaScript
+  // that will buffer it's data
+  var allUniformsString = Object.keys(uniformData)
+  .sort(function (a, b) {
+    var aUniformType = uniformData[a].type
+    var bUniformType = uniformData[b].type
+    if (aUniformType === 'sampler2D') {
+      return -1
+    } else if (bUniformType === 'sampler2D') {
+      return 1
+    }
+
+    return 0
+  })
+  .reduce(function bufferAttributeData (allUniformsString, uniformName) {
+    var uniformType = typeInformation[uniformData[uniformName].type].uniformType
+    uniformLocations[uniformName] = uniformData[uniformName].location
+
+    // When buffering 4x4 matrices there's a transpose parameter that we'll need to add in
+    var transposeParemeter = ''
+    if (uniformType === 'uniformMatrix4fv') {
+      // We do not support transposing the matrix input. The user can do this themselves before passing it in if they ever need to
+      transposeParemeter = 'false,'
+    }
+
+    if (uniformData[uniformName].type === 'sampler2D') {
+      // Set the active texture and then pass the uniform data to the gpu
+      // TODO: We don't need to do this everything. So be smarter.. Maybe allow a param to be passed in
+      // TODO: Currently only supports one texture. Should we allow more than one? Do some research..
+      allUniformsString += `
+        gl.activeTexture(gl.TEXTURE0)
+        gl.bindTexture(gl.TEXTURE_2D, textures[0])
+        gl.uniform1i(uniformLocations.${uniformName}, 0)
+      `
+    } else {
+      // If we are not dealing with texture uniforms we don't need to set the active texture
+      allUniformsString += `
+        gl.${uniformType}(uniformLocations.${uniformName}, ${transposeParemeter} drawOpts.uniforms.${uniformName})
+      `
+    }
+
+    return allUniformsString
+  }, '')
+
+  var elementsStatement = `
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementBuffer)
+    gl.drawElements(gl.TRIANGLES, numIndices, gl.UNSIGNED_SHORT, 0)
+  `
+
+  // Get around Standard's linter. No WiFi right now so can't look up a better way...
+  var Func = Function
+
+  // TODO: Make the element buffer and num indices a part of drawOpts passed in by user
+  var drawFunction = new Func(
+    'gl',
+    'uniformLocations',
+    'elementBuffer',
+    'numIndices',
+    'textures',
+    'drawOpts',
+    allAttributesString + allUniformsString + elementsStatement
+  )
+
+  return drawFunction.bind(null, gl, uniformLocations, elementBuffer, numIndices, textures)
+}
+
+},{}],53:[function(require,module,exports){
 // TODO: This should be it's own, tested module. This is like the third time that
 // I've copied and pasted this into a repo
 module.exports = expandVertices
@@ -2049,7 +2456,7 @@ function expandVertices (parsedDae, opts) {
 }
 
 
-},{}],47:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 module.exports = initTexture
 
 function initTexture (gl, opts) {
@@ -2078,11 +2485,13 @@ function initTexture (gl, opts) {
 }
 
 
-},{}],48:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 var generateShader = require('./shader/generate-shader.js')
 var drawModel = require('./draw-model.js')
 var expandVertices = require('./expand-vertices.js')
 var initTexture = require('./init-texture.js')
+
+var createDrawFunction = require('./draw/create-draw-function.js')
 
 module.exports = loadColladaDae
 
@@ -2092,36 +2501,47 @@ function loadColladaDae (gl, modelJSON, loadOpts) {
 
   var vertexData = expandVertices(modelJSON, expandOpts)
 
-  var vertexPositionBuffer = createBuffer(gl, 'ARRAY_BUFFER', Float32Array, modelJSON.vertexPositions)
+  // Create our shader program
+  var shader = generateShader(gl, {
+    fragmentShaderFunc: loadOpts.fragmentShaderFunc,
+    vertexShaderFunc: loadOpts.vertexShaderFunc,
+    numJoints: vertexData.numJoints,
+    texture: !!loadOpts.texture
+  })
+
+  var aVertexPosition = createBuffer(gl, 'ARRAY_BUFFER', Float32Array, modelJSON.vertexPositions)
+  var aVertexNormal = createBuffer(gl, 'ARRAY_BUFFER', Float32Array, vertexData.vertexNormals)
+  var aJointIndex = createBuffer(gl, 'ARRAY_BUFFER', Float32Array, vertexData.vertexJointAffectors)
+  var aJointWeight = createBuffer(gl, 'ARRAY_BUFFER', Float32Array, vertexData.vertexJointWeights)
   var vertexPositionIndexBuffer = createBuffer(gl, 'ELEMENT_ARRAY_BUFFER', Uint16Array, vertexData.vertexPositionIndices)
-  // var vertexNormalBuffer = createBuffer(gl, 'ARRAY_BUFFER', Float32Array, modelJSON.vertexNormals)
-  var vertexJointIndexBuffer = createBuffer(gl, 'ARRAY_BUFFER', Float32Array, vertexData.vertexJointAffectors)
-  var weightBuffer = createBuffer(gl, 'ARRAY_BUFFER', Float32Array, vertexData.vertexJointWeights)
-  // If the user's model has a texture we create our texture buffer
-  var modelTexture
-  var vertexTextureBuffer
-  if (loadOpts.texture) {
-    vertexTextureBuffer = createBuffer(gl, 'ARRAY_BUFFER', Float32Array, vertexData.vertexUVs)
-    modelTexture = initTexture(gl, loadOpts)
+
+    // Data that we pass into our draw call that does not change
+  var bufferData = {
+    shader: shader,
+    // Useful for knowing how many triangles to draw
+    numIndices: modelJSON.vertexPositionIndices.length,
+    numJoints: vertexData.numJoints
+  }
+  var attributes = {
+    aVertexNormal: aVertexNormal,
+    aVertexPosition: aVertexPosition,
+    aJointIndex: aJointIndex,
+    aJointWeight: aJointWeight
   }
 
-  var shader = generateShader(gl, {numJoints: vertexData.numJoints, texture: !!loadOpts.texture})
+  // If the user's model has a texture we create our texture buffer
+  var textures = []
+  if (loadOpts.texture) {
+    attributes.aTextureCoord = createBuffer(gl, 'ARRAY_BUFFER', Float32Array, vertexData.vertexUVs)
+    textures[0] = initTexture(gl, loadOpts)
+  }
+
+  var drawModel2 = createDrawFunction(gl, shader.program, shader.attributes, shader.uniforms, vertexPositionIndexBuffer, modelJSON.vertexPositionIndices.length, textures)
 
   return {
-    draw: drawModel.bind(null, gl, {
-      // vertexNormalBuffer: vertexNormalBuffer,
-      vertexPositionBuffer: vertexPositionBuffer,
-      vertexPositionIndexBuffer: vertexPositionIndexBuffer,
-      vertexJointIndexBuffer: vertexJointIndexBuffer,
-      vertexTextureBuffer: vertexTextureBuffer,
-      weightBuffer: weightBuffer,
-      shader: shader,
-      // The texture for our model
-      modelTexture: modelTexture,
-      // Useful for knowing how many triangles to draw
-      numIndices: modelJSON.vertexPositionIndices.length,
-      numJoints: vertexData.numJoints
-    }),
+    draw: drawModel2 || drawModel.bind(null, gl, bufferData),
+    bufferData: bufferData,
+    attributes: attributes,
     // Useful for letting our consumer call gl.useProgram()
     //  If they're drawing this model many times, they'll want to call `useProgram` themselves, only once, right before drawing
     shaderProgram: shader.program
@@ -2138,7 +2558,7 @@ function createBuffer (gl, bufferType, DataType, data) {
   return buffer
 }
 
-},{"./draw-model.js":45,"./expand-vertices.js":46,"./init-texture.js":47,"./shader/generate-shader.js":50}],49:[function(require,module,exports){
+},{"./draw-model.js":51,"./draw/create-draw-function.js":52,"./expand-vertices.js":53,"./init-texture.js":54,"./shader/generate-shader.js":57}],56:[function(require,module,exports){
 module.exports = generateFragmentShader
 
 // TODO: Support lighting
@@ -2150,7 +2570,6 @@ function generateFragmentShader (opts) {
   if (opts.texture) {
     textureVars = `
       varying vec2 vTextureCoord;
-      varying vec3 vLightWeighting;
 
       uniform sampler2D uSampler;
     `
@@ -2158,14 +2577,14 @@ function generateFragmentShader (opts) {
     // TODO: Lighting
     assignFragColor = `
       vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
-      gl_FragColor = vec4(textureColor.rgb, textureColor.a);
+      gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a);
 
     `
   } else {
     // If there is no texture for now we just make the model white
     // later we'll introduce normals and lighting
     assignFragColor = `
-      gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+      gl_FragColor = vec4(vLightWeighting, 1.0);
     `
   }
 
@@ -2176,6 +2595,8 @@ function generateFragmentShader (opts) {
 
     ${textureVars}
 
+    varying vec3 vLightWeighting;
+
     void main (void) {
       ${assignFragColor}
     }
@@ -2184,23 +2605,28 @@ function generateFragmentShader (opts) {
   return fragmentShader
 }
 
-},{}],50:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 var generateFragmentShader = require('./generate-fragment-shader.js')
 var generateVertexShader = require('./generate-vertex-shader.js')
+// TODO: Don't actually need this. We can get the information that we need
+// directly from the shader program
+var getAttributesUniforms = require('get-attributes-uniforms')
 
 module.exports = generateShader
 
 /*
- * Generate a shader that's optimized for drawing the particular model
+ * Generate a shader that's for drawing a skinned model
  */
 // TODO: Pull out into separate, tested shader generation repository
 function generateShader (gl, opts) {
   var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)
-  gl.shaderSource(fragmentShader, generateFragmentShader(opts))
+  var fragmentShaderString = (opts.fragmentShaderFunc || generateFragmentShader)(opts)
+  gl.shaderSource(fragmentShader, fragmentShaderString)
   gl.compileShader(fragmentShader)
 
   var vertexShader = gl.createShader(gl.VERTEX_SHADER)
-  gl.shaderSource(vertexShader, generateVertexShader(opts))
+  var vertexShaderString = (opts.vertexShaderFunc || generateVertexShader)(opts)
+  gl.shaderSource(vertexShader, vertexShaderString)
   gl.compileShader(vertexShader)
 
   var shaderProgram = gl.createProgram()
@@ -2208,33 +2634,75 @@ function generateShader (gl, opts) {
   gl.attachShader(shaderProgram, vertexShader)
   gl.linkProgram(shaderProgram)
 
-  // Return our shader object data
+  // If we were unable to link our shader program we throw an error
+  if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+    throw new Error('Error linking shader.. TODO: better error message')
+  }
+
+  var vertexShaderAttributesUniforms = getAttributesUniforms(vertexShaderString)
+  var fragmentShaderAttributesUniforms = getAttributesUniforms(fragmentShaderString)
+
   var shaderObj = {
-    mvMatrixUniform: gl.getUniformLocation(shaderProgram, 'uMVMatrix'),
-    nMatrixUniform: gl.getUniformLocation(shaderProgram, 'uNMatrix'),
-    pMatrixUniform: gl.getUniformLocation(shaderProgram, 'uPMatrix'),
+    attributes: {},
     program: shaderProgram,
-    vertexPositionAttribute: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
-    vertexJointIndexAttribute: gl.getAttribLocation(shaderProgram, 'aJointIndex'),
-    vertexJointWeightAttribute: gl.getAttribLocation(shaderProgram, 'aJointWeight')
+    uniforms: {}
   }
 
-  if (opts.texture) {
-    shaderObj.samplerUniform = gl.getUniformLocation(shaderProgram, 'uSampler')
-    shaderObj.textureCoordAttribute = gl.getAttribLocation(shaderProgram, 'aTextureCoord')
-  }
+  // Loop through all of our attributes and get their locations
+  Object.keys(vertexShaderAttributesUniforms.attributes).forEach(function (attributeName) {
+    getAttributeLocations(attributeName, vertexShaderAttributesUniforms.attributes[attributeName])
+  })
+  Object.keys(fragmentShaderAttributesUniforms.attributes).forEach(function (attributeName) {
+    getAttributeLocations(attributeName, fragmentShaderAttributesUniforms.attributes[attributeName])
+  })
 
-  // TODO: Don't hard code # of joints
-  for (var jointNum = 0; jointNum < opts.numJoints; jointNum++) {
-    // Split our dual quaternion into two vec4's since we can't use mat2x4 in WebGL
-    shaderObj['boneRotQuaternion' + jointNum] = gl.getUniformLocation(shaderProgram, 'boneRotQuaternions[' + jointNum + ']')
-    shaderObj['boneTransQuaternion' + jointNum] = gl.getUniformLocation(shaderProgram, 'boneTransQuaternions[' + jointNum + ']')
-  }
+  // Loop through all of the uniforms and get their locations
+  Object.keys(vertexShaderAttributesUniforms.uniforms).forEach(function (uniformName) {
+    getUniformLocations(uniformName, vertexShaderAttributesUniforms.uniforms[uniformName])
+  })
+  Object.keys(fragmentShaderAttributesUniforms.uniforms).forEach(function (uniformName) {
+    getUniformLocations(uniformName, fragmentShaderAttributesUniforms.uniforms[uniformName])
+  })
 
   return shaderObj
+
+  function getUniformLocations (uniformName, uniformType) {
+    // If the uniform is not an array we get it's location
+    var openBracketIndex = uniformName.indexOf('[')
+    if (openBracketIndex === -1) {
+      shaderObj.uniforms[uniformName] = {
+        location: gl.getUniformLocation(shaderProgram, uniformName),
+        type: uniformType
+      }
+    } else {
+      // If the uniform if an array we get the location of each element in the array
+      var closedBracketIndex = uniformName.indexOf(']')
+      // We're converting someUniformArray[n] -> n
+      var uniformArraySize = Number(uniformName.substring(openBracketIndex + 1, closedBracketIndex))
+      // We're converting someUniformArray[n] -> someUniformArray
+      var uniformArrayName = uniformName.substring(0, openBracketIndex)
+
+      // Get the uniform location of each element in the array
+      //  Naming convention -> someUniform1, someUniform2, ... someAtribute25
+      for (var arrayElement = 0; arrayElement < uniformArraySize; arrayElement++) {
+        // ex: shaderObj[someUniform2] = gl.getUniformLocation(shaderProgram, someUniform[2])
+        shaderObj.uniforms[uniformArrayName + arrayElement] = {
+          location: gl.getUniformLocation(shaderProgram, uniformArrayName + '[' + arrayElement + ']'),
+          type: uniformType
+        }
+      }
+    }
+  }
+
+  function getAttributeLocations (attributeName, attributeType) {
+    shaderObj.attributes[attributeName] = {
+      location: gl.getAttribLocation(shaderProgram, attributeName),
+      type: attributeType
+    }
+  }
 }
 
-},{"./generate-fragment-shader.js":49,"./generate-vertex-shader.js":51}],51:[function(require,module,exports){
+},{"./generate-fragment-shader.js":56,"./generate-vertex-shader.js":58,"get-attributes-uniforms":25}],58:[function(require,module,exports){
 module.exports = generateVertexShader
 
 // TODO: Add comments
@@ -2256,13 +2724,18 @@ function generateVertexShader (opts) {
     `
   }
 
-  // TODO: Optimize code after tests pass and benchmarks are in place
+  // TODO: Optimize default shader after benchmarks are in place
   var vertexShader = `
     attribute vec3 aVertexPosition;
+    attribute vec3 aVertexNormal;
+
+    uniform bool uUseLighting;
+    uniform vec3 uAmbientColor;
+    uniform vec3 uLightingDirection;
+    uniform vec3 uDirectionalColor;
+    varying vec3 vLightWeighting;
 
     ${textureVars}
-
-    uniform mat3 uNMatrix;
 
     attribute vec4 aJointIndex;
     attribute vec4 aJointWeight;
@@ -2352,6 +2825,19 @@ function generateVertexShader (opts) {
       leftWorldSpace.y = y;
       leftWorldSpace.z = z;
 
+      if (uUseLighting) {
+        vec3 transformedNormal = (weightedMatrix * vec4(aVertexNormal, 0.0)).xyz;
+        y = transformedNormal.z;
+        z = -transformedNormal.y;
+        transformedNormal.y = y;
+        transformedNormal.z = z;
+
+        float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);
+        vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;
+      } else {
+        vLightWeighting = vec3(1.0, 1.0, 1.0);
+      }
+
       ${varyingStatement}
 
       gl_Position = uPMatrix * uMVMatrix * leftWorldSpace;
@@ -2361,7 +2847,7 @@ function generateVertexShader (opts) {
   return vertexShader
 }
 
-},{}],52:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 var raf = require("raf")
 var TypedError = require("error/typed")
 
@@ -2443,7 +2929,7 @@ function main(initialState, view, opts) {
     }
 }
 
-},{"error/typed":21,"raf":54}],53:[function(require,module,exports){
+},{"error/typed":21,"raf":61}],60:[function(require,module,exports){
 (function (process){
 // Generated by CoffeeScript 1.6.3
 (function() {
@@ -2483,7 +2969,7 @@ function main(initialState, view, opts) {
 */
 
 }).call(this,require('_process'))
-},{"_process":57}],54:[function(require,module,exports){
+},{"_process":64}],61:[function(require,module,exports){
 var now = require('performance-now')
   , global = typeof window === 'undefined' ? {} : window
   , vendors = ['moz', 'webkit']
@@ -2565,7 +3051,7 @@ module.exports.cancel = function() {
   caf.apply(global, arguments)
 }
 
-},{"performance-now":53}],55:[function(require,module,exports){
+},{"performance-now":60}],62:[function(require,module,exports){
 var trim = require('trim')
   , forEach = require('for-each')
   , isArray = function(arg) {
@@ -2597,7 +3083,7 @@ module.exports = function (headers) {
 
   return result
 }
-},{"for-each":24,"trim":64}],56:[function(require,module,exports){
+},{"for-each":24,"trim":71}],63:[function(require,module,exports){
 (function (process){
 // Generated by CoffeeScript 1.7.1
 (function() {
@@ -2633,7 +3119,7 @@ module.exports = function (headers) {
 }).call(this);
 
 }).call(this,require('_process'))
-},{"_process":57}],57:[function(require,module,exports){
+},{"_process":64}],64:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -2815,7 +3301,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],58:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 var inherits = require('inherits')
 var EventEmitter = require('events').EventEmitter
 var now = require('right-now')
@@ -2860,7 +3346,7 @@ Engine.prototype.tick = function() {
     this.emit('tick', dt)
     this.last = time
 }
-},{"events":23,"inherits":41,"raf":59,"right-now":60}],59:[function(require,module,exports){
+},{"events":23,"inherits":47,"raf":66,"right-now":67}],66:[function(require,module,exports){
 (function (global){
 var now = require('performance-now')
   , root = typeof window === 'undefined' ? global : window
@@ -2936,7 +3422,7 @@ module.exports.polyfill = function() {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"performance-now":56}],60:[function(require,module,exports){
+},{"performance-now":63}],67:[function(require,module,exports){
 (function (global){
 module.exports =
   global.performance &&
@@ -2947,7 +3433,7 @@ module.exports =
   }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],61:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 var Listeners = require('ear')
 var dotProp = require('dot-prop')
 var extend = require('xtend')
@@ -2984,7 +3470,7 @@ State.prototype.del = function (key) {
   this.listeners(this.get())
 }
 
-},{"dot-prop":19,"ear":20,"traverse":63,"xtend":95}],62:[function(require,module,exports){
+},{"dot-prop":19,"ear":20,"traverse":70,"xtend":102}],69:[function(require,module,exports){
 var nargs = /\{([0-9a-zA-Z]+)\}/g
 var slice = Array.prototype.slice
 
@@ -3020,7 +3506,7 @@ function template(string) {
     })
 }
 
-},{}],63:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 var traverse = module.exports = function (obj) {
     return new Traverse(obj);
 };
@@ -3336,7 +3822,7 @@ var hasOwnProperty = Object.hasOwnProperty || function (obj, key) {
     return key in obj;
 };
 
-},{}],64:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 
 exports = module.exports = trim;
 
@@ -3352,22 +3838,22 @@ exports.right = function(str){
   return str.replace(/\s*$/, '');
 };
 
-},{}],65:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 var createElement = require("./vdom/create-element.js")
 
 module.exports = createElement
 
-},{"./vdom/create-element.js":72}],66:[function(require,module,exports){
+},{"./vdom/create-element.js":79}],73:[function(require,module,exports){
 var diff = require("./vtree/diff.js")
 
 module.exports = diff
 
-},{"./vtree/diff.js":92}],67:[function(require,module,exports){
+},{"./vtree/diff.js":99}],74:[function(require,module,exports){
 var h = require("./virtual-hyperscript/index.js")
 
 module.exports = h
 
-},{"./virtual-hyperscript/index.js":79}],68:[function(require,module,exports){
+},{"./virtual-hyperscript/index.js":86}],75:[function(require,module,exports){
 var diff = require("./diff.js")
 var patch = require("./patch.js")
 var h = require("./h.js")
@@ -3384,7 +3870,7 @@ module.exports = {
     VText: VText
 }
 
-},{"./create-element.js":65,"./diff.js":66,"./h.js":67,"./patch.js":70,"./vnode/vnode.js":88,"./vnode/vtext.js":90}],69:[function(require,module,exports){
+},{"./create-element.js":72,"./diff.js":73,"./h.js":74,"./patch.js":77,"./vnode/vnode.js":95,"./vnode/vtext.js":97}],76:[function(require,module,exports){
 /*!
  * Cross-Browser Split 1.1.1
  * Copyright 2007-2012 Steven Levithan <stevenlevithan.com>
@@ -3492,12 +3978,12 @@ module.exports = (function split(undef) {
   return self;
 })();
 
-},{}],70:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 var patch = require("./vdom/patch.js")
 
 module.exports = patch
 
-},{"./vdom/patch.js":75}],71:[function(require,module,exports){
+},{"./vdom/patch.js":82}],78:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook.js")
 
@@ -3596,7 +4082,7 @@ function getPrototype(value) {
     }
 }
 
-},{"../vnode/is-vhook.js":83,"is-object":44}],72:[function(require,module,exports){
+},{"../vnode/is-vhook.js":90,"is-object":50}],79:[function(require,module,exports){
 var document = require("global/document")
 
 var applyProperties = require("./apply-properties")
@@ -3644,7 +4130,7 @@ function createElement(vnode, opts) {
     return node
 }
 
-},{"../vnode/handle-thunk.js":81,"../vnode/is-vnode.js":84,"../vnode/is-vtext.js":85,"../vnode/is-widget.js":86,"./apply-properties":71,"global/document":37}],73:[function(require,module,exports){
+},{"../vnode/handle-thunk.js":88,"../vnode/is-vnode.js":91,"../vnode/is-vtext.js":92,"../vnode/is-widget.js":93,"./apply-properties":78,"global/document":43}],80:[function(require,module,exports){
 // Maps a virtual DOM tree onto a real DOM tree in an efficient manner.
 // We don't want to read all of the DOM nodes in the tree so we use
 // the in-order tree indexing to eliminate recursion down certain branches.
@@ -3731,7 +4217,7 @@ function ascending(a, b) {
     return a > b ? 1 : -1
 }
 
-},{}],74:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 var applyProperties = require("./apply-properties")
 
 var isWidget = require("../vnode/is-widget.js")
@@ -3884,7 +4370,7 @@ function replaceRoot(oldRoot, newRoot) {
     return newRoot;
 }
 
-},{"../vnode/is-widget.js":86,"../vnode/vpatch.js":89,"./apply-properties":71,"./update-widget":76}],75:[function(require,module,exports){
+},{"../vnode/is-widget.js":93,"../vnode/vpatch.js":96,"./apply-properties":78,"./update-widget":83}],82:[function(require,module,exports){
 var document = require("global/document")
 var isArray = require("x-is-array")
 
@@ -3966,7 +4452,7 @@ function patchIndices(patches) {
     return indices
 }
 
-},{"./create-element":72,"./dom-index":73,"./patch-op":74,"global/document":37,"x-is-array":93}],76:[function(require,module,exports){
+},{"./create-element":79,"./dom-index":80,"./patch-op":81,"global/document":43,"x-is-array":100}],83:[function(require,module,exports){
 var isWidget = require("../vnode/is-widget.js")
 
 module.exports = updateWidget
@@ -3983,7 +4469,7 @@ function updateWidget(a, b) {
     return false
 }
 
-},{"../vnode/is-widget.js":86}],77:[function(require,module,exports){
+},{"../vnode/is-widget.js":93}],84:[function(require,module,exports){
 'use strict';
 
 var EvStore = require('ev-store');
@@ -4012,7 +4498,7 @@ EvHook.prototype.unhook = function(node, propertyName) {
     es[propName] = undefined;
 };
 
-},{"ev-store":22}],78:[function(require,module,exports){
+},{"ev-store":22}],85:[function(require,module,exports){
 'use strict';
 
 module.exports = SoftSetHook;
@@ -4031,7 +4517,7 @@ SoftSetHook.prototype.hook = function (node, propertyName) {
     }
 };
 
-},{}],79:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 'use strict';
 
 var isArray = require('x-is-array');
@@ -4170,7 +4656,7 @@ function errorString(obj) {
     }
 }
 
-},{"../vnode/is-thunk":82,"../vnode/is-vhook":83,"../vnode/is-vnode":84,"../vnode/is-vtext":85,"../vnode/is-widget":86,"../vnode/vnode.js":88,"../vnode/vtext.js":90,"./hooks/ev-hook.js":77,"./hooks/soft-set-hook.js":78,"./parse-tag.js":80,"x-is-array":93}],80:[function(require,module,exports){
+},{"../vnode/is-thunk":89,"../vnode/is-vhook":90,"../vnode/is-vnode":91,"../vnode/is-vtext":92,"../vnode/is-widget":93,"../vnode/vnode.js":95,"../vnode/vtext.js":97,"./hooks/ev-hook.js":84,"./hooks/soft-set-hook.js":85,"./parse-tag.js":87,"x-is-array":100}],87:[function(require,module,exports){
 'use strict';
 
 var split = require('browser-split');
@@ -4226,7 +4712,7 @@ function parseTag(tag, props) {
     return props.namespace ? tagName : tagName.toUpperCase();
 }
 
-},{"browser-split":69}],81:[function(require,module,exports){
+},{"browser-split":76}],88:[function(require,module,exports){
 var isVNode = require("./is-vnode")
 var isVText = require("./is-vtext")
 var isWidget = require("./is-widget")
@@ -4268,14 +4754,14 @@ function renderThunk(thunk, previous) {
     return renderedThunk
 }
 
-},{"./is-thunk":82,"./is-vnode":84,"./is-vtext":85,"./is-widget":86}],82:[function(require,module,exports){
+},{"./is-thunk":89,"./is-vnode":91,"./is-vtext":92,"./is-widget":93}],89:[function(require,module,exports){
 module.exports = isThunk
 
 function isThunk(t) {
     return t && t.type === "Thunk"
 }
 
-},{}],83:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 module.exports = isHook
 
 function isHook(hook) {
@@ -4284,7 +4770,7 @@ function isHook(hook) {
        typeof hook.unhook === "function" && !hook.hasOwnProperty("unhook"))
 }
 
-},{}],84:[function(require,module,exports){
+},{}],91:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualNode
@@ -4293,7 +4779,7 @@ function isVirtualNode(x) {
     return x && x.type === "VirtualNode" && x.version === version
 }
 
-},{"./version":87}],85:[function(require,module,exports){
+},{"./version":94}],92:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualText
@@ -4302,17 +4788,17 @@ function isVirtualText(x) {
     return x && x.type === "VirtualText" && x.version === version
 }
 
-},{"./version":87}],86:[function(require,module,exports){
+},{"./version":94}],93:[function(require,module,exports){
 module.exports = isWidget
 
 function isWidget(w) {
     return w && w.type === "Widget"
 }
 
-},{}],87:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 module.exports = "2"
 
-},{}],88:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
 var version = require("./version")
 var isVNode = require("./is-vnode")
 var isWidget = require("./is-widget")
@@ -4386,7 +4872,7 @@ function VirtualNode(tagName, properties, children, key, namespace) {
 VirtualNode.prototype.version = version
 VirtualNode.prototype.type = "VirtualNode"
 
-},{"./is-thunk":82,"./is-vhook":83,"./is-vnode":84,"./is-widget":86,"./version":87}],89:[function(require,module,exports){
+},{"./is-thunk":89,"./is-vhook":90,"./is-vnode":91,"./is-widget":93,"./version":94}],96:[function(require,module,exports){
 var version = require("./version")
 
 VirtualPatch.NONE = 0
@@ -4410,7 +4896,7 @@ function VirtualPatch(type, vNode, patch) {
 VirtualPatch.prototype.version = version
 VirtualPatch.prototype.type = "VirtualPatch"
 
-},{"./version":87}],90:[function(require,module,exports){
+},{"./version":94}],97:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = VirtualText
@@ -4422,7 +4908,7 @@ function VirtualText(text) {
 VirtualText.prototype.version = version
 VirtualText.prototype.type = "VirtualText"
 
-},{"./version":87}],91:[function(require,module,exports){
+},{"./version":94}],98:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook")
 
@@ -4482,7 +4968,7 @@ function getPrototype(value) {
   }
 }
 
-},{"../vnode/is-vhook":83,"is-object":44}],92:[function(require,module,exports){
+},{"../vnode/is-vhook":90,"is-object":50}],99:[function(require,module,exports){
 var isArray = require("x-is-array")
 
 var VPatch = require("../vnode/vpatch")
@@ -4911,7 +5397,7 @@ function appendPatch(apply, patch) {
     }
 }
 
-},{"../vnode/handle-thunk":81,"../vnode/is-thunk":82,"../vnode/is-vnode":84,"../vnode/is-vtext":85,"../vnode/is-widget":86,"../vnode/vpatch":89,"./diff-props":91,"x-is-array":93}],93:[function(require,module,exports){
+},{"../vnode/handle-thunk":88,"../vnode/is-thunk":89,"../vnode/is-vnode":91,"../vnode/is-vtext":92,"../vnode/is-widget":93,"../vnode/vpatch":96,"./diff-props":98,"x-is-array":100}],100:[function(require,module,exports){
 var nativeIsArray = Array.isArray
 var toString = Object.prototype.toString
 
@@ -4921,7 +5407,7 @@ function isArray(obj) {
     return toString.call(obj) === "[object Array]"
 }
 
-},{}],94:[function(require,module,exports){
+},{}],101:[function(require,module,exports){
 "use strict";
 var window = require("global/window")
 var isFunction = require("is-function")
@@ -5161,7 +5647,7 @@ function getXml(xhr) {
 
 function noop() {}
 
-},{"global/window":38,"is-function":42,"parse-headers":55,"xtend":95}],95:[function(require,module,exports){
+},{"global/window":44,"is-function":48,"parse-headers":62,"xtend":102}],102:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -5182,7 +5668,7 @@ function extend() {
     return target
 }
 
-},{}],96:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -5201,7 +5687,7 @@ function extend(target) {
     return target
 }
 
-},{}],97:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 var dotProduct = require('gl-vec4/dot')
 var lerp = require('gl-vec4/lerp')
 
@@ -5252,7 +5738,7 @@ function blendDualQuaternions (startDualQuat, endDualQuat, blendValue) {
   )
 }
 
-},{"gl-vec4/dot":34,"gl-vec4/lerp":35}],98:[function(require,module,exports){
+},{"gl-vec4/dot":40,"gl-vec4/lerp":41}],105:[function(require,module,exports){
 module.exports = getPreviousAnimationData
 
 function getPreviousAnimationData (opts, keyframeTimes) {
@@ -5315,7 +5801,7 @@ function getPreviousAnimationData (opts, keyframeTimes) {
   }
 }
 
-},{}],99:[function(require,module,exports){
+},{}],106:[function(require,module,exports){
 var blendDualQuaternions = require('./blend-dual-quaternions.js')
 
 module.exports = {
@@ -5447,4 +5933,4 @@ function defaultBlend (dt) {
 
 // TODO: Event emitter for when animation ends ?
 
-},{"./blend-dual-quaternions.js":97,"./get-previous-animation-data.js":98}]},{},[1]);
+},{"./blend-dual-quaternions.js":104,"./get-previous-animation-data.js":105}]},{},[1]);
