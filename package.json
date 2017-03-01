@@ -47,7 +47,7 @@
     "gl-quat": "^1.0.0",
     "hyperscript": "^2.0.2",
     "inline-htmlify": "^2.0.0",
-    "load-collada-dae": "^0.3.0",
+    "load-collada-dae": "^0.6.0",
     "main-loop": "^3.4.0",
     "mkdirp": "^0.5.1",
     "raf-loop": "^1.1.3",

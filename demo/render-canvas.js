@@ -1,4 +1,6 @@
 var createCamera = require('create-orbit-camera')
+var vec3Normalize = require('gl-vec3/normalize')
+var vec3Scale = require('gl-vec3/scale')
 
 module.exports = renderCanvas
 
@@ -22,21 +24,34 @@ function renderCanvas (gl, state, cameraControls, dt, opts) {
 
   var interpolatedQuats = {rot: [], trans: []}
   var totalJoints = upperBodyQuats.length + lowerBodyQuats.length
+
+  var lightingDirection = [1, -3, -1]
+  var normalizedLD = []
+  vec3Normalize(normalizedLD, lightingDirection)
+  vec3Scale(normalizedLD, normalizedLD, -1)
+
+  var uniforms = {
+    uUseLighting: true,
+    uAmbientColor: [0.3, 0.3, 0.3],
+    uLightingDirection: normalizedLD,
+    uDirectionalColor: [0.0, 0.4, 0.7],
+    uMVMatrix: cameraData.viewMatrix,
+    uPMatrix: require('gl-mat4/perspective')([], Math.PI / 3, state.viewport.width / state.viewport.height, 0.1, 100)
+  }
+
   for (var i = 0; i < totalJoints; i++) {
-    interpolatedQuats.rot[i] = upperBodyQuats.rot[i] || lowerBodyQuats.rot[i]
-    interpolatedQuats.trans[i] = upperBodyQuats.trans[i] || lowerBodyQuats.trans[i]
+    uniforms['boneRotQuaternions' + i] = upperBodyQuats.rot[i] || lowerBodyQuats.rot[i]
+    uniforms['boneTransQuaternions' + i] = upperBodyQuats.trans[i] || lowerBodyQuats.trans[i]
   }
 
   // Once we've loaded our model we draw it every frame
   if (opts.model) {
+    gl.useProgram(opts.model.shaderProgram)
     opts.model.draw({
-      perspective: require('gl-mat4/perspective')([], Math.PI / 3, state.viewport.width / state.viewport.height, 0.1, 100),
-      viewMatrix: cameraData.viewMatrix,
-      position: [0, 0, 0],
+      attributes: opts.model.attributes,
+      uniforms: uniforms,
       rotQuaternions: interpolatedQuats.rot,
       transQuaternions: interpolatedQuats.trans
-      // TODO: Leave comment in tutorial about using a view matrix to create a camera
-      //  If you're interested in that let me know on twitter
     })
   }
 }
