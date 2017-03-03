@@ -36,6 +36,7 @@
   },
   "homepage": "https://github.com/chinedufn/skeletal-animation-system#readme",
   "dependencies": {
+    "expand-vertex-data": "^1.0.1",
     "gl-vec4": "^1.0.1",
     "resl": "^1.0.3"
   },
