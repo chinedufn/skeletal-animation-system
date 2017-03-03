@@ -4,8 +4,8 @@
   "description": "A standalone, stateless, dual quaternion based skeletal animation system built with interactive applications in mind",
   "main": "index.js",
   "scripts": {
-    "demo": "budo --open --live --host=localhost --dir=demo/asset demo/browser.js",
-    "regl-demo": "budo --open --live --host=localhost --dir=demo/asset demo/regl.js",
+    "demo": "budo --open --live --host=localhost --dir=demo/webgl/asset demo/webgl/browser-entry.js",
+    "regl-demo": "budo --open --live --host=localhost --dir=demo/webgl/asset demo/regl/regl.js",
     "deploy": "mkdirp example-dist && npm run dist:index:html && browserify demo/browser.js > example-dist/bundle.js && cp ./demo/asset/* ./example-dist/ && gh-pages -d example-dist",
     "dist:index:html": "echo '</script><script src=\"bundle.js\">' | htmlify > example-dist/index.html",
     "test": "standard && tape test/**/*.js"

@@ -1,8 +1,8 @@
-var animationSystem = require('../')
+var animationSystem = require('../../')
 
-module.exports = upperBody
+module.exports = lowerBody
 
-function upperBody (state, dualQuatKeyframes) {
+function lowerBody (state, dualQuatKeyframes) {
   var interpolatedQuats = animationSystem.interpolateJoints({
     blendFunction: function (dt) {
       // Blend linearly over 1 second
@@ -10,24 +10,25 @@ function upperBody (state, dualQuatKeyframes) {
     },
     currentTime: state.currentTime,
     keyframes: dualQuatKeyframes,
-    jointNums: state.upperBodyJointNums,
+    jointNums: state.lowerBodyJointNums,
     currentAnimation: {
-      range: state.upperBody.currentAnimation.range,
-      startTime: state.upperBody.currentAnimation.startTime
+      range: state.lowerBody.currentAnimation.range,
+      startTime: state.lowerBody.currentAnimation.startTime
     },
-    previousAnimation: state.upperBody.previousAnimation
+    previousAnimation: state.lowerBody.previousAnimation
   })
 
   var interpolatedRotQuats = []
   var interpolatedTransQuats = []
-  state.upperBodyJointNums.forEach(function (jointNum) {
+  state.lowerBodyJointNums.forEach(function (jointNum) {
     interpolatedRotQuats[jointNum] = interpolatedQuats[jointNum].slice(0, 4)
     interpolatedTransQuats[jointNum] = interpolatedQuats[jointNum].slice(4, 8)
   })
 
   return {
-    length: state.upperBodyJointNums.length,
+    length: state.lowerBodyJointNums.length,
     rot: interpolatedRotQuats,
     trans: interpolatedTransQuats
   }
 }
+

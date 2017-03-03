@@ -1,6 +1,6 @@
 'use strict'
 const regl = require('regl')()
-const cowboy = require('./asset/cowboy.json')
+const cowboy = require('../webgl/asset/cowboy.json')
 const expandVertices = require('expand-vertex-data')
 
 const mat3FromMat4 = require('gl-mat3/from-mat4')
@@ -18,8 +18,8 @@ const mat4RotateX = require('gl-mat4/rotateX')
 const mat4RotateY = require('gl-mat4/rotateY')
 const mat4RotateZ = require('gl-mat4/rotateZ')
 
-const getUpperBodyQuats = require('./upper-body.js')
-const getLowerBodyQuats = require('./lower-body.js')
+const getUpperBodyQuats = require('../webgl/upper-body.js')
+const getLowerBodyQuats = require('../webgl/lower-body.js')
 
 const state = {
   animationRanges: {
