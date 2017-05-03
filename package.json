@@ -36,7 +36,6 @@
   },
   "homepage": "https://github.com/chinedufn/skeletal-animation-system#readme",
   "dependencies": {
-    "expand-vertex-data": "^1.0.1",
     "gl-vec4": "^1.0.1"
   },
   "devDependencies": {
@@ -44,6 +43,7 @@
     "budo": "^9.3.0",
     "collada-dae-parser": "^0.10.0",
     "create-orbit-camera": "0.0.2",
+    "expand-vertex-data": "^1.0.1",
     "gh-pages": "^0.12.0",
     "gl-mat3": "^1.0.0",
     "gl-quat": "^1.0.0",
