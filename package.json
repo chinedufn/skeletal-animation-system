@@ -1,6 +1,6 @@
 {
   "name": "skeletal-animation-system",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "A standalone, stateless, dual quaternion based skeletal animation system built with interactive applications in mind",
   "main": "index.js",
   "scripts": {
