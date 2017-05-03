@@ -104,7 +104,8 @@ var lowerBodyOptions = {
   jointNums: lowerBodyJointNums,
   currentAnimation: {
     range: animationRanges['jump']
-    startTime: 24.3
+    startTime: 24.3,
+    noLoop: true
   }
 }
 
@@ -226,6 +227,16 @@ Type: `Number`
 
 The time in seconds that your current animation was initiated. This gets compared with
 the `currentTime` in order to interpolate your joint data appropriately.
+
+###### currentAnimation.noLoop
+
+Type: `Boolean`
+
+Whether or not your animation should loop. For example, let's say you are 13 seconds into a 4 second animation.
+
+If `noLoop === true` then you will be playing the frame at the 4th second.
+
+If `noLoop === false` then you will be playing the frame at the 1st second.
 
 ##### previousAnimation
 

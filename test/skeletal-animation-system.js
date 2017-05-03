@@ -165,3 +165,46 @@ test('Looping when not using lowest keyframe range', function (t) {
   )
   t.end()
 })
+
+// The noLoop flag is useful for animations that shouldn't repeat. For example,
+// you'll likely want a walk animation to loop as your player walks,
+// but it is unlikely that you will want a punch animation to loop
+// (assuming your player only punched once)
+test('Playing a non looping animation', function (t) {
+  var options = {
+    currentTime: 7.0,
+    keyframes: {
+      '1': [
+        [0, 0, 0, 0, 1, 1, 1, 1]
+      ],
+      '3': [
+        [1, 1, 1, 1, 0, 0, 0, 0]
+      ],
+      '5': [
+        [3, 3, 3, 3, 1, 1, 1, 1]
+      ],
+      '7': [
+        [1, 1, 1, 1, 0, 0, 0, 0]
+      ]
+    },
+    jointNums: [0],
+    currentAnimation: {
+      // Lowest keyframe is '3' highest keyframe is '5'
+      range: [1, 2],
+      startTime: 0.0,
+      // Notice that we are passing in `noLoop` in this test
+      noLoop: true
+    }
+  }
+
+  var interpolatedJoints = animationSystem.interpolateJoints(options)
+
+  t.deepEqual(
+    interpolatedJoints[0],
+    // Our highest keyframe is '5'. Since we aren't looping that's where we
+    // should end
+    [3, 3, 3, 3, 1, 1, 1, 1],
+    'Bound to highest keyframe when `noLoop` is true'
+  )
+  t.end()
+})

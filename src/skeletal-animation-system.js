@@ -28,7 +28,14 @@ function interpolateJoints (opts) {
   var frameRelToFirst = Number(currentKeyframeTimes[0]) + Number(currentAnimElapsedTime)
   var range = currentKeyframeTimes[currentKeyframeTimes.length - 1] - currentKeyframeTimes[0]
   if (frameRelToFirst > range) {
-    currentAnimElapsedTime = currentAnimElapsedTime % range
+    // If we are NOT LOOPING then we set our upper bound of elapsed time to the duration of the animation
+    if (opts.currentAnimation.noLoop) {
+      currentAnimElapsedTime = Math.min(currentAnimElapsedTime, range)
+    } else {
+      // If we ARE LOOPING then we use the modulus of the animation duration to
+      // always re-start from the beginning
+      currentAnimElapsedTime = currentAnimElapsedTime % range
+    }
     frameRelToFirst = currentAnimElapsedTime + Number(currentKeyframeTimes[0])
   }
 
