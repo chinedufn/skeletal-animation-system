@@ -8,35 +8,48 @@ module.exports = {
 // TODO: Refactor now that tests are passing
 // TODO: Benchmark perf
 function interpolateJoints (opts) {
+  // Get the amount of time that the current animation has been running.
+  // We use this when interpolating the current animation. Depending on
+  // how long the animation has been running we'll sample from different
+  // keyframe times
   var currentAnimElapsedTime = opts.currentTime - opts.currentAnimation.startTime
 
-  var keyframeTimes = Object.keys(opts.keyframes).sort(function (a, b) {
-    if (Number(a) > Number(b)) { return 1 }
-    if (Number(a) < Number(b)) { return -1 }
-    return 0
+  // Sort all of our animations keyframe times numerically so that
+  // they're next to each other when we're sampling them.
+  // ex: {1: [...], '6.5': [...], 2: [...]} becomes [1, 2, 6.5]
+  // All keyframe times are in seconds
+  var allKeyframeTimes = Object.keys(opts.keyframes).sort(function (a, b) {
+    // NOTE: This breaks if you have the same keyframe twice. But you
+    // really shouldn't have the same keyframe twice. In the future
+    // we might have a separate package for linting your model
+    return Number(a) > Number(b) ? 1 : -1
   })
 
-  var currentKeyframeTimes = keyframeTimes.slice(
+  // We grab the keyframe times that our current animation is using. For example,
+  // if you have keyframe times [1, 2, 6, 9, 10] and the current animation range,
+  // [1, 3], then we care about keyframes [2, 6, 9]
+  var currentKeyframeTimes = allKeyframeTimes.slice(
     opts.currentAnimation.range[0],
     opts.currentAnimation.range[1] + 1
   )
 
-  // Get the number of frames passed the first animation frame
-  // TODO: This isn't actually the frame relative to the first..?
-  // TODO: Yeah refactor everything once this works
-  // Handle looping here
-  var frameRelToFirst = Number(currentKeyframeTimes[0]) + Number(currentAnimElapsedTime)
-  var range = currentKeyframeTimes[currentKeyframeTimes.length - 1] - currentKeyframeTimes[0]
-  if (frameRelToFirst > range) {
+  // Get the current animation's time relative to the first possible time.
+  // For example, if our keyframe times are [1, 2, 6.5] and the current animation's
+  // elapsed time is `3`, then our time relative to our first time is `1 + 3` or `4`
+  var timeRelativeToFirst = Number(currentKeyframeTimes[0]) + Number(currentAnimElapsedTime)
+  // Our duration is the number of seconds from the first keyframe time to the last
+  // in our current animation. So for a current animation of [1, 2, 6.5] our duration is 4.5
+  var duration = currentKeyframeTimes[currentKeyframeTimes.length - 1] - currentKeyframeTimes[0]
+  if (currentAnimElapsedTime > duration) {
     // If we are NOT LOOPING then we set our upper bound of elapsed time to the duration of the animation
     if (opts.currentAnimation.noLoop) {
-      currentAnimElapsedTime = Math.min(currentAnimElapsedTime, range)
+      currentAnimElapsedTime = Math.min(currentAnimElapsedTime, duration)
     } else {
       // If we ARE LOOPING then we use the modulus of the animation duration to
       // always re-start from the beginning
-      currentAnimElapsedTime = currentAnimElapsedTime % range
+      currentAnimElapsedTime = currentAnimElapsedTime % duration
     }
-    frameRelToFirst = currentAnimElapsedTime + Number(currentKeyframeTimes[0])
+    timeRelativeToFirst = currentAnimElapsedTime + Number(currentKeyframeTimes[0])
   }
 
   var currentAnimLowerKeyframe
@@ -44,11 +57,11 @@ function interpolateJoints (opts) {
   // Get the surrounding keyframes for our current animation
   currentKeyframeTimes.forEach(function (keyframeTime) {
     if (currentAnimLowerKeyframe && currentAnimUpperKeyframe) { return }
-    if (frameRelToFirst > keyframeTime) {
+    if (timeRelativeToFirst > keyframeTime) {
       currentAnimLowerKeyframe = keyframeTime
-    } else if (frameRelToFirst < keyframeTime) {
+    } else if (timeRelativeToFirst < keyframeTime) {
       currentAnimUpperKeyframe = keyframeTime
-    } else if (frameRelToFirst === Number(keyframeTime)) {
+    } else if (timeRelativeToFirst === Number(keyframeTime)) {
       // TODO: Perform fewer calculations in places that we already know
       // that the keyframe time doesn't need to be blended against an upper
       // and lower keyframe. For now we don't handle this special case
@@ -56,13 +69,13 @@ function interpolateJoints (opts) {
     }
   })
   // Set the elapsed time relative to our current lower bound keyframe instead of our lowest out of all keyframes
-  currentAnimElapsedTime = frameRelToFirst - currentAnimLowerKeyframe
+  currentAnimElapsedTime = timeRelativeToFirst - currentAnimLowerKeyframe
 
   var previousAnimLowerKeyframe
   var previousAnimUpperKeyframe
   var prevAnimElapsedTime
   if (opts.previousAnimation) {
-    var previousKeyframeData = require('./get-previous-animation-data.js')(opts, keyframeTimes)
+    var previousKeyframeData = require('./get-previous-animation-data.js')(opts, allKeyframeTimes)
     previousAnimLowerKeyframe = previousKeyframeData.lower
     previousAnimUpperKeyframe = previousKeyframeData.upper
     prevAnimElapsedTime = previousKeyframeData.elapsedTime
