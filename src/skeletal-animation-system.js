@@ -133,8 +133,24 @@ function interpolateJoints (opts) {
     return acc
   }, {})
 
+  // Calculate the keyframe number of our upper and lower keyframe
+  // TODO: Handle this while we do other stuff so we don't need to loop through again
+  //  this is a minor perf optimization that we can implement when we benchmark
+  var currentAnimLowerKeyframeNumber
+  var currentAnimUpperKeyframeNumber
+  allKeyframeTimes.forEach(function (keyTime, keyframeNumber) {
+    currentAnimLowerKeyframeNumber = currentAnimLowerKeyframe === keyTime ? keyframeNumber : currentAnimLowerKeyframeNumber
+    currentAnimUpperKeyframeNumber = currentAnimUpperKeyframe === keyTime ? keyframeNumber : currentAnimUpperKeyframeNumber
+  })
+
   // Return the freshly interpolated dual quaternions for each of the joints that were passed in
-  return interpolatedJoints
+  return {
+    joints: interpolatedJoints,
+    currentAnimationInfo: {
+      lowerKeyframeNumber: currentAnimLowerKeyframeNumber,
+      upperKeyframeNumber: currentAnimUpperKeyframeNumber
+    }
+  }
 }
 
 // Give then number of seconds elapsed between the previous animation

@@ -110,10 +110,11 @@ var lowerBodyOptions = {
 }
 
 var interpolatedUpperBodyJoints = animationSystem
-.interpolateJoints(upperBodyOptions)
+.interpolateJoints(upperBodyOptions).joints
+
 
 var interpolatedLowerBodyJoints = animationSystem
-.interpolateJoints(lowerBodyJoints)
+.interpolateJoints(lowerBodyJoints).joints
 
 // Tou can pass these joint dual quaternions into `load-collada-dae`
 var interpolatedJoints = Object.assign({}, interpolatedUpperBodyJoints, interpolatedLowerBodyJoints)
@@ -125,8 +126,10 @@ TODO: [Link to collada-dae-parser README]()
 
 ## TODO:
 
-- [ ] Handle rotation quaternion lerp when dot product is < 0
+- [x] Handle rotation quaternion lerp when dot product is < 0
 - [ ] Implement more from the papers linked in `References` section below (whenever we need them)
+- [ ] Add documentation about how to approach playing a sound effect on a keyframe in your game / simulation / program
+- [ ] Benchmark
 
 ## API
 

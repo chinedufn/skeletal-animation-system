@@ -42,7 +42,7 @@ test('Blend out previous animation', function (t) {
     }
   }
 
-  var interpolatedJoints = animationSystem.interpolateJoints(options)
+  var interpolatedJoints = animationSystem.interpolateJoints(options).joints
 
   t.deepEqual(
     interpolatedJoints[0],
@@ -91,7 +91,7 @@ test('Blending while passed previous animations upper keyframe', function (t) {
     }
   }
 
-  var interpolatedJoints = animationSystem.interpolateJoints(options)
+  var interpolatedJoints = animationSystem.interpolateJoints(options).joints
 
   t.deepEqual(
     interpolatedJoints[0],
@@ -140,7 +140,7 @@ test('Blend is above 100% complete', function (t) {
     }
   }
 
-  var interpolatedJoints = animationSystem.interpolateJoints(options)
+  var interpolatedJoints = animationSystem.interpolateJoints(options).joints
 
   t.deepEqual(
     interpolatedJoints[0],
@@ -189,7 +189,7 @@ test('Blends using time since current animation frame set began', function (t) {
     }
   }
 
-  var interpolatedJoints = animationSystem.interpolateJoints(options)
+  var interpolatedJoints = animationSystem.interpolateJoints(options).joints
 
   t.deepEqual(
     interpolatedJoints[0],
@@ -235,7 +235,7 @@ test('Previous animation in middle of loop', function (t) {
     }
   }
 
-  var interpolatedJoints = animationSystem.interpolateJoints(options)
+  var interpolatedJoints = animationSystem.interpolateJoints(options).joints
 
   t.deepEqual(
     interpolatedJoints[0],
@@ -280,7 +280,7 @@ test('Previous animation started in middle of loop but now passed final frame', 
     }
   }
 
-  var interpolatedJoints = animationSystem.interpolateJoints(options)
+  var interpolatedJoints = animationSystem.interpolateJoints(options).joints
 
   t.deepEqual(
     interpolatedJoints[0],
@@ -329,7 +329,7 @@ test('Previous animation elapsed time when previous animation starts from non fi
     }
   }
 
-  var interpolatedJoints = animationSystem.interpolateJoints(options)
+  var interpolatedJoints = animationSystem.interpolateJoints(options).joints
 
   t.deepEqual(
     interpolatedJoints[0],
@@ -388,7 +388,7 @@ test('Multiple keyframes larger than the current one', function (t) {
     }
   }
 
-  var interpolatedJoints = animationSystem.interpolateJoints(options)
+  var interpolatedJoints = animationSystem.interpolateJoints(options).joints
 
   t.deepEqual(
     interpolatedJoints[0],
