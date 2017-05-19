@@ -40,6 +40,10 @@ $ npm run demo
 
 Changes to the `demo` and `src` files will now live reload in your browser.
 
+---
+
+[View live demo](http://chinedufn.github.io/skeletal-animation-system/)
+
 ## Usage
 
 ```js
@@ -82,7 +86,7 @@ var fullBodyJoints = upperBodyJoints.concat(lowerBodyJoints)
 var upperBodyOptions = {
   currentTime: 28.24,
   keyframes: keyframes,
-  jointNames: upperBodyJointsNums,
+  jointNums: upperBodyJointsNums,
   blendFunction: function (dt) {
     // Blend animations linearly over 2.5 seconds
     return 1 / 2.5 * dt
@@ -114,15 +118,19 @@ var interpolatedUpperBodyJoints = animationSystem
 
 
 var interpolatedLowerBodyJoints = animationSystem
-.interpolateJoints(lowerBodyJoints).joints
+.interpolateJoints(lowerBodyOptions).joints
 
-// Tou can pass these joint dual quaternions into `load-collada-dae`
+// You can pass these joint dual quaternions into `load-collada-dae`
 var interpolatedJoints = Object.assign({}, interpolatedUpperBodyJoints, interpolatedLowerBodyJoints)
 ```
 
 ## Expected JSON model format
 
 TODO: [Link to collada-dae-parser README]()
+
+## Benchmark
+
+WIP
 
 ## TODO:
 
