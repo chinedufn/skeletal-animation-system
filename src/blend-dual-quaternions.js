@@ -9,6 +9,9 @@ var lowerTransQuat
 var upperRotQuat
 var upperTransQuat
 
+var lerpedRotQuat
+var lerpedTransQuat
+
 // Blend between two dual quaternions using the shortest path.
 //
 // startDualQuat -> your first dual quaternion that you are blending away from
@@ -42,8 +45,16 @@ function blendDualQuaternions (startDualQuat, endDualQuat, blendValue) {
 
   // Blend our rotation and translation quaternions then combine them
   // back into a final blended dual quaternion
-  return lerp([], lowerRotQuat, upperRotQuat, blendValue)
-  .concat(
-    lerp([], lowerTransQuat, upperTransQuat, blendValue)
-  )
+  lerpedRotQuat = lerp([], lowerRotQuat, upperRotQuat, blendValue)
+  lerpedTransQuat = lerp([], lowerTransQuat, upperTransQuat, blendValue)
+  return [
+    lerpedRotQuat[0],
+    lerpedRotQuat[1],
+    lerpedRotQuat[2],
+    lerpedRotQuat[3],
+    lerpedTransQuat[0],
+    lerpedTransQuat[1],
+    lerpedTransQuat[2],
+    lerpedTransQuat[3]
+  ]
 }

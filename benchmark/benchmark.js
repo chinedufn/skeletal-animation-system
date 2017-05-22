@@ -5,10 +5,10 @@ var animationSystem = require('../')
  * TODO: Threw in a benchmark, but need to be more deliberate about what we're benchmarking
  * and how to make things faster
  */
-bench('Interpolate 20 bones 1000 times', function (b) {
+bench('Interpolate 20 bones one million times', function (b) {
   b.start()
 
-  for (var i = 0; i < 1000; i++) {
+  for (var i = 0; i < 1000000; i++) {
     animationSystem.interpolateJoints({
       currentTime: i,
       keyframes: {
