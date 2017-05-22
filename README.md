@@ -62,9 +62,10 @@ var animationRanges = {
   'right-arm-punch': [17, 20]
 }
 
-// Convert our joint names into their associated joint number
+// Convert our joint names into their associated joint index number
 // This number comes from collada-dae-parser
 // (or your compatible parser of choice)
+// Will return an array of joint indices such as like [0, 1, 5, 6, 8]
 var upperBodyJointNums = [
 'spine', 'chest_L', 'chest_R', 'bicep_L', 'bicep_R'
 ].reduce(function (jointIndices, jointName) {
@@ -72,6 +73,7 @@ var upperBodyJointNums = [
   return jointIndices
 }, [])
 
+// Will return an array of joint indices such as [2, 3, 4, 7, 9]
 var lowerBodyJointNums = [
 'hip', 'thigh_L', 'thigh_R', 'femur_L'
 ].reduce(function (jointIndices, jointName) {
@@ -79,8 +81,6 @@ var lowerBodyJointNums = [
   return jointIndices
 }, [])
 
-
-var fullBodyJoints = upperBodyJoints.concat(lowerBodyJoints)
 
 // Our options for animating our model's upper body
 var upperBodyOptions = {
@@ -116,12 +116,15 @@ var lowerBodyOptions = {
 var interpolatedUpperBodyJoints = animationSystem
 .interpolateJoints(upperBodyOptions).joints
 
-
 var interpolatedLowerBodyJoints = animationSystem
 .interpolateJoints(lowerBodyOptions).joints
 
-// You can pass these joint dual quaternions into `load-collada-dae`
-var interpolatedJoints = Object.assign({}, interpolatedUpperBodyJoints, interpolatedLowerBodyJoints)
+// You know have your interpolated upper and lower body dual quaternions.
+// You can pass these into `load-collada-dae` or any vertex shader that
+// works with dual quaternions
+
+// If you're just getting started and you still need matrices you
+// can convert these into matrices uses [dual-quat-to-mat4](https://github.com/chinedufn/dual-quat-to-mat4)
 ```
 
 ## Expected JSON model format
@@ -180,11 +183,18 @@ Type: `Object`
 
 Default: `{}`
 
-TODO: Link to collada-dae-parser README on keyframes
+TODO: Link to collada-dae-parser README on keyframes for more info, but also put an example here
 
 ##### jointNums
 
 Type: `Array`
+
+An array of joint indices that you would like to interpolate.
+
+Say your model has 4 joints. To interpolate the entire model you would pass in [0, 1, 2, 3].
+To only interpolate two of the joints you might pass in [0, 2], or any desired combination.
+
+These joint indices are based on the order of the joints in your `keyframes`
 
 ##### blendFunction
 
