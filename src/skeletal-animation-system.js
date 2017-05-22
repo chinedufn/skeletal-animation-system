@@ -4,9 +4,8 @@ module.exports = {
   interpolateJoints: interpolateJoints
 }
 
-// TODO: Add thorough comments
-// TODO: Refactor now that tests are passing
-// TODO: Benchmark perf
+// TODO: Finishing adding comments
+// TODO: Benchmark performance and optimize
 function interpolateJoints (opts) {
   // Get the amount of time that the current animation has been running.
   // We use this when interpolating the current animation. Depending on
@@ -165,5 +164,3 @@ function defaultBlend (dt) {
   // Blender linearly over 0.5s
   return 2 * dt
 }
-
-// TODO: Event emitter for when animation ends ?
