@@ -97,6 +97,7 @@ function interpolateJoints (opts) {
       } else {
         // Blend the dual quaternions for our previous animation that we are about to blend out
         previousAnimJointDualQuat = blendDualQuaternions(
+          [],
           opts.keyframes[previousAnimLowerKeyframe][jointName],
           opts.keyframes[previousAnimUpperKeyframe][jointName],
           prevAnimElapsedTime / (previousAnimUpperKeyframe - previousAnimLowerKeyframe)
@@ -108,13 +109,14 @@ function interpolateJoints (opts) {
         currentAnimJointDualQuat = opts.keyframes[currentAnimLowerKeyframe][jointName]
       } else {
         currentAnimJointDualQuat = blendDualQuaternions(
+          [],
           opts.keyframes[currentAnimLowerKeyframe][jointName],
           opts.keyframes[currentAnimUpperKeyframe][jointName],
           currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe)
         )
       }
 
-      acc[jointName] = blendDualQuaternions(previousAnimJointDualQuat, currentAnimJointDualQuat, blend)
+      acc[jointName] = blendDualQuaternions([], previousAnimJointDualQuat, currentAnimJointDualQuat, blend)
     } else {
       // If we are on an exact, pre-defined keyframe there is no need to blend
       if (currentAnimUpperKeyframe === currentAnimLowerKeyframe) {
@@ -122,6 +124,7 @@ function interpolateJoints (opts) {
       } else {
         // Blend the two dual quaternions based on where we are in the current keyframe
         acc[jointName] = blendDualQuaternions(
+          [],
           // The defined keyframe right below our current frame
           opts.keyframes[currentAnimLowerKeyframe][jointName],
           // The defined keyframe right above our current frame
