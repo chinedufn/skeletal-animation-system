@@ -1,7 +1,6 @@
 var test = require('tape')
 var animationSystem = require('../')
 
-/*
 test('Animate without blending previous animation', function (t) {
   var options = {
     // Our application clock has been running for 1.5 seconds
@@ -209,7 +208,6 @@ test('Playing a non looping animation', function (t) {
   )
   t.end()
 })
-*/
 
 // This is useful for knowing to play an animation on a certain keyframe
 // for example, you might keep track of the previous lower keyframe, and whenever
