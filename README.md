@@ -5,6 +5,10 @@ skeletal-animation-system [![npm version](https://badge.fury.io/js/skeletal-anim
 
 [View live demo](http://chinedufn.github.io/skeletal-animation-system/)
 
+## Tutorials
+
+[WebGL Skeletal Animation Tutorial](chinedufn.com/webgl-skeletal-animation-tutorial)
+
 ## Background / Initial Motivation
 
 skeletal-animation-system aims to give the user a flexible module for managing skeletal animations across different 3d models and bone groups.
