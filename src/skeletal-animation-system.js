@@ -79,13 +79,14 @@ function interpolateJoints (opts) {
     previousAnimUpperKeyframe = previousKeyframeData.upper
     prevAnimElapsedTime = previousKeyframeData.elapsedTime
   }
+  console.log(previousAnimLowerKeyframe, previousAnimUpperKeyframe)
 
   // Calculate the interpolated joint matrices for our consumer's animation
   // TODO: acc is a bad variable name. Renaame it
   var interpolatedJoints = opts.jointNums.reduce(function (acc, jointName) {
     // If there is a previous animation
-    // TODO: don't blend if blend is > 1
     var blend = (opts.blendFunction || defaultBlend)(opts.currentTime - opts.currentAnimation.startTime)
+
     if (opts.previousAnimation && blend < 1) {
       var previousAnimJointDualQuat
       var currentAnimJointDualQuat

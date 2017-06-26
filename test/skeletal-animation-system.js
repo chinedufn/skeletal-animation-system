@@ -1,6 +1,7 @@
 var test = require('tape')
 var animationSystem = require('../')
 
+/*
 test('Animate without blending previous animation', function (t) {
   var options = {
     // Our application clock has been running for 1.5 seconds
@@ -257,5 +258,46 @@ test('Information about the frames that were sampled', function (t) {
   t.equal(currentAnimationInfoNonExact.lowerKeyframeNumber, 2, 'Returns correct lower keyframe (non exact frame time)')
   t.equal(currentAnimationInfoNonExact.upperKeyframeNumber, 3, 'Returns correct upper keyframe (non exact frame time)')
 
+  t.end()
+})
+*/
+
+// Was an edge case error where the lower keyframe would be equal to the
+// current elapsed time. We were checking for `>` but should have been
+// checking for `>=`
+test('Start time is equal to the current time with an outlived skeletal animation', function (t) {
+  var options = {
+    // Our application clock has been running for 1.5 seconds
+    //  which is 3/4 of the curent animations duration
+    currentTime: 4.0,
+    blendFunc: function (dt) {
+      return 5 * dt
+    },
+    keyframes: {
+      '0': [
+        [0, 0, 0, 0, 1, 1, 1, 1]
+      ],
+      '2': [
+        [1, 1, 1, 1, 0, 0, 0, 0]
+      ]
+    },
+    jointNums: [0],
+    currentAnimation: {
+      range: [0, 1],
+      startTime: 4.0
+    },
+    previousAnimation: {
+      startTime: 0,
+      range: [0, 1]
+    }
+  }
+
+  var interpolatedJoints = animationSystem.interpolateJoints(options).joints
+
+  t.deepEqual(
+    interpolatedJoints[0],
+    [0, 0, 0, 0, 1, 1, 1, 1],
+    'Works when start time is equal to current time'
+  )
   t.end()
 })
