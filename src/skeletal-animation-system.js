@@ -79,7 +79,6 @@ function interpolateJoints (opts) {
     previousAnimUpperKeyframe = previousKeyframeData.upper
     prevAnimElapsedTime = previousKeyframeData.elapsedTime
   }
-  console.log(previousAnimLowerKeyframe, previousAnimUpperKeyframe)
 
   // Calculate the interpolated joint matrices for our consumer's animation
   // TODO: acc is a bad variable name. Renaame it
