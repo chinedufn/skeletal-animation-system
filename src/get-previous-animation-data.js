@@ -14,6 +14,13 @@ function getPreviousAnimationData (opts, keyframeTimes) {
   //  during this time it is okay to loop the animation
   // TODO: Better naming
   var leway = opts.currentAnimation.startTime - opts.previousAnimation.startTime
+  // If the previous animation wasn't looping we make sure to start from the
+  // final frame no matter what. We do not provide any leway to loop the animation
+  // up until the current animation starts.
+  // TODO: This file needs to be refactored and commented.. It's getting messier as I add more
+  if (opts.previousAnimation.noLoop) {
+    leway = 0
+  }
   var currentAnimTimeElapsed = opts.currentTime - opts.currentAnimation.startTime
 
   // TODO: My mind is jelly but the tests have passed... Refactor this!

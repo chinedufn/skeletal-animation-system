@@ -1,7 +1,6 @@
 var test = require('tape')
 var animationSystem = require('../')
 
-/*
 test('Animate without blending previous animation', function (t) {
   var options = {
     // Our application clock has been running for 1.5 seconds
@@ -68,7 +67,6 @@ test('Chooses proper minimum and maximum keyframe', function (t) {
   t.end()
 })
 
-// TODO: Test looping
 test('Looping animation', function (t) {
   var options = {
     currentTime: 4.0,
@@ -260,7 +258,6 @@ test('Information about the frames that were sampled', function (t) {
 
   t.end()
 })
-*/
 
 // Was an edge case error where the lower keyframe would be equal to the
 // current elapsed time. We were checking for `>` but should have been
@@ -298,6 +295,55 @@ test('Start time is equal to the current time with an outlived skeletal animatio
     interpolatedJoints[0],
     [0, 0, 0, 0, 1, 1, 1, 1],
     'Works when start time is equal to current time'
+  )
+  t.end()
+})
+
+// This prevents us from thinking that the previous animation was looping
+// when it wasn't. That was causing an issue where our interpolation was
+// wrong because we didn't specify that the old animation wasn't looping
+// in the first place.
+// In short.. before this.. our previous -> current interpolation
+// always assumed that the previous animation was looping
+test('Previous animation uses `noLoop`', function (t) {
+  var options = {
+    currentTime: 10.0,
+    keyframes: {
+      '1': [
+        [0, 0, 0, 0, 1, 1, 1, 1]
+      ],
+      '3': [
+        [1, 1, 1, 1, 0, 0, 0, 0]
+      ],
+      '5': [
+        [3, 3, 3, 3, 1, 1, 1, 1]
+      ],
+      '7': [
+        [1, 1, 1, 1, 0, 0, 0, 0]
+      ]
+    },
+    jointNums: [0],
+    currentAnimation: {
+      // Lowest keyframe is '3' highest keyframe is '5'
+      range: [2, 3],
+      startTime: 10.0
+    },
+    previousAnimation: {
+      // Lowest keyframe is '1' highest keyframe is '3'
+      range: [0, 1],
+      startTime: 0.0,
+      noLoop: true
+    }
+  }
+
+  var interpolatedJoints = animationSystem.interpolateJoints(options).joints
+
+  t.deepEqual(
+    interpolatedJoints[0],
+    // The old keyframe had noloop so we should be blending away from the final keyframe
+    // of the previous animation
+    [1, 1, 1, 1, 0, 0, 0, 0],
+    'Use final keyframe when blending away from previous keyframe with noLoop'
   )
   t.end()
 })
