@@ -120,11 +120,16 @@ var lowerBodyOptions = {
 var interpolatedUpperBodyJoints = animationSystem
 .interpolateJoints(upperBodyOptions).joints
 
-var interpolatedLowerBodyJoints = animationSystem
-.interpolateJoints(lowerBodyOptions).joints
+var lowerBodyData = animationSystem
+.interpolateJoints(lowerBodyOptions)
+
+var interpolatedLowerBodyJoints = lowerBodyData.joints
+
+console.log(lowerBodyData.currentAnimationInfo)
+// => {lowerKeyframeNumber: 5, upperKeyframeNumber: 6}
 
 // You know have your interpolated upper and lower body dual quaternions.
-// You can pass these into `load-collada-dae` or any vertex shader that
+// You can pass these into any vertex shader that
 // works with dual quaternions
 
 // If you're just getting started and you still need matrices you
@@ -283,6 +288,19 @@ Type: `Number`
 
 The time in seconds that your previous animation was initiated.
 This is used in order to blend in the current animation.
+
+## Returned data
+
+```js
+// Example
+{
+  joints: [...],
+  currentAnimationInfo: {
+    lowerKeyframeNumber: 0,
+    upperKeyframeNumber:: 1
+  }
+}
+```
 
 ## See Also
 
