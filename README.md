@@ -7,6 +7,10 @@ skeletal-animation-system [![npm version](https://badge.fury.io/js/skeletal-anim
 
 ## Tutorials
 
+[WebGL Skeletal Animation Sound Effects Tutorial](https://github.com/chinedufn/webgl-skeletal-animation-sound-tutorial)
+
+[Attaching objects to bones](http://localhost:4000/attaching-objects-to-bones/)
+
 [WebGL Skeletal Animation Tutorial](chinedufn.com/webgl-skeletal-animation-tutorial)
 
 ## Background / Initial Motivation
@@ -148,7 +152,7 @@ WIP
 
 - [x] Handle rotation quaternion lerp when dot product is < 0
 - [ ] Implement more from the papers linked in `References` section below (whenever we need them)
-- [ ] Add documentation about how to approach playing a sound effect on a keyframe in your game / simulation / program
+- [x] Add documentation about how to approach playing a sound effect on a keyframe in your game / simulation / program
 - [ ] Benchmark
 
 ## API
