@@ -2,21 +2,22 @@ var test = require('tape')
 var animationSystem = require('../')
 
 test('Animate without blending previous animation', function (t) {
+  var currentKeyframes = {
+    '0': [
+      [0, 0, 0, 0, 1, 1, 1, 1]
+    ],
+    '2': [
+      [1, 1, 1, 1, 0, 0, 0, 0]
+    ]
+  }
+
   var options = {
     // Our application clock has been running for 1.5 seconds
     //  which is 3/4 of the curent animations duration
     currentTime: 1.5,
-    keyframes: {
-      '0': [
-        [0, 0, 0, 0, 1, 1, 1, 1]
-      ],
-      '2': [
-        [1, 1, 1, 1, 0, 0, 0, 0]
-      ]
-    },
     jointNums: [0],
     currentAnimation: {
-      range: [0, 1],
+      keyframes: currentKeyframes,
       startTime: 0
     }
   }
@@ -31,6 +32,8 @@ test('Animate without blending previous animation', function (t) {
   t.end()
 })
 
+/*
+ * Remnant from the old API, keeping this test around until things work
 test('Chooses proper minimum and maximum keyframe', function (t) {
   var options = {
     currentTime: 1.5,
@@ -66,21 +69,23 @@ test('Chooses proper minimum and maximum keyframe', function (t) {
   )
   t.end()
 })
+*/
 
 test('Looping animation', function (t) {
+  var currentAnimationKeyframes = {
+    '1': [
+      [0, 0, 0, 0, 1, 1, 1, 1]
+    ],
+    '3': [
+      [1, 1, 1, 1, 0, 0, 0, 0]
+    ]
+  }
+
   var options = {
     currentTime: 4.0,
-    keyframes: {
-      '1': [
-        [0, 0, 0, 0, 1, 1, 1, 1]
-      ],
-      '3': [
-        [1, 1, 1, 1, 0, 0, 0, 0]
-      ]
-    },
     jointNums: [0],
     currentAnimation: {
-      range: [0, 1],
+      keyframes: currentAnimationKeyframes,
       startTime: 0.0
     }
   }
@@ -100,19 +105,20 @@ test('Looping animation', function (t) {
 // frame as the number specified. But since Blender defaults to frame
 // `1` it's too easy to accidentally not start at zero
 test('Current time lower than first keyframe', function (t) {
+  var currentAnimationKeyframes = {
+    '1': [
+      [0, 0, 0, 0, 1, 1, 1, 1]
+    ],
+    '3': [
+      [1, 1, 1, 1, 0, 0, 0, 0]
+    ]
+  }
+
   var options = {
     currentTime: 0.0,
-    keyframes: {
-      '1': [
-        [0, 0, 0, 0, 1, 1, 1, 1]
-      ],
-      '3': [
-        [1, 1, 1, 1, 0, 0, 0, 0]
-      ]
-    },
     jointNums: [0],
     currentAnimation: {
-      range: [0, 1],
+      keyframes: currentAnimationKeyframes,
       startTime: 0.0
     }
   }
@@ -127,6 +133,9 @@ test('Current time lower than first keyframe', function (t) {
   t.end()
 })
 
+/*
+ * Remnant from the old API, keeping this test around until things work
+ *
 // In this case we should start from the lowest frame as zero
 // in the future we might add a flag to actually treat the lowest
 // frame as the number specified. But since Blender defaults to frame
@@ -164,32 +173,27 @@ test('Looping when not using lowest keyframe range', function (t) {
   )
   t.end()
 })
+*/
 
 // The noLoop flag is useful for animations that shouldn't repeat. For example,
 // you'll likely want a walk animation to loop as your player walks,
 // but it is unlikely that you will want a punch animation to loop
 // (assuming your player only punched once)
 test('Playing a non looping animation', function (t) {
+  var currentAnimationKeyframes = {
+    '3': [
+      [1, 1, 1, 1, 0, 0, 0, 0]
+    ],
+    '5': [
+      [3, 3, 3, 3, 1, 1, 1, 1]
+    ]
+  }
+
   var options = {
     currentTime: 7.0,
-    keyframes: {
-      '1': [
-        [0, 0, 0, 0, 1, 1, 1, 1]
-      ],
-      '3': [
-        [1, 1, 1, 1, 0, 0, 0, 0]
-      ],
-      '5': [
-        [3, 3, 3, 3, 1, 1, 1, 1]
-      ],
-      '7': [
-        [1, 1, 1, 1, 0, 0, 0, 0]
-      ]
-    },
     jointNums: [0],
     currentAnimation: {
-      // Lowest keyframe is '3' highest keyframe is '5'
-      range: [1, 2],
+      keyframes: currentAnimationKeyframes,
       startTime: 0.0,
       // Notice that we are passing in `noLoop` in this test
       noLoop: true
@@ -219,26 +223,26 @@ test('Playing a non looping animation', function (t) {
 // All of this is handled outside of skeletal-animation-system, skeletal-animation-system
 // only concerns itself with letting you know the current lower keyframe
 test('Information about the frames that were sampled', function (t) {
+  var currentAnimationKeyframes = {
+    '0': [
+      [0, 0, 0, 0, 1, 1, 1, 1]
+    ],
+    '2.222': [
+      [1, 1, 1, 1, 0, 0, 0, 0]
+    ],
+    '5': [
+      [3, 3, 3, 3, 1, 1, 1, 1]
+    ],
+    '7': [
+      [1, 1, 1, 1, 0, 0, 0, 0]
+    ]
+  }
+
   var options = {
     currentTime: 7.0,
-    keyframes: {
-      '0': [
-        [0, 0, 0, 0, 1, 1, 1, 1]
-      ],
-      '2.222': [
-        [1, 1, 1, 1, 0, 0, 0, 0]
-      ],
-      '5': [
-        [3, 3, 3, 3, 1, 1, 1, 1]
-      ],
-      '7': [
-        [1, 1, 1, 1, 0, 0, 0, 0]
-      ]
-    },
     jointNums: [0],
     currentAnimation: {
-      // Lowest keyframe is '3' highest keyframe is '5'
-      range: [0, 3],
+      keyframes: currentAnimationKeyframes,
       startTime: 0.0
     }
   }
@@ -263,6 +267,15 @@ test('Information about the frames that were sampled', function (t) {
 // current elapsed time. We were checking for `>` but should have been
 // checking for `>=`
 test('Start time is equal to the current time with an outlived skeletal animation', function (t) {
+  var currentAnimationKeyframes = {
+    '0': [
+      [0, 0, 0, 0, 1, 1, 1, 1]
+    ],
+    '2': [
+      [1, 1, 1, 1, 0, 0, 0, 0]
+    ]
+  }
+
   var options = {
     // Our application clock has been running for 1.5 seconds
     //  which is 3/4 of the curent animations duration
@@ -270,22 +283,14 @@ test('Start time is equal to the current time with an outlived skeletal animatio
     blendFunc: function (dt) {
       return 5 * dt
     },
-    keyframes: {
-      '0': [
-        [0, 0, 0, 0, 1, 1, 1, 1]
-      ],
-      '2': [
-        [1, 1, 1, 1, 0, 0, 0, 0]
-      ]
-    },
     jointNums: [0],
     currentAnimation: {
-      range: [0, 1],
+      keyframes: currentAnimationKeyframes,
       startTime: 4.0
     },
     previousAnimation: {
-      startTime: 0,
-      range: [0, 1]
+      keyframes: currentAnimationKeyframes,
+      startTime: 0
     }
   }
 
@@ -306,6 +311,24 @@ test('Start time is equal to the current time with an outlived skeletal animatio
 // In short.. before this.. our previous -> current interpolation
 // always assumed that the previous animation was looping
 test('Previous animation uses `noLoop`', function (t) {
+  var currentAnimationKeyframes = {
+    '5': [
+      [3, 3, 3, 3, 1, 1, 1, 1]
+    ],
+    '7': [
+      [1, 1, 1, 1, 0, 0, 0, 0]
+    ]
+  }
+
+  var previousAnimationKeyframes = {
+    '1': [
+      [0, 0, 0, 0, 1, 1, 1, 1]
+    ],
+    '3': [
+      [1, 1, 1, 1, 0, 0, 0, 0]
+    ]
+  }
+
   var options = {
     currentTime: 10.0,
     keyframes: {
@@ -324,13 +347,11 @@ test('Previous animation uses `noLoop`', function (t) {
     },
     jointNums: [0],
     currentAnimation: {
-      // Lowest keyframe is '3' highest keyframe is '5'
-      range: [2, 3],
+      keyframes: currentAnimationKeyframes,
       startTime: 10.0
     },
     previousAnimation: {
-      // Lowest keyframe is '1' highest keyframe is '3'
-      range: [0, 1],
+      keyframes: previousAnimationKeyframes,
       startTime: 0.0,
       noLoop: true
     }

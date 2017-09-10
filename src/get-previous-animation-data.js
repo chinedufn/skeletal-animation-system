@@ -1,14 +1,17 @@
 module.exports = getPreviousAnimationData
 
-function getPreviousAnimationData (opts, keyframeTimes) {
+/**
+ * Get animation data about the previous animation
+ *
+ * TODO: IIRC I split this out just to make it easier to wrap my head around it
+ * while I was writing it, but this is pretty much the exact same logic as our
+ * current animation data extraction. So we should normalize the two into
+ * `getAnimationData`
+ */
+function getPreviousAnimationData (opts, previousKeyframeTimes) {
   var prevAnimElapsedTime = opts.currentTime - opts.previousAnimation.startTime
   var previousAnimLowerKeyframe
   var previousAnimUpperKeyframe
-
-  var previousKeyframeTimes = keyframeTimes.slice(
-    opts.previousAnimation.range[0],
-    opts.previousAnimation.range[1] + 1
-  )
 
   // The amount of time that the previous animation was running before the new animation began
   //  during this time it is okay to loop the animation

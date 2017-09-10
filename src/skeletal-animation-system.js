@@ -17,20 +17,20 @@ function interpolateJoints (opts) {
   // they're next to each other when we're sampling them.
   // ex: {1: [...], '6.5': [...], 2: [...]} becomes [1, 2, 6.5]
   // All keyframe times are in seconds
-  var allKeyframeTimes = Object.keys(opts.keyframes).sort(function (a, b) {
+  var currentKeyframeTimes = Object.keys(opts.currentAnimation.keyframes)
+  .sort(function (a, b) {
     // NOTE: This breaks if you have the same keyframe twice. But you
     // really shouldn't have the same keyframe twice. In the future
     // we might have a separate package for linting your model
     return Number(a) > Number(b) ? 1 : -1
   })
-
-  // We grab the keyframe times that our current animation is using. For example,
-  // if you have keyframe times [1, 2, 6, 9, 10] and the current animation range,
-  // [1, 3], then we care about keyframes [2, 6, 9]
-  var currentKeyframeTimes = allKeyframeTimes.slice(
-    opts.currentAnimation.range[0],
-    opts.currentAnimation.range[1] + 1
-  )
+  var previousKeyframeTimes
+  if (opts.previousAnimation) {
+    previousKeyframeTimes = Object.keys(opts.previousAnimation.keyframes)
+    .sort(function (a, b) {
+      return Number(a) > Number(b) ? 1 : -1
+    })
+  }
 
   // Get the current animation's time relative to the first possible time.
   // For example, if our keyframe times are [1, 2, 6.5] and the current animation's
@@ -74,7 +74,7 @@ function interpolateJoints (opts) {
   var previousAnimUpperKeyframe
   var prevAnimElapsedTime
   if (opts.previousAnimation) {
-    var previousKeyframeData = require('./get-previous-animation-data.js')(opts, allKeyframeTimes)
+    var previousKeyframeData = require('./get-previous-animation-data.js')(opts, previousKeyframeTimes)
     previousAnimLowerKeyframe = previousKeyframeData.lower
     previousAnimUpperKeyframe = previousKeyframeData.upper
     prevAnimElapsedTime = previousKeyframeData.elapsedTime
@@ -92,25 +92,25 @@ function interpolateJoints (opts) {
 
       if (previousAnimLowerKeyframe === previousAnimUpperKeyframe) {
         // If our current frame happens to be one of our defined keyframes we use the existing frame
-        previousAnimJointDualQuat = opts.keyframes[previousAnimLowerKeyframe][jointName]
+        previousAnimJointDualQuat = opts.previousAnimation.keyframes[previousAnimLowerKeyframe][jointName]
       } else {
         // Blend the dual quaternions for our previous animation that we are about to blend out
         previousAnimJointDualQuat = blendDualQuaternions(
           [],
-          opts.keyframes[previousAnimLowerKeyframe][jointName],
-          opts.keyframes[previousAnimUpperKeyframe][jointName],
+          opts.previousAnimation.keyframes[previousAnimLowerKeyframe][jointName],
+          opts.previousAnimation.keyframes[previousAnimUpperKeyframe][jointName],
           prevAnimElapsedTime / (previousAnimUpperKeyframe - previousAnimLowerKeyframe)
         )
       }
 
       if (currentAnimLowerKeyframe === currentAnimUpperKeyframe) {
         // If our current frame happens to be one of our defined keyframes we use the existing frame
-        currentAnimJointDualQuat = opts.keyframes[currentAnimLowerKeyframe][jointName]
+        currentAnimJointDualQuat = opts.currentAnimation.keyframes[currentAnimLowerKeyframe][jointName]
       } else {
         currentAnimJointDualQuat = blendDualQuaternions(
           [],
-          opts.keyframes[currentAnimLowerKeyframe][jointName],
-          opts.keyframes[currentAnimUpperKeyframe][jointName],
+          opts.currentAnimation.keyframes[currentAnimLowerKeyframe][jointName],
+          opts.currentAnimation.keyframes[currentAnimUpperKeyframe][jointName],
           currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe)
         )
       }
@@ -119,15 +119,15 @@ function interpolateJoints (opts) {
     } else {
       // If we are on an exact, pre-defined keyframe there is no need to blend
       if (currentAnimUpperKeyframe === currentAnimLowerKeyframe) {
-        acc[jointName] = opts.keyframes[currentAnimLowerKeyframe][jointName]
+        acc[jointName] = opts.currentAnimation.keyframes[currentAnimLowerKeyframe][jointName]
       } else {
         // Blend the two dual quaternions based on where we are in the current keyframe
         acc[jointName] = blendDualQuaternions(
           [],
           // The defined keyframe right below our current frame
-          opts.keyframes[currentAnimLowerKeyframe][jointName],
+          opts.currentAnimation.keyframes[currentAnimLowerKeyframe][jointName],
           // The defined keyframe right above our current frame
-          opts.keyframes[currentAnimUpperKeyframe][jointName],
+          opts.currentAnimation.keyframes[currentAnimUpperKeyframe][jointName],
           currentAnimElapsedTime / (currentAnimUpperKeyframe - currentAnimLowerKeyframe)
         )
       }
@@ -140,7 +140,7 @@ function interpolateJoints (opts) {
   //  this is a minor perf optimization that we can implement when we benchmark
   var currentAnimLowerKeyframeNumber
   var currentAnimUpperKeyframeNumber
-  allKeyframeTimes.forEach(function (keyTime, keyframeNumber) {
+  currentKeyframeTimes.forEach(function (keyTime, keyframeNumber) {
     currentAnimLowerKeyframeNumber = currentAnimLowerKeyframe === keyTime ? keyframeNumber : currentAnimLowerKeyframeNumber
     currentAnimUpperKeyframeNumber = currentAnimUpperKeyframe === keyTime ? keyframeNumber : currentAnimUpperKeyframeNumber
   })

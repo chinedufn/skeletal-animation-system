@@ -8,24 +8,31 @@ function blendFunction (dt) {
 
 // TODO: Thoroughly comment tests. Hard to understand without more context
 test('Blend out previous animation', function (t) {
+  var currentKeyframes = {
+    '5.0': [
+      [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    ],
+    '8.0': [
+      [1, 1, 1, 1, 1, 1, 1, 1]
+    ]
+  }
+
+  var previousKeyframes = {
+    '0': [
+      [0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    '5.0': [
+      [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    ]
+  }
+
   var options = {
     // Our application clock has been running for 100.5 seconds
     blendFunction: blendFunction,
     currentTime: 100.5,
-    keyframes: {
-      '0': [
-        [0, 0, 0, 0, 0, 0, 0, 0]
-      ],
-      '5.0': [
-        [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-      ],
-      '8.0': [
-        [1, 1, 1, 1, 1, 1, 1, 1]
-      ]
-    },
     jointNums: [0],
     currentAnimation: {
-      range: [1, 2],
+      keyframes: currentKeyframes,
       // Our new animation has been playing for 1.5 seconds
       //  This means that it is halfway done
       //  Making it's dual quaternion:
@@ -33,7 +40,7 @@ test('Blend out previous animation', function (t) {
       startTime: 99.0
     },
     previousAnimation: {
-      range: [0, 1],
+      keyframes: previousKeyframes,
       // Our previous animation started 2.5 seconds before our current time
       //  This means that it has (5.0 - 2.5) seconds remaining
       //  Making it's dual quaternion:
@@ -56,33 +63,40 @@ test('Blend out previous animation', function (t) {
 })
 
 test('Blending while passed previous animations upper keyframe', function (t) {
+  var currentKeyframes = {
+    '1.0': [
+      [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    ],
+    '4.0': [
+      [1, 1, 1, 1, 1, 1, 1, 1]
+    ]
+  }
+
+  var previousKeyframes = {
+    '0': [
+      [0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    '1.0': [
+      [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    ]
+  }
+
   var options = {
     blendFunction: blendFunction,
     // Our application clock has been running for 100.5 seconds
     currentTime: 100.5,
-    keyframes: {
-      '0': [
-        [0, 0, 0, 0, 0, 0, 0, 0]
-      ],
-      '1.0': [
-        [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-      ],
-      '4.0': [
-        [1, 1, 1, 1, 1, 1, 1, 1]
-      ]
-    },
     jointNums: [0],
     currentAnimation: {
-      range: [1, 2],
-      // Our new animation has been playing for 1.5 frames
+      keyframes: currentKeyframes,
+      // Our new animation has been playing for 1.5 seconds
       //  This means that it is halfway done
       //  Making it's dual quaternion:
       //  [0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75]
       startTime: 99.0
     },
     previousAnimation: {
-      range: [0, 1],
-      // Our previous animation started 1.5 frames before our current time
+      keyframes: previousKeyframes,
+      // Our previous animation started 1.5 seconds before our current time
       //   Meaning that it has passed it's final frame of 1.0. It should not loop
       //   if it's being blended. We will use it's final frame
       //   Making it's dual quaternion:
@@ -106,24 +120,31 @@ test('Blending while passed previous animations upper keyframe', function (t) {
 })
 
 test('Blend is above 100% complete', function (t) {
+  var currentKeyframes = {
+    '5.0': [
+      [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    ],
+    '10.0': [
+      [1, 1, 1, 1, 1, 1, 1, 1]
+    ]
+  }
+
+  var previousKeyframes = {
+    '0': [
+      [0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    '5.0': [
+      [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    ]
+  }
+
   var options = {
     blendFunction: blendFunction,
     // Our application clock has been running for 100.5 seconds
     currentTime: 101.5,
-    keyframes: {
-      '0': [
-        [0, 0, 0, 0, 0, 0, 0, 0]
-      ],
-      '5.0': [
-        [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-      ],
-      '10.0': [
-        [1, 1, 1, 1, 1, 1, 1, 1]
-      ]
-    },
     jointNums: [0],
     currentAnimation: {
-      range: [1, 2],
+      keyframes: currentKeyframes,
       // Our new animation has been playing for 2.5 seconds
       //  This means that it is halfway done
       //  Making it's dual quaternion:
@@ -131,7 +152,7 @@ test('Blend is above 100% complete', function (t) {
       startTime: 99.0
     },
     previousAnimation: {
-      range: [0, 1],
+      keyframes: previousKeyframes,
       // Our previous animation started 2.5 seconds before our current time
       //  This means that it has (5.0 - 2.5) seconds remaining
       //  Making it's dual quaternion:
@@ -154,34 +175,41 @@ test('Blend is above 100% complete', function (t) {
 })
 
 test('Blends using time since current animation frame set began', function (t) {
+  var currentKeyframes = {
+    '5.0': [
+      [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    ],
+    '6.0': [
+      [1, 1, 1, 1, 1, 1, 1, 1]
+    ],
+    '7.0': [
+      [3, 3, 3, 3, 3, 3, 3, 3]
+    ]
+  }
+
+  var previousKeyframes = {
+    '1': [
+      [-0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5]
+    ],
+    '5.0': [
+      [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    ]
+  }
+
   var options = {
     blendFunction: blendFunction,
     // Our application clock has been running for 100.5 seconds
     currentTime: 100.5,
-    keyframes: {
-      '1': [
-        [-0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5]
-      ],
-      '5.0': [
-        [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-      ],
-      '6.0': [
-        [1, 1, 1, 1, 1, 1, 1, 1]
-      ],
-      '7.0': [
-        [3, 3, 3, 3, 3, 3, 3, 3]
-      ]
-    },
     jointNums: [0],
     currentAnimation: {
-      range: [1, 3],
+      keyframes: currentKeyframes,
       // Our new animation has been playing for 1.5 seconds
       //  Making it's dual quaternion:
       //  [2, 2, 2, 2, 2, 2, 2, 2]
       startTime: 99.0
     },
     previousAnimation: {
-      range: [0, 1],
+      keyframes: previousKeyframes,
       // Our previous animation started 2 seconds before our current time
       //  Making it's dual quaternion:
       //  [0, 0, 0, 0, 0, 0, 0, 0]
@@ -201,24 +229,31 @@ test('Blends using time since current animation frame set began', function (t) {
 })
 
 test('Previous animation in middle of loop', function (t) {
+  var currentKeyframes = {
+    '2.0': [
+      [2, 2, 2, 2, 2, 2, 2, 2]
+    ],
+    '3.0': [
+      [4, 4, 4, 4, 4, 4, 4, 4]
+    ]
+  }
+
+  var previousKeyframes = {
+    '0': [
+      [0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    '2.0': [
+      [2, 2, 2, 2, 2, 2, 2, 2]
+    ]
+  }
+
   var options = {
     blendFunction: blendFunction,
     // Our application clock has been running for 100.5 seconds
     currentTime: 101,
-    keyframes: {
-      '0': [
-        [0, 0, 0, 0, 0, 0, 0, 0]
-      ],
-      '2.0': [
-        [2, 2, 2, 2, 2, 2, 2, 2]
-      ],
-      '3.0': [
-        [4, 4, 4, 4, 4, 4, 4, 4]
-      ]
-    },
     jointNums: [0],
     currentAnimation: {
-      range: [1, 2],
+      keyframes: currentKeyframes,
       // TODO: Change all "frames" to "seconds". We're dealing with seconds
       // as our keyframe key
       // Our new animation has been playing for 0.5 seconds
@@ -227,7 +262,7 @@ test('Previous animation in middle of loop', function (t) {
       startTime: 100.5
     },
     previousAnimation: {
-      range: [0, 1],
+      keyframes: previousKeyframes,
       // Our previous animation has been playing for 3 seconds
       //  Making it's dual quaternion:
       //  [1, 1, 1, 1, 1, 1, 1, 1]
@@ -246,24 +281,31 @@ test('Previous animation in middle of loop', function (t) {
 })
 
 test('Previous animation started in middle of loop but now passed final frame', function (t) {
+  var currentKeyframes = {
+    '1.0': [
+      [2, 2, 2, 2, 2, 2, 2, 2]
+    ],
+    '3.0': [
+      [4, 4, 4, 4, 4, 4, 4, 4]
+    ]
+  }
+
+  var previousKeyframes = {
+    '0': [
+      [0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    '1.0': [
+      [2, 2, 2, 2, 2, 2, 2, 2]
+    ]
+  }
+
   var options = {
     blendFunction: blendFunction,
     // Our application clock has been running for 100.5 seconds
     currentTime: 102.5,
-    keyframes: {
-      '0': [
-        [0, 0, 0, 0, 0, 0, 0, 0]
-      ],
-      '1.0': [
-        [2, 2, 2, 2, 2, 2, 2, 2]
-      ],
-      '3.0': [
-        [4, 4, 4, 4, 4, 4, 4, 4]
-      ]
-    },
     jointNums: [0],
     currentAnimation: {
-      range: [1, 2],
+      keyframes: currentKeyframes,
       // TODO: Change all of the "seconds" to frames
       // Our new animation has been playing for 1.0 seconds
       //  Making it's dual quaternion:
@@ -271,7 +313,7 @@ test('Previous animation started in middle of loop but now passed final frame', 
       startTime: 101.5
     },
     previousAnimation: {
-      range: [0, 1],
+      keyframes: previousKeyframes,
       // Our previous animation has been playing for 2.5 frames,
       //  but only 1 frame since the new animation started
       //  This means that it has hit it's final frame and should
@@ -293,27 +335,34 @@ test('Previous animation started in middle of loop but now passed final frame', 
 // Test that previous animation elapsed time is properly calculated against
 // the lowest keyframe
 test('Previous animation elapsed time when previous animation starts from non first keyframe in set', function (t) {
+  var currentKeyframes = {
+    '6.0': [
+      [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    ],
+    '9.0': [
+      [1, 1, 1, 1, 1, 1, 1, 1]
+    ]
+  }
+
+  var previousKeyframes = {
+    '0': [
+      [100, 100, 100, 100, 100, 100, 100, 100]
+    ],
+    '1': [
+      [0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    '6.0': [
+      [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    ]
+  }
+
   var options = {
     blendFunction: blendFunction,
     // Our application clock has been running for 100.5 seconds
     currentTime: 100.5,
-    keyframes: {
-      '0': [
-        [100, 100, 100, 100, 100, 100, 100, 100]
-      ],
-      '1': [
-        [0, 0, 0, 0, 0, 0, 0, 0]
-      ],
-      '6.0': [
-        [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-      ],
-      '9.0': [
-        [1, 1, 1, 1, 1, 1, 1, 1]
-      ]
-    },
     jointNums: [0],
     currentAnimation: {
-      range: [2, 3],
+      keyframes: currentKeyframes,
       // Our new animation has been playing for 1.5 seconds
       //  This means that it is halfway done
       //  Making it's dual quaternion:
@@ -321,7 +370,7 @@ test('Previous animation elapsed time when previous animation starts from non fi
       startTime: 99.0
     },
     previousAnimation: {
-      range: [0, 2],
+      keyframes: previousKeyframes,
       // Our previous animation started 3.5 seconds before our current time
       //  Making it's dual quaternion:
       //  [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
@@ -345,33 +394,34 @@ test('Previous animation elapsed time when previous animation starts from non fi
 // If there are multiple keyframes above our previous animation's
 // current keyframe it should be sure to chose the correct one
 test('Multiple keyframes larger than the current one', function (t) {
+  var currentKeyframes = {
+    '10.0': [
+      [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    ],
+    '13.0': [
+      [1, 1, 1, 1, 1, 1, 1, 1]
+    ]
+  }
+
+  var previousKeyframes = {
+    '0': [
+      [0, 0, 0, 0, 0, 0, 0, 0]
+    ],
+    '5.0': [
+      [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    ],
+    '8.0': [
+      [100, 100, 100, 100, 100, 100, 100, 100]
+    ]
+  }
+
   var options = {
     blendFunction: blendFunction,
     // Our application clock has been running for 100.5 seconds
     currentTime: 100.5,
-    keyframes: {
-      '0': [
-        [0, 0, 0, 0, 0, 0, 0, 0]
-      ],
-      '5.0': [
-        [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-      ],
-      '8.0': [
-        [100, 100, 100, 100, 100, 100, 100, 100]
-      ],
-      '9.0': [
-        [100, 100, 100, 100, 100, 100, 100, 100]
-      ],
-      '10.0': [
-        [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-      ],
-      '13.0': [
-        [1, 1, 1, 1, 1, 1, 1, 1]
-      ]
-    },
     jointNums: [0],
     currentAnimation: {
-      range: [4, 5],
+      keyframes: currentKeyframes,
       // Our new animation has been playing for 1.5 seconds
       //  This means that it is halfway done
       //  Making it's dual quaternion:
@@ -379,7 +429,7 @@ test('Multiple keyframes larger than the current one', function (t) {
       startTime: 99.0
     },
     previousAnimation: {
-      range: [0, 2],
+      keyframes: previousKeyframes,
       // Our previous animation started 2.5 seconds before our current time
       //  This means that it has (5.0 - 2.5) seconds remaining
       //  Making it's dual quaternion:
