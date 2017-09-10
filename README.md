@@ -5,13 +5,15 @@ skeletal-animation-system [![npm version](https://badge.fury.io/js/skeletal-anim
 
 [View live demo](http://chinedufn.github.io/skeletal-animation-system/)
 
+TODO: Create a demo site instead of just a demo. Embed a demo inside of the demo site
+
 ## Tutorials
 
-[WebGL Skeletal Animation Sound Effects Tutorial](https://github.com/chinedufn/webgl-skeletal-animation-sound-tutorial)
+[WebGL Skeletal Animation Sound Effects Tutorial](http://chinedufn.com/webgl-skeletal-animation-sound-effect-tutorial/)
 
-[Attaching objects to bones](http://localhost:4000/attaching-objects-to-bones/)
+[Attaching objects to bones](http://chinedufn.com/attaching-objects-to-bones/)
 
-[WebGL Skeletal Animation Tutorial](chinedufn.com/webgl-skeletal-animation-tutorial)
+[WebGL Skeletal Animation Tutorial](http://chinedufn.com/webgl-skeletal-animation-tutorial)
 
 ## Background / Initial Motivation
 
@@ -59,52 +61,31 @@ var animationSystem = require('skeletal-animation-system')
 // Parsed using collada-dae-parser or some other parser
 var parsedColladaModel = require('./parsed-collada-model.json')
 
-// Animation names and the keyframes that they start and end on
-// Zero indexed
-//  ex: [2, 5] means start on the third keyframe and end at the sixth
-var animationRanges = {
-  'idle': [0, 5],
-  'jump': [5, 8],
-  'dance': [8, 14],
-  'left-arm-punch': [14, 17],
-  'right-arm-punch': [17, 20]
-}
+// Keyframe data for all joints.
+// @see `github.com/chinedufn/blender-actions-to-json` for an example format
+var lowerBodyKeyframes = {...}
+var upperBodyKey = {...}
 
 // Convert our joint names into their associated joint index number
 // This number comes from collada-dae-parser
-// (or your compatible parser of choice)
-// Will return an array of joint indices such as like [0, 1, 5, 6, 8]
-var upperBodyJointNums = [
-'spine', 'chest_L', 'chest_R', 'bicep_L', 'bicep_R'
-].reduce(function (jointIndices, jointName) {
-  jointIndices.push(parsedColladaModel.jointNamePositionIndex[jointName])
-  return jointIndices
-}, [])
-
-// Will return an array of joint indices such as [2, 3, 4, 7, 9]
-var lowerBodyJointNums = [
-'hip', 'thigh_L', 'thigh_R', 'femur_L'
-].reduce(function (jointIndices, jointName) {
-  jointIndices.push(parsedColladaModel.jointNamePositionIndex[jointName])
-  return jointIndices
-}, [])
-
+// (or your parser of choice)
+var upperBodyJointNums = [0, 1, 5, 6, 8]
+var lowerBodyJointNums = [2, 3, 4, 7, 9]
 
 // Our options for animating our model's upper body
 var upperBodyOptions = {
   currentTime: 28.24,
-  keyframes: keyframes,
   jointNums: upperBodyJointsNums,
   blendFunction: function (dt) {
     // Blend animations linearly over 2.5 seconds
     return 1 / 2.5 * dt
   },
   currentAnimation: {
-    range: animationRanges['left-arm-punch'],
+    keyframes: currentAnimKeyframes,
     startTime: 25
   },
   previousAnimation: {
-    range: animationRanges['right-arm-punch'],
+    keyframes: previousAnimKeyframes,
     startTime: 24.5
   }
 }
@@ -112,10 +93,9 @@ var upperBodyOptions = {
 // Our options for animating our model's lower body
 var lowerBodyOptions = {
   currentTime: 28.24,
-  keyframes: keyframes,
   jointNums: lowerBodyJointNums,
   currentAnimation: {
-    range: animationRanges['jump']
+    keyframes: currentAnimKeyframes,
     startTime: 24.3,
     noLoop: true
   }
@@ -126,13 +106,12 @@ var interpolatedUpperBodyJoints = animationSystem
 
 var lowerBodyData = animationSystem
 .interpolateJoints(lowerBodyOptions)
-
 var interpolatedLowerBodyJoints = lowerBodyData.joints
 
 console.log(lowerBodyData.currentAnimationInfo)
 // => {lowerKeyframeNumber: 5, upperKeyframeNumber: 6}
 
-// You know have your interpolated upper and lower body dual quaternions.
+// You know have your interpolated upper and lower body dual quaternions (joints).
 // You can pass these into any vertex shader that
 // works with dual quaternions
 
@@ -238,22 +217,31 @@ blended in using your `blendFunction`
 
 ```js
 var currentAnimation = {
-  range: [0, 10],
+  keyframes: {0: [..], 1.66666: [...]}
   startTime: 10
 }
 ```
 
-###### currentAnimation.range
+###### currentAnimation.keyframes
 
 Type: `Array`
 
-The index of the first and last key for your current animation.
+```js
+{
+  "0": [
+    [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+  ],
+  "1.33333": [
+    [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 2, 1],
+    [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 2, 1],
+    [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 5, 1]
+  ]
+}
+```
 
-For example, if you have five keyframes at `0.2seconds`, `0.8s` `2.4s` `3.9s` and `13.8s`
-
-A range of `[0, 2]` would loop between the keyframes at `0.2s` , `0.8s` and `2.4s`
-
-A range of `[2, 3]` would loop between the keyframes at `2.4s` and `3.9s `
+Pose matrices for each joint in the model, organized by the animation time (`0` and `1.33333` are seconds)
 
 ###### currentAnimation.startTime
 
@@ -280,11 +268,26 @@ while your current animation gets blended in.
 
 Type: `Object`
 
-###### previousAnimation.range
+###### previousAnimation.keyframes
 
 Type: `Array`
 
-The index of the first and last key for your previous animation.
+```js
+{
+  "0": [
+    [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+  ],
+  "1.33333": [
+    [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 2, 1],
+    [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 2, 1],
+    [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 5, 1]
+  ]
+}
+```
+
+Pose matrices for each joint in the model, organized by the animation time (`0` and `1.33333` are seconds)
 
 ###### previousAnimation.startTime
 
