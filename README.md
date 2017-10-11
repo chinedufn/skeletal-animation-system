@@ -125,14 +125,17 @@ TODO: [Link to collada-dae-parser README]()
 
 ## Benchmark
 
-WIP
+```sh
+npm run bench
+```
 
 ## TODO:
 
 - [x] Handle rotation quaternion lerp when dot product is < 0
 - [ ] Implement more from the papers linked in `References` section below (whenever we need them)
 - [x] Add documentation about how to approach playing a sound effect on a keyframe in your game / simulation / program
-- [ ] Benchmark
+- [x] Benchmark
+- [ ] Allow consumer to provide the sampling function between keyframes. Currently we sample linearly between all keyframes. Could make use of [chromakode/fcurve](https://github.com/chromakode/fcurve) here
 
 ## API
 
