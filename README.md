@@ -136,6 +136,7 @@ npm run bench
 - [x] Add documentation about how to approach playing a sound effect on a keyframe in your game / simulation / program
 - [x] Benchmark
 - [ ] Allow consumer to provide the sampling function between keyframes. Currently we sample linearly between all keyframes. Could make use of [chromakode/fcurve](https://github.com/chromakode/fcurve) here
+- [ ] Create a new demo site and demo(s)
 
 ## API
 
