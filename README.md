@@ -27,7 +27,25 @@ and lower body, allowing you to, for example, play a walking animation for your 
 
 `skeletal-animation-system` does not maintain an internal state, but instead lets the modules consumer track things such as the current animation and the current clock time.
 
-## Notes
+## I use matrices and not dual quaternions
+
+The first versions of `skeletal-animation-system` uses matrices instead of dual quaternions.
+
+The issue there was that [blending matrices can lead to unexpected artifacts](http://chinedufn.com/dual-quaternion-shader-explained/).
+
+So we switched to dual quaternions and completely dropped support for matrices.
+
+However, if you use matrices you can still make use of `skeletal-animation-system`.
+
+1. [Convert your matrices into dual quaternions](https://github.com/chinedufn/mat4-to-dual-quat) once when you first load your model.
+2. Use `skeletal-animation-system` to determine your pose dual quaternions
+3. [Convert your pose dual quaternions back into matrices before each render](https://github.com/chinedufn/dual-quat-to-mat4)
+4. Use your newly created matrices for skinning
+
+The 3rd step here means that you're doing some extra work on the CPU, but this hopefully bridges the gap for you until you can move to dual quaternion
+based skinning.
+
+TODO: Example code demonstrating how to incorporate `skeletal-animation-system` into matrix based skinning application
 
 This API is still experimental and will evolve as we use it and realize the kinks.
 
@@ -111,12 +129,13 @@ var interpolatedLowerBodyJoints = lowerBodyData.joints
 console.log(lowerBodyData.currentAnimationInfo)
 // => {lowerKeyframeNumber: 5, upperKeyframeNumber: 6}
 
-// You know have your interpolated upper and lower body dual quaternions (joints).
+// You now have your interpolated upper and lower body dual quaternions (joints).
 // You can pass these into any vertex shader that
 // works with dual quaternions
 
 // If you're just getting started and you still need matrices you
-// can convert these into matrices uses [dual-quat-to-mat4](https://github.com/chinedufn/dual-quat-to-mat4)
+// can convert these into matrices using dual-quat-to-mat4
+//  @see https://github.com/chinedufn/dual-quat-to-mat4
 ```
 
 ## Expected JSON model format
@@ -315,8 +334,9 @@ This is used in order to blend in the current animation.
 
 ## See Also
 
-- [load-collada-dae](https://github.com/chinedufn/load-collada-dae)
 - [collada-dae-parser](https://github.com/chinedufn/collada-dae-parser)
+- [blender-iks-to-fks](https://github.com/chinedufn/blender-iks-to-fks)
+- [blender-actions-to-json](https://github.com/chinedufn/blender-actions-to-json)
 
 ## References
 
