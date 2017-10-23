@@ -1,0 +1,37 @@
+#hero {
+  background-color: lightgoldenrodyellow;
+}
+
+h1 {
+  background-color: lightsalmon;
+}
+
+h2 {
+  background-color: lightblue;
+}
+
+nav ul {
+  /* background-color: lightcyan; */
+}
+
+#demo {
+  background-color: lightgreen;
+}
+
+#demo div img {
+  background-color: green;
+}
+
+#demo-ctrls {
+  background-color: lightpink;
+}
+
+#canvas {
+  background-color: grey;
+  /* border: 1px solid #111; */
+
+}
+
+#content {
+  background-color: azure;
+}
