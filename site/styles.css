@@ -22,7 +22,7 @@ html, body {
 
 #lines-dots {
   -webkit-transform: scale(0.8) translate(65px, -100px);
-          transform: scale(0.8) translate(65px, -100px);
+  transform: scale(0.8) translate(65px, -100px);
   fill: #EFEFEF;
 }
 
@@ -38,8 +38,8 @@ nav ul {
   display: -ms-flexbox;
   display: flex;
   -webkit-box-pack: end;
-      -ms-flex-pack: end;
-          justify-content: flex-end;
+  -ms-flex-pack: end;
+  justify-content: flex-end;
   padding: 15px 0;
   margin: 0;
 }
@@ -77,7 +77,6 @@ h1 {
   margin: 0;
   font-weight: 100;
   font-size: 3.2em;
-  /* text-align: center; */
 }
 
 h2 {
@@ -86,7 +85,6 @@ h2 {
   font-weight: 300;
   font-size: 1em;
   font-style: italic;
-  /* text-align: center; */
 }
 button, label {
   font-weight: bold;
@@ -103,7 +101,7 @@ button, label {
   margin: 40px auto;
   font-size: 1.3em;
   -webkit-box-shadow: 0px 3px 5px #999;
-          box-shadow: 0px 3px 5px #999;
+  box-shadow: 0px 3px 5px #999;
   border-radius: 6px;
   background-color: #FF659B;
   color: white;
@@ -136,13 +134,9 @@ button, label {
 
 #demo {
   width: 30vw;
-  /* height: 85vh; */
-  /* margin: 50px 20px 0 20px; */
   display: block;
   float:left;
-  /* border: 1px solid #111; */
   padding: 15vh 12vw 0 0;
-  /* margin-top: 46px; */
 }
 
 #demo div img {
@@ -154,10 +148,8 @@ button, label {
 }
 
 #canvas {
-  /* margin: 0 auto; */
   width: 320px;
   height: 350px;
-  /* background-color: Transparent; */
 }
 
 #demo-ctrls {
@@ -174,8 +166,8 @@ button, label {
   display: flex;
   text-align: center;
   -webkit-box-pack: justify;
-      -ms-flex-pack: justify;
-          justify-content: space-between;
+  -ms-flex-pack: justify;
+  justify-content: space-between;
   padding: 0 100px;
 }
 
@@ -243,7 +235,6 @@ p, ol {
 code {
   border-radius: 9px;
   margin: 0 3px;
-  /* border: 1px solid #aaa; */
 }
 
 #content ul {
@@ -256,16 +247,16 @@ code {
   display: flex;
   -webkit-box-orient: vertical;
   -webkit-box-direction: normal;
-      -ms-flex-flow: column;
-          flex-flow: column;
+  -ms-flex-flow: column;
+  flex-flow: column;
   -webkit-box-align: start;
-      -ms-flex-align: start;
-          align-items: flex-start;
+  -ms-flex-align: start;
+  align-items: flex-start;
   -webkit-box-pack:start;
-      -ms-flex-pack:start;
-          justify-content:flex-start;
+  -ms-flex-pack:start;
+  justify-content:flex-start;
   -ms-flex-line-pack: start;
-      align-content: flex-start;
+  align-content: flex-start;
 }
 
 #content ol li {
@@ -318,7 +309,6 @@ code {
 }
 @media only screen and (max-width: 763px) {
   #hero {
-    /* margin: 100px 5% 0 5%; */
     padding: 12vh 3% 0 3%;
     width: 94%;
     height: 88vh;
@@ -341,7 +331,7 @@ code {
   }
   nav ul {
     -ms-flex-pack: distribute;
-        justify-content: space-around;
+    justify-content: space-around;
   }
   nav li {
     margin: 0;
