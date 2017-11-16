@@ -34,7 +34,7 @@ window.onload = function () {
   }
 
   var demoBtn = document.getElementById('demo-btn')
-  anime({
+  window.anime({
     targets: '#demo-btn svg',
     top: '+=5',
     direction: 'alternate',
@@ -105,13 +105,13 @@ window.onload = function () {
 }
 
 function btnAnimation (target) {
-  var ain = anime({
+  var ain = window.anime({
     targets: target,
     scale: 1.05,
     duration: 1500
   })
   ain.pause()
-  var cl = anime({
+  var cl = window.anime({
     targets: target,
     scale: 0.9,
     direction: 'alternate',
@@ -119,7 +119,7 @@ function btnAnimation (target) {
     duration: 50
   })
   cl.pause()
-  var aout = anime({
+  var aout = window.anime({
     targets: target,
     scale: [1.05, 1]
   })
@@ -128,7 +128,7 @@ function btnAnimation (target) {
 }
 
 function scrollTo (target) {
-  anime({
+  window.anime({
     targets: doc,
     scrollTop: target,
     easing: 'easeInOutCubic',
