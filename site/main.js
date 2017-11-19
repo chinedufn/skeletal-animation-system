@@ -1,8 +1,3 @@
-// test to see which version of scrollTop the browser uses
-document.body.scrollTop += 1
-var doc = document.body.scrollTop ? document.body : document.documentElement
-document.body.scrollTop -= 1
-
 window.onload = function () {
   var mobile = false
 
@@ -25,9 +20,10 @@ window.onload = function () {
   }
 
   document.onscroll = function () {
-    if (doc.scrollTop > 100) {
+    var st = document.body.scrollTop || document.documentElement.scrollTop
+    if (st > 100) {
       document.getElementsByTagName('nav')[0].style.background = '#FFF'
-    } else if (doc.scrollTop < 100 &&
+    } else if (st < 100 &&
        window.innerWidth > 763) {
       document.getElementsByTagName('nav')[0].style.background = 'transparent'
     }
@@ -128,6 +124,11 @@ function btnAnimation (target) {
 }
 
 function scrollTo (target) {
+  // BS scrollTop check for browser compatibility
+  var doc
+  document.documentElement.scrollTop += 1
+  if (document.documentElement.scrollTop !== 0) doc = document.documentElement
+  else doc = document.body
   window.anime({
     targets: doc,
     scrollTop: target,
