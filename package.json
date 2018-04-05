@@ -5,10 +5,11 @@
   "main": "index.js",
   "scripts": {
     "bench": "node benchmark/benchmark.js",
-    "demo": "budo --open --live --host=localhost --dir=demo/webgl/asset demo/webgl/browser-entry.js",
+    "demo": "budo --open --live --host=localhost --dir=demo/",
     "regl-demo": "budo --open --live --host=localhost --dir=demo/webgl/asset demo/regl/regl.js",
-    "deploy": "mkdirp example-dist && npm run dist:index:html && browserify demo/browser.js > example-dist/bundle.js && cp ./demo/asset/* ./example-dist/ && gh-pages -d example-dist",
-    "dist:index:html": "echo '</script><script src=\"bundle.js\">' | htmlify > example-dist/index.html",
+    "predeploy": "rm -rf example-dist && mkdirp example-dist/static && cp -r ./demo/static/ ./example-dist/static/ && cp ./demo/index.html ./example-dist/",
+    "deploy": "browserify demo/main.js > example-dist/main.js",
+    "postdeploy": "gh-pages -d example-dist",
     "test": "standard && tape test/**/*.js"
   },
   "repository": {
