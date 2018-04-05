@@ -107,6 +107,14 @@ button, label {
   color: white;
 }
 
+#get-started-btn, #demo-ctrls label {
+  transform: scale(1.001);
+  transition: transform 2s cubic-bezier(0.075, 0.82, 0.165, 1);
+}
+#get-started-btn:hover, #demo-ctrls label:hover {
+  transform: scale(1.1);
+}
+
 
 #demo-btn {
   font-size: 1em;
@@ -212,101 +220,10 @@ input[type="checkbox"]:checked ~ label svg path {
   width: 27px;
 }
 
-#content {
-  width: 70vw;
-  margin: 0 auto;
-}
-
-#abt {
-  height: 4px;
-}
-
-h3 {
-  font-weight: 300;
-  font-size: 2em;
-  margin: 90px auto 20px auto;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #ccc;
-}
-p, ol {
-  font-weight: 300;
-}
-
-code {
-  border-radius: 9px;
-  margin: 0 3px;
-}
-
-#content ul {
-  list-style: circle;
-  margin: 0;
-  padding-left: 2%;
-  width: 100%;
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-orient: vertical;
-  -webkit-box-direction: normal;
-  -ms-flex-flow: column;
-  flex-flow: column;
-  -webkit-box-align: start;
-  -ms-flex-align: start;
-  align-items: flex-start;
-  -webkit-box-pack:start;
-  -ms-flex-pack:start;
-  justify-content:flex-start;
-  -ms-flex-line-pack: start;
-  align-content: flex-start;
-}
-
-#content ol li {
-  margin: 5px;
-}
-
-#content ul li {
-  margin: 15px 0;
-  border-bottom: 1px dotted #111;
-  padding-bottom: 8px;
-}
-
-#content h5 {
-  font-style: italic;
-}
-
-#content a {
-  color: #FF659B;
-
-}
-
-#content a:hover {
-  text-decoration: underline;
-}
-
-#toc_6 {
-  margin-top:20px;
-  width: 100%;
-  font-size: 2em;
-  border:none;
-}
 
 /* ============= */
 /* MEDIA QUERIES */
 /* ============= */
-@media only screen and (max-width: 750px) {
-  #toc_6 {
-    font-size: 1.5em;
-  }
-}
-@media only screen and (max-width: 570px) {
-  #toc_6 {
-    font-size: 1em;
-  }
-}
-@media only screen and (max-width: 380px) {
-  #toc_6 {
-    font-size: 0.85em;
-  }
-}
 @media only screen and (max-width: 763px) {
   #hero {
     padding: 12vh 3% 0 3%;
@@ -335,9 +252,6 @@ code {
   }
   nav li {
     margin: 0;
-  }
-  #shim {
-    height: 75vh;
   }
   #demo-btn {
     display: block;
