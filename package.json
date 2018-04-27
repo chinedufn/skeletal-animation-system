@@ -5,11 +5,11 @@
   "main": "index.js",
   "scripts": {
     "bench": "node benchmark/benchmark.js",
-    "demo": "budo --open --live --host=localhost --dir=demo/",
+    "demo": "budo --open --live --host=localhost --dir=demo/ demo/main.js",
     "regl-demo": "budo --open --live --host=localhost --dir=demo/webgl/asset demo/regl/regl.js",
-    "predeploy": "rm -rf example-dist && mkdirp example-dist/static && cp -r ./demo/static/ ./example-dist/static/ && cp ./demo/index.html ./example-dist/",
+    "predeploy": "rm -rf example-dist && mkdirp example-dist/asset && cp -r ./demo/asset/ ./example-dist/asset/ && cp ./demo/index.html ./example-dist/",
     "deploy": "browserify demo/main.js > example-dist/main.js",
-    "postdeploy": "gh-pages -d example-dist",
+    "pdeploy": "gh-pages -d example-dist",
     "test": "standard && tape test/**/*.js"
   },
   "repository": {
@@ -60,5 +60,8 @@
     "tape": "^4.6.2",
     "virtual-dom": "^2.1.1",
     "xhr": "^2.3.2"
+  },
+  "dependencies": {
+    "keyframes-to-dual-quats": "^1.0.0"
   }
 }
