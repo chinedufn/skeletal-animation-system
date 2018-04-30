@@ -253,7 +253,6 @@ var directionalColorUni = gl.getUniformLocation(shaderProgram, 'uDirectionalColo
 var mVMatrixUni = gl.getUniformLocation(shaderProgram, 'uMVMatrix')
 var pMatrixUni = gl.getUniformLocation(shaderProgram, 'uPMatrix')
 var nMatrixUni = gl.getUniformLocation(shaderProgram, 'uNMatrix')
-var uSampler = gl.getUniformLocation(shaderProgram, 'uSampler')
 
 var boneRotQuaternions = {}
 var boneTransQuaternions = {}
@@ -316,21 +315,10 @@ textureImage.onload = function () {
 }
 textureImage.src = 'baseball-player-uvs.png'
 
-// Whenever we hit keyframe #7 or #9 we will play a sound effect
-var keyframesToPlaySoundOn = {
-  7: true,
-  9: true
-}
-
 // We maintain a clock for our application. The clock is used to know how
 // far into the animation we are so that we interpolate the correct keyframes
 var clockTime = 0
 var lastStartTime = new Date().getTime()
-
-// By tracking the keyframe from the last time we rendered we can check whether
-// or not the new keyframe is different from the previous one. If it's different
-// and it's one of the keyframes that needs a sound effect, we'll play a soung
-var previousLowerKeyframe
 
 function draw () {
   var currentTime = new Date().getTime()
