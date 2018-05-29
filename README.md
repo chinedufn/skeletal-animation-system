@@ -332,6 +332,9 @@ This is used in order to blend in the current animation.
 }
 ```
 
+`currentAnimationInfo` is the lower and upper keyframe time bounds of the current animation.
+If you have three keyframes at 1 8 and 19 seconds and you are currently 12 seconds into your animation then your lower keyframe is 1 (8) and your upper keyframe is 2 (19).
+
 ## See Also
 
 - [collada-dae-parser](https://github.com/chinedufn/collada-dae-parser)
