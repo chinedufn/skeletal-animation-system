@@ -453,8 +453,8 @@ test('Multiple keyframes larger than the current one', function (t) {
 
 test.only('single frame animations', function (t) {
   var options = {
-    'currentTime': 0.016666666666666666,
-    'jointNums': [
+    currentTime: 0.016666666666666666,
+    jointNums: [
       0,
       3,
       8,
@@ -468,8 +468,8 @@ test.only('single frame animations', function (t) {
       24,
       11
     ],
-    'currentAnimation': {
-      'keyframes': {
+    currentAnimation: {
+      keyframes: {
         '0.0': [
           [-7.278466024329688e-14, 2.0600566680306368e-10, -5.126635227448162e-12, 1, 5.187854313327257e-18, -8.827153992227743e-19, 2.7275390652703847e-16, 1.580531756253426e-27],
           [-2.638234361324749e-14, -1.9854463795120477e-13, -2.1968254906162832e-11, 1, -4.5048562835195434e-07, -1.857223468447898e-07, -3.034722995927766e-12, -4.8825710322101963e-20],
@@ -499,8 +499,8 @@ test.only('single frame animations', function (t) {
           [1.0161697158733558e-06, 1.6442014968290737e-07, -3.21235352606673e-08, 0.9999999999994696, 7.48762917487542e-07, 3.269295837403037e-06, -8.674296855304534e-06, -1.5770573929570408e-12]
         ]
       },
-      'startTime': 0,
-      'noLoop': false
+      startTime: 0,
+      noLoop: false
     }
   }
 
