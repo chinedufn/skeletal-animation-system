@@ -451,7 +451,7 @@ test('Multiple keyframes larger than the current one', function (t) {
   t.end()
 })
 
-test.only('single frame animations', function (t) {
+test('single frame animations', function (t) {
   var options = {
     currentTime: 0.016666666666666666,
     jointNums: [

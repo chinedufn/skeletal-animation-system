@@ -53,20 +53,24 @@ function interpolateJoints (opts) {
 
   var currentAnimLowerKeyframe
   var currentAnimUpperKeyframe
-  // Get the surrounding keyframes for our current animation
-  currentKeyframeTimes.forEach(function (keyframeTime) {
-    if (currentAnimLowerKeyframe && currentAnimUpperKeyframe) { return }
-    if (timeRelativeToFirst > keyframeTime) {
-      currentAnimLowerKeyframe = keyframeTime
-    } else if (timeRelativeToFirst < keyframeTime) {
-      currentAnimUpperKeyframe = keyframeTime
-    } else if (timeRelativeToFirst === Number(keyframeTime)) {
-      // TODO: Perform fewer calculations in places that we already know
-      // that the keyframe time doesn't need to be blended against an upper
-      // and lower keyframe. For now we don't handle this special case
-      currentAnimLowerKeyframe = currentAnimUpperKeyframe = keyframeTime
-    }
-  })
+  if (currentKeyframeTimes.length === 1) {
+    currentAnimLowerKeyframe = currentAnimUpperKeyframe = currentKeyframeTimes[0]
+  } else {
+    // Get the surrounding keyframes for our current animation
+    currentKeyframeTimes.forEach(function (keyframeTime) {
+      if (currentAnimLowerKeyframe && currentAnimUpperKeyframe) { return }
+      if (timeRelativeToFirst > keyframeTime) {
+        currentAnimLowerKeyframe = keyframeTime
+      } else if (timeRelativeToFirst < keyframeTime) {
+        currentAnimUpperKeyframe = keyframeTime
+      } else if (timeRelativeToFirst === Number(keyframeTime)) {
+        // TODO: Perform fewer calculations in places that we already know
+        // that the keyframe time doesn't need to be blended against an upper
+        // and lower keyframe. For now we don't handle this special case
+        currentAnimLowerKeyframe = currentAnimUpperKeyframe = keyframeTime
+      }
+    })
+  }
   // Set the elapsed time relative to our current lower bound keyframe instead of our lowest out of all keyframes
   currentAnimElapsedTime = timeRelativeToFirst - currentAnimLowerKeyframe
 
