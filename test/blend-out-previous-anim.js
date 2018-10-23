@@ -450,3 +450,26 @@ test('Multiple keyframes larger than the current one', function (t) {
   )
   t.end()
 })
+
+test('single frame animations', function (t) {
+  var options = {
+    currentTime: 0.016666666666666666,
+    jointNums: [
+      0
+    ],
+    currentAnimation: {
+      keyframes: {
+        '0.0': [
+          [-7.278466024329688e-14, 2.0600566680306368e-10, -5.126635227448162e-12, 1, 5.187854313327257e-18, -8.827153992227743e-19, 2.7275390652703847e-16, 1.580531756253426e-27]
+        ]
+      },
+      startTime: 0,
+      noLoop: false
+    }
+  }
+
+  t.doesNotThrow(function () {
+    animationSystem.interpolateJoints(options)
+  }, 'interpolateJoints should not throw')
+  t.end()
+})
